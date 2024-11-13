@@ -1,8 +1,7 @@
+  - {name: WiFi-@V2ray_Alpha-19, server: 23.154.136.47, port: 22324, type: vmess, uuid: 04621bae-ab36-11ec-b909-0242ac120002, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-13, server: hkt2.bika.hk, port: 30251, type: vmess, uuid: 9e88a10b-655c-5120-89d0-408634169561, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false}
   - {name: All-@V2ray_Alpha-19, server: 172.67.190.98, port: 443, type: vmess, uuid: 03fcc618-b93d-6796-6aed-8a38c975d581, alterId: 1, cipher: auto, tls: true, skip-cert-verify: false, servername: lammaland.org, network: ws, ws-opts: {path: linkvws, headers: {Host: lammaland.org}}}
   - {name: All-@V2ray_Alpha-20, server: 185.146.173.52, port: 80, type: vmess, uuid: e2b683fe-5b91-5f62-906a-e720ba96cf97, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false, network: ws, ws-opts: {path: /vmess, headers: {Host: fr2.vmess.site.}}}
-  - {name: WiFi-@V2ray_Alpha-15, server: 45.8.158.32, port: 3168, type: vmess, uuid: 398ce84e-4849-4e5f-9b1a-a56fbe233b81, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false, network: ws, ws-opts: {path: /}}
-  - {name: MCI-@V2ray_Alpha-13, server: dkzbofzkop.com, port: 443, type: vmess, uuid: fa1897db-1925-4c86-a495-939a959af900, alterId: 0, cipher: auto, tls: true, skip-cert-verify: false, servername: dkzbofzkop.com, network: ws, ws-opts: {path: /rbqqvws, headers: {Host: dkzbofzkop.com}}}
-  - {name: MCI-@V2ray_Alpha-14, server: 147.45.51.16, port: 2098, type: vmess, uuid: 83876222-64a4-4912-aa18-b7d9d34959de, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false}
   - {name: Project By ALIILAPRO, server: https://github.com/ALIILAPRO/v2rayNG-Config, port: 433, type: vmess, uuid: Free, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false}
   - {name: "[🇺🇸]t.me/ConfigsHub", server: 104.17.197.31, port: 443, type: vmess, uuid: 441da342-ce90-441e-bff9-d2ceb55e68ca, alterId: 0, cipher: auto, tls: true, skip-cert-verify: false, servername: quiet-moon-132a.xetag42714.workers.dev, network: ws, ws-opts: {path: /ivideos.sbs/linkws, headers: {Host: quiet-moon-132a.xetag42714.workers.dev}}}
   - {name: 🇨🇦 @v2ray_configs_pool📡🇨🇦Canada, server: 172.67.244.191, port: 443, type: vmess, uuid: bc864078-dcf3-4bf4-8dbf-ca9f200b56be, alterId: 0, cipher: auto, tls: true, skip-cert-verify: false, servername: gwdef.sbs, network: ws, ws-opts: {path: /linkws, headers: {Host: gwdef.sbs}}}
@@ -70,25 +69,61 @@
   - {name: 🇨🇦 @v2ray_configs_pool📡🇨🇦Canada 38, server: denc36.xtooltech.cfd, port: 443, type: vmess, uuid: b321fd5d-e6ec-4293-a644-164e3885f52e, alterId: 0, cipher: auto, tls: true, skip-cert-verify: false, network: ws, ws-opts: {path: /linkws, headers: {Host: adenc36v.xtooltech.cfd}}}
   - {name: 🇨🇦 @v2ray_configs_pool📡🇨🇦Canada 39, server: 104.26.5.57, port: 2086, type: vmess, uuid: e9e3cc13-db48-4cc1-8c24-7626439a5339, alterId: 0, cipher: auto, tls: false, skip-cert-verify: false, network: ws, ws-opts: {path: github.com/Alvin9999, headers: {Host: ip1.1789034.xyz}}}
   - {name: 🇨🇦 @v2ray_configs_pool📡🇨🇦Canada 40, server: 172.67.216.29, port: 443, type: vmess, uuid: 1052f24e-7b09-45eb-b0c5-d858eb124192, alterId: 0, cipher: auto, tls: true, skip-cert-verify: false, network: ws, ws-opts: {path: /linkws, headers: {Host: glweidf.cfd}}}
+  - {name: WiFi-@V2ray_Alpha-8, server: 23.227.60.8, port: 443, type: trojan, password: bpb-trojan, sni: 403b3611-99bc-43b7-88D7-26Ed5D0825A9-3.paGeS.dev, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-9, server: 185.156.108.40, port: 13784, type: trojan, password: 2d722623-3740-4f73-9357-01ad1a25ce27, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-10, server: 91.107.151.209, port: 58298, type: trojan, password: 4c942230-2910-4c2d-80eb-f3800c79dc7a, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-11, server: 104.19.209.229, port: 8880, type: trojan, password: f0d584bc-342f-4443-ba24-79e4d0e504b1, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-12, server: www.speedtest.net, port: 2052, type: trojan, password: 012116a8-7d92-4c5f-b3f2-13a0e9b37ba9, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-13, server: www.speedtest.net, port: 2052, type: trojan, password: 4dcbf542-6f9f-4c87-a96d-fa66e7a03d2b, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-14, server: www.speedtest.net, port: 2052, type: trojan, password: cf43996d-cc45-458e-87ac-c9c933c9ed3e, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-15, server: www.speedtest.net, port: 2052, type: trojan, password: 2fe62d75-af36-4f84-97cb-c0c71691be1b, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-16, server: 91.107.240.100, port: 2095, type: trojan, password: f1aefe1d-64a7-4252-81b9-34c8221a925f, sni: EMie2V.Gstatic.COM.coiNEX.com.SARBAZIT.COM, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-17, server: 104.16.190.131, port: 8443, type: trojan, password: 9d5e7586-64e1-4c29-9d47-6cbbd57fe8d1, sni: pardazeshvpn-tg48.pages.dev, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-18, server: 185.146.173.115, port: 443, type: trojan, password: 9a4bc15d-a7d4-4181-9485-405629c36894, sni: king-ae1.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-2, server: 104.18.13.229, port: 2053, type: trojan, password: Watashi_VPN, sni: t-watashi-r-jacket-o-people-jan.watashi-java.ir, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-3, server: 185.238.228.6, port: 443, type: trojan, password: bpb-trojan, sni: 403b3611-99bc-43b7-88D7-26Ed5D0825a9-3.PAgeS.dEv, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-4, server: 104.20.71.132, port: 8880, type: trojan, password: f0d584bc-342f-4443-ba24-79e4d0e504b1, skip-cert-verify: false}
+  - {name: MCI--@V2ray_Alpha-5, server: 185.146.173.52, port: 8880, type: trojan, password: 23b41d65-d0b2-4a50-f94d-ae187e0bd456, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-6, server: www.speedtest.net, port: 2052, type: trojan, password: 012116a8-7d92-4c5f-b3f2-13a0e9b37ba9, skip-cert-verify: false}
+  - {name: MCI--@V2ray_Alpha-7, server: www.speedtest.net, port: 2052, type: trojan, password: c05ffb1d-e27c-48e5-92e1-f00dedf23013, skip-cert-verify: false}
+  - {name: MCI--@V2ray_Alpha-8, server: www.speedtest.net, port: 2052, type: trojan, password: 93d2ef40-6d50-4844-87d1-15e3c8257dba, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-9, server: 185.18.250.117, port: 443, type: trojan, password: 1e9aadae-ca17-4f75-b0a0-7de5e3858cfb, sni: xN----PMcNAAC0DKn0Rb71nDa.PAges.Dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-10, server: 172.66.47.130, port: 443, type: trojan, password: e8b87dd9-cc8f-407c-a1f3-a564009fe6ee, sni: dc1bf227.vf-8co.pages.dev, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-11 2, server: 172.66.46.249, port: 443, type: trojan, password: 90cd4a77-141a-43c9-991b-08263cfe9c10, sni: 79193c43.aryoovpn-5fr.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-12, server: 172.66.44.233, port: 443, type: trojan, password: 38720105-063f-40f5-a5eb-f3198b9b617d, sni: aksnmaioas.pages.dev, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-13 2, server: 104.17.148.22, port: 443, type: trojan, password: e2f4d1fa-0a6d-48c3-a5bb-8b438e78af23, sni: 119f3a0b.chikiy123w.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-14, server: 104.18.218.118, port: 443, type: trojan, password: a94edb46-0734-4593-a8b5-9cd11ddc57f6, sni: 5c53ca21.vpn-aryoo.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-15, server: 172.66.46.249, port: 443, type: trojan, password: 90cd4a77-141a-43c9-991b-08263cfe9c10, sni: 79193c43.aryoovpn-5fr.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-16♾نامحدود, server: 172.66.47.100, port: 443, type: trojan, password: 4045e84e-5e3c-4f70-8ff5-c1097882a55a, sni: BPb-WOrKeR-paneL1-e4P.PAGES.DEV, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-3, server: enfuego.missionsec.io, port: 443, type: trojan, password: TD7FKA3CZSyRgCeXp60xjaEa3uSzFaS5BOpC2lY3y9cYRA884qZOI3wxlNDneD, sni: enfuego.missionsec.io, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-4, server: starfish.missionsec.io, port: 28331, type: trojan, password: DxuCRlZS3aq5pgI8YYcBCZFln7e83XDONSROjAepSK3CaFyATz0aw3DyE6294x, sni: starfish.missionsec.io, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-5, server: penguin.missionsec.io, port: 28332, type: trojan, password: 8DAzZXOSwYcDlgOej2lC3AYypa30F4pxnqCSEZKR7yD3Sx89RuNa6aCBeFT35I, sni: penguin.missionsec.io, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-6, server: training.freetrade.link, port: 18333, type: trojan, password: Y4O3x7D8RSepyNXDA8ZOZEaKB3F9Y35Ca3TpuxlR6aCAeygSDl0IwcjCz2nSqF, sni: training.freetrade.link, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-7, server: tobster.freetrade.link, port: 28343, type: trojan, password: ASRpD3DYlZTNagqjxKS2BcF39y3y8DO30e85zCZXaCau6EO7RwxF4YAIenplSC, sni: tobster.freetrade.link, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-8, server: 104.19.209.229, port: 2052, type: trojan, password: edcfbd77-d607-53a9-842c-32592c2504b2, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-9, server: www.speedtest.net, port: 2052, type: trojan, password: 4b0915d7-8544-5d48-946a-a708d7288447, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-10, server: 190.93.247.152, port: 80, type: trojan, password: 572e7789-76af-51c8-928b-e327d862f16c, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-11, server: 185.146.173.52, port: 8880, type: trojan, password: 23b41d65-d0b2-4a50-f94d-ae187e0bd456, skip-cert-verify: false}
+  - {name: IR-@V2ray_Alpha-12, server: 185.146.173.115, port: 443, type: trojan, password: 9a4bc15d-a7d4-4181-9485-405629c36894, sni: king-ae1.pages.dev, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-04, server: 185.238.228.6, port: 443, type: trojan, password: bpb-trojan, sni: 403b3611-99bc-43b7-88D7-26Ed5D0825a9-3.PAgeS.dEv, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-05, server: 199.232.95.123, port: 80, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-06, server: 104.21.3.233, port: 8880, type: trojan, password: f0d584bc-342f-4443-ba24-79e4d0e504b1, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-07, server: 104.17.147.22, port: 2052, type: trojan, password: cf43996d-cc45-458e-87ac-c9c933c9ed3e, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-08, server: 104.18.39.232, port: 2083, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, sni: ArGodev11222.PaGes.Dev, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-09, server: 206.238.236.187, port: 2096, type: trojan, password: 0d89a36e-36bc-41d2-8bd3-bbd639991f29, sni: nicorobin.eula.cloudns.org, skip-cert-verify: false}
-  - {name: MCI-@V2ray_Alpha-10, server: re.iranfastfod.ir, port: 8443, type: trojan, password: telegram-Afv2Ray, sni: www.speedtest.net, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-10 2, server: re.iranfastfod.ir, port: 8443, type: trojan, password: telegram-Afv2Ray, sni: www.speedtest.net, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-11, server: 172.66.44.101, port: 443, type: trojan, password: 34a83286-ba4e-4f0a-ac08-77a95469eeaf, sni: pardazesh18.pages.dev, skip-cert-verify: false}
-  - {name: MCI-@V2ray_Alpha-12, server: 172.66.44.58, port: 443, type: trojan, password: bc953cb6-7112-4d3c-bbf4-eaf8a0d004cb, sni: sflslf0flk0sfk0sf.pages.dev, skip-cert-verify: false}
-  - {name: MCI-@V2ray_Alpha-13 2, server: 172.66.47.151, port: 443, type: trojan, password: a64f0cea-ca89-40e6-b316-b3badff1eb90, sni: iSaA1.paGes.DEv, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-12 2, server: 172.66.44.58, port: 443, type: trojan, password: bc953cb6-7112-4d3c-bbf4-eaf8a0d004cb, sni: sflslf0flk0sfk0sf.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-13, server: 172.66.47.151, port: 443, type: trojan, password: a64f0cea-ca89-40e6-b316-b3badff1eb90, sni: iSaA1.paGes.DEv, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-14♾نامحدود, server: 172.66.47.151, port: 443, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, sni: 23sPT.pAGEs.dEV, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-06 2, server: 162.159.128.233, port: 8443, type: trojan, password: auto, sni: e9464f45.trauma-2r4.pages.dev, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-07 2, server: zula.ir, port: 2096, type: trojan, password: 98f0c223-cb75-4faa-859e-47110b1f052b, sni: iNTeRnET4EVERIeONe7.PaGes.DeV, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-08 2, server: 104.18.39.232, port: 2083, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, sni: ArGodev11222.PaGes.Dev, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-09 2, server: 172.66.47.151, port: 443, type: trojan, password: a64f0cea-ca89-40e6-b316-b3badff1eb90, sni: iSaA1.paGes.DEv, skip-cert-verify: false}
-  - {name: MCI-@V2ray_Alpha-10 2, server: 172.66.47.200, port: 443, type: trojan, password: c6d299d4-db0b-4444-8b56-b23bbdcbcd67, sni: midsUMmER-Bpb.pAgES.DEV, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-10 3, server: 172.66.47.200, port: 443, type: trojan, password: c6d299d4-db0b-4444-8b56-b23bbdcbcd67, sni: midsUMmER-Bpb.pAgES.DEV, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-11 2, server: www.visa.com, port: 443, type: trojan, password: 1b3b276f-44b4-4c39-bfdf-67ff6337b41f, sni: POOrIaREd--persEPolIS.pAGEs.Dev, skip-cert-verify: false}
-  - {name: MCI-@V2ray_Alpha-12 2, server: 172.66.47.130, port: 443, type: trojan, password: e8b87dd9-cc8f-407c-a1f3-a564009fe6ee, sni: dc1bf227.vf-8co.pages.dev, skip-cert-verify: false}
-  - {name: MCI-@V2ray_Alpha-13 3, server: 188.114.99.91, port: 443, type: trojan, password: 4f9219f6-ba56-4e5a-a676-0978d8b613e4, sni: Noshteri.hooplnqpb.ir, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-12 3, server: 172.66.47.130, port: 443, type: trojan, password: e8b87dd9-cc8f-407c-a1f3-a564009fe6ee, sni: dc1bf227.vf-8co.pages.dev, skip-cert-verify: false}
+  - {name: MCI-@V2ray_Alpha-13 2, server: 188.114.99.91, port: 443, type: trojan, password: 4f9219f6-ba56-4e5a-a676-0978d8b613e4, sni: Noshteri.hooplnqpb.ir, skip-cert-verify: false}
   - {name: MCI-@V2ray_Alpha-14♾نامحدود 2, server: 185.18.250.117, port: 443, type: trojan, password: 1e9aadae-ca17-4f75-b0a0-7de5e3858cfb, sni: xN----PMcNAAC0DKn0Rb71nDa.PAges.Dev, skip-cert-verify: false}
   - {name: All-@V2ray_Alpha-5, server: 104.21.36.165, port: 443, type: trojan, password: azadnet-trojan, sni: XN----PmCnaaC0dKn0Rb71NdA.PagES.DeV, skip-cert-verify: false}
   - {name: All-@V2ray_Alpha-6, server: 185.146.173.158, port: 443, type: trojan, password: auto, sni: esetsecuritylicense.bwnsmv.workers.dev, skip-cert-verify: false}
@@ -112,36 +147,19 @@
   - {name: All--@V2ray_Alpha-20, server: pardazeshvpn-tg7.pages.dev, port: 443, type: trojan, password: 0ac0df1b-cfce-47b1-a286-91a0ec2fc7ef, sni: pardazeshvpn-tg7.pages.dev, skip-cert-verify: false}
   - {name: All--@V2ray_Alpha-21, server: bpb-worker-panel1-e4p.pages.dev, port: 443, type: trojan, password: 4045e84e-5e3c-4f70-8ff5-c1097882a55a, sni: bpb-wOrkeR-PANEl1-E4P.PaGeS.Dev, skip-cert-verify: false}
   - {name: All--@V2ray_Alpha-22, server: meti-u9d.pages.dev, port: 443, type: trojan, password: 1187ba87-8ebc-4a07-aa89-b331ed2cb356, sni: meti-u9d.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-08, server: e9464f45.trauma-2r4.pages.dev, port: 8443, type: trojan, password: auto, sni: e9464f45.trauma-2r4.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-09, server: 37.114.33.108, port: 15296, type: trojan, password: 063f59fe-987b-401f-b404-84352e08dfc6, sni: sourceforge.net, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-10 2, server: 151.101.3.10, port: 80, type: trojan, password: cefffd1d-cc58-4560-b4d1-44f1af528f30, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-11 2, server: 104.18.39.232, port: 2083, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, sni: ArGodev11222.PaGes.Dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-12 2, server: 104.18.5.250, port: 443, type: trojan, password: a64f0cea-ca89-40e6-b316-b3badff1eb90, sni: iSaa1.PAGeS.DeV, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-13 2, server: pardazeshvpn-tg18.pages.dev, port: 443, type: trojan, password: bf7e1009-1574-44f7-86df-6cbecd338477, sni: pardazeshvpn-tg18.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-14 2, server: pardazeshvpn-tg7.pages.dev, port: 443, type: trojan, password: 0ac0df1b-cfce-47b1-a286-91a0ec2fc7ef, sni: pardazeshvpn-tg7.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-15 2, server: cfpage-39t.pages.dev, port: 443, type: trojan, password: bba5ce00-09e4-4fce-8d26-35db5b4e38d4, sni: cfpage-39t.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-16 2, server: meti-u9d.pages.dev, port: 443, type: trojan, password: 1187ba87-8ebc-4a07-aa89-b331ed2cb356, sni: meti-u9d.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-17♾نامحدود, server: bpb-worker-panel1-e4p.pages.dev, port: 443, type: trojan, password: 4045e84e-5e3c-4f70-8ff5-c1097882a55a, sni: bpb-wOrkeR-PANEl1-E4P.PaGeS.Dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-2, server: 104.25.254.4, port: 2087, type: trojan, password: auto, sni: trojanfree-76s.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-3, server: 104.20.21.78, port: 443, type: trojan, password: auto, sni: b96ef9ae.trojanfree-76s.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-4, server: tu.hideabr.ir, port: 1001, type: trojan, password: 6aa14e75-7d01-472b-8983-00ce703963c0, sni: The-Ashegh.org, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-5 2, server: 199.232.197.231, port: 80, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-6 2, server: 198.41.214.224, port: 2052, type: trojan, password: f0d584bc-342f-4443-ba24-79e4d0e504b1, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-7 2, server: 23.227.38.208, port: 2053, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, sni: bPB-V.pageS.dEV, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-8 2, server: zula.ir, port: 2096, type: trojan, password: 98f0c223-cb75-4faa-859e-47110b1f052b, sni: iNTeRnET4EVERIeONe7.PaGes.DeV, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-9 2, server: sky.rethinkdns.com, port: 2096, type: trojan, password: 6285e567-0c25-4ce2-a2fa-80517c1345e1, sni: 1223-9ux.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-10 3, server: joinv2ngfast-7nr.pages.dev, port: 2096, type: trojan, password: 89b3cbba-e6ac-485a-9481-976a0415eab9, sni: joinV2NGFasT-7Nr.pAgeS.DeV, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-11 3, server: 104.21.83.62, port: 2096, type: trojan, password: 0fdc0235-0055-4203-a66f-f29e7e663d10, sni: tnetplus3.pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-12 3, server: 79.127.70.123, port: 2083, type: trojan, password: ec94daf9-442f-4a6b-9633-70c90006dfdd, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-13 3, server: 79.127.70.123, port: 443, type: trojan, password: 672a7a10-7e7a-40c6-8a45-2b2f799ae1dc, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-14 3, server: 185.18.250.117, port: 443, type: trojan, password: 1e9aadae-ca17-4f75-b0a0-7de5e3858cfb, sni: xN----PMcNAAC0DKn0Rb71nDa.PAges.Dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-15 3, server: 199.34.228.178, port: 443, type: trojan, password: fca01448-d84a-436e-9aec-3be1ebdfb350, sni: sB-1u6.Pages.DEV, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-16 3, server: 172.67.204.84, port: 443, type: trojan, password: 2df56fd0-d1b7-4793-b877-acd356d960f7, sni: pages.dev, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-17 2, server: 172.67.180.67, port: 443, type: trojan, password: 0792bb58-36ac-451e-a629-e363e53da93b, sni: kafka.eula.cloudns.org, skip-cert-verify: false}
-  - {name: All-@V2ray_Alpha-18♾نامحدود, server: 172.66.47.33, port: 443, type: trojan, password: bba5ce00-09e4-4fce-8d26-35db5b4e38d4, sni: cfpage-39t.pages.dev, skip-cert-verify: false}
   - {name: 👉🆔, server: 172.64.35.188, port: 443, type: trojan, password: blue2024, sni: ta.promote.icu, skip-cert-verify: false}
   - {name: "[🏁]t.me/ConfigsHub`", server: 13.48.220.142, port: 22222, type: trojan, password: telegram-id-directvpn, sni: trojan.burgerip.co.uk, skip-cert-verify: false}
   - {name: 👉🆔 2, server: 104.25.254.4, port: 2087, type: trojan, password: auto, sni: trojanfree-76s.pages.dev, skip-cert-verify: false}
+  - {name: WiFi-@V2ray_Alpha-1, server: 67.220.95.100, port: 443, type: ss, cipher: aes-256-gcm, password: pKEW8JPByTVTLtM}
+  - {name: WiFi-@V2ray_Alpha-2, server: 89.23.103.21, port: 51584, type: ss, cipher: chacha20-ietf-poly1305, password: oYQ8JwEldYn4KT2gfZ6eNl}
+  - {name: WiFi-@V2ray_Alpha-3, server: 91.107.160.111, port: 36298, type: ss, cipher: aes-256-gcm, password: eYIAoGqIiRxoKF5zsnpmade3UnUEJchNghNYliDVlYk=}
+  - {name: WiFi-@V2ray_Alpha-4, server: 23.166.88.198, port: 5003, type: ss, cipher: aes-256-gcm, password: g5MeD6Ft3CWlJId}
+  - {name: WiFi-@V2ray_Alpha-5, server: 195.15.243.125, port: 5555, type: ss, cipher: chacha20-ietf-poly1305, password: AdcivTASb8XWqRKubWaz2w}
+  - {name: WiFi-@V2ray_Alpha-6 2, server: 91.219.237.102, port: 990, type: ss, cipher: chacha20-ietf-poly1305, password: f8f7aCzcPKbsF8p3}
+  - {name: WiFi-@V2ray_Alpha-7, server: 103.167.234.98, port: 990, type: ss, cipher: chacha20-ietf-poly1305, password: f8f7aCzcPKbsF8p3}
+  - {name: MCI-@V2ray_Alpha-1, server: 45.158.171.44, port: 8080, type: ss, cipher: chacha20-ietf-poly1305, password: a8bt9fY0QsLS6eLnXUe0Ym}
+  - {name: IR-@V2ray_Alpha-1, server: 185.5.38.111, port: 55988, type: ss, cipher: chacha20-ietf-poly1305, password: 2VrTnsQrvfJhSxWwRGtSUk43T8BL3M9XU6AYssJKzSbT6Lr2paHvqWAxcYWHZ243vEqc1fSTMkWbP6VqUBbFEVKeX5pVv1CU}
+  - {name: IR-@V2ray_Alpha-2, server: mx2.drawnrisha.one, port: 55988, type: ss, cipher: chacha20-ietf-poly1305, password: T9VPet1fGhdb4JPmUS6SS5RNZ7NSgBvQNF4rkoQTdFhGWvmGedszfjBTgefmrQYhjhyB867P9RvyBQmtEjLUegm5CNymHC3i}
   - {name: "Ir-@V2ray_Alpha-01wireguard://kHDBqBOh5lBDtep71CuZsPb8x9fFdF51VOy4vkr+/1A=@162.159.195.236:4177?address=172.16.0.2/32,2606:4700:110:8f81:d551:a0:532e:a2b3/128&reserved=199,212,116&publickey=bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=&mtu=1280#Ir-@V2ray_Alpha-02wireguard://oMUx2ZTi1G7ZQvWlClFuKVbWixrdxq+RyIfVpVio/1s=@162.159.192.225:7559?address=172.16.0.2/32,2606:4700:110:897b:9c3:13fb:7b2c:8cae/128&reserved=75,115,46&publickey=bmXOC+F1FxEMF9dyiK2H5/1SUtzH0JuVo51h2wPfgyo=&mtu=1420#Ir-@V2ray_Alpha-03", server: 95.164.44.21, port: 8388, type: ss, cipher: chacha20-ietf-poly1305, password: Y2QwYmNi}
   - {name: WiFi-@V2ray_Alpha-01, server: 23.166.88.221, port: 8118, type: ss, cipher: aes-256-gcm, password: cdBIDV42DCwnfIN}
   - {name: WiFi-@V2ray_Alpha-02, server: 45.151.62.54, port: 28825, type: ss, cipher: chacha20-ietf-poly1305, password: 0zyDRZ1XmNXaaCAN7KEA8a}
@@ -151,9 +169,9 @@
   - {name: Ir--@V2ray_Alpha-03, server: 45.87.175.178, port: 8080, type: ss, cipher: chacha20-ietf-poly1305, password: 1RWwXhwfAB5gAEozU4G2Pg}
   - {name: Ir--@V2ray_Alpha-04, server: 95.164.35.90, port: 8388, type: ss, cipher: chacha20-ietf-poly1305, password: ZDMyNmZi}
   - {name: All-@V2ray_Alpha-1, server: 13.74.65.20, port: 42492, type: ss, cipher: chacha20-ietf-poly1305, password: u7rbIkzBXeyBUyPCq4nyAN}
-  - {name: All-@V2ray_Alpha-2 2, server: 13.74.71.116, port: 25579, type: ss, cipher: chacha20-ietf-poly1305, password: 1EDLaUEHX0a0Uvyjzmwjh3}
-  - {name: All-@V2ray_Alpha-3 2, server: 51.120.10.54, port: 4567, type: ss, cipher: chacha20-ietf-poly1305, password: vP8snDatg097c19A3eYPjU}
-  - {name: All-@V2ray_Alpha-4 2, server: 45.87.175.192, port: 8080, type: ss, cipher: chacha20-ietf-poly1305, password: 1RWwXhwfAB5gAEozU4G2Pg}
+  - {name: All-@V2ray_Alpha-2, server: 13.74.71.116, port: 25579, type: ss, cipher: chacha20-ietf-poly1305, password: 1EDLaUEHX0a0Uvyjzmwjh3}
+  - {name: All-@V2ray_Alpha-3, server: 51.120.10.54, port: 4567, type: ss, cipher: chacha20-ietf-poly1305, password: vP8snDatg097c19A3eYPjU}
+  - {name: All-@V2ray_Alpha-4, server: 45.87.175.192, port: 8080, type: ss, cipher: chacha20-ietf-poly1305, password: 1RWwXhwfAB5gAEozU4G2Pg}
   - {name: All--@V2ray_Alpha-01, server: 23.166.88.198, port: 2375, type: ss, cipher: aes-256-gcm, password: faBAoD54k87UJG7}
   - {name: All--@V2ray_Alpha-02, server: 23.166.88.198, port: 4444, type: ss, cipher: aes-256-gcm, password: pKEW8JPByTVTLtM}
   - {name: All--@V2ray_Alpha-03, server: 23.166.88.198, port: 3306, type: ss, cipher: aes-256-gcm, password: Y6R9pAtvxxzmGC}
@@ -168,14 +186,3 @@
   - {name: All--@V2ray_Alpha-12, server: 185.213.20.227, port: 990, type: ss, cipher: chacha20-ietf-poly1305, password: f8f7aCzcPKbsF8p3}
   - {name: All-@V2ray_Alpha-01, server: 23.150.152.16, port: 443, type: ss, cipher: aes-256-gcm, password: pKEW8JPByTVTLtM}
   - {name: All-@V2ray_Alpha-01 2, server: 45.87.175.199, port: 8080, type: ss, cipher: chacha20-ietf-poly1305, password: 1RWwXhwfAB5gAEozU4G2Pg}
-  - {name: All-@V2ray_Alpha-01 3, server: series-a1.samanehha.co, port: 443, type: ss, cipher: chacha20-ietf-poly1305, password: W74XFALLLuw6m5IA}
-  - {name: All-@V2ray_Alpha-02, server: series-a2.samanehha.co, port: 443, type: ss, cipher: chacha20-ietf-poly1305, password: mps3FwmDjLrWaOVg}
-  - {name: All-@V2ray_Alpha-03, server: series-a2.varzesh360.co, port: 443, type: ss, cipher: chacha20-ietf-poly1305, password: mps3FwmDjLrWaOVg}
-  - {name: All-@V2ray_Alpha-04, server: series-a2-mec.varzesh360.co, port: 443, type: ss, cipher: chacha20-ietf-poly1305, password: u17T3BvpYaaiuW2c}
-  - {name: All-@V2ray_Alpha-05, server: freakconfig.drroyazare.ir, port: 443, type: ss, cipher: chacha20-ietf-poly1305, password: W74XFALLLuw6m5IA}
-  - {name: All-@V2ray_Alpha-06, server: 13.79.219.138, port: 53728, type: ss, cipher: chacha20-ietf-poly1305, password: MmhnlKiN5prj61LYI9H0YL}
-  - {name: All-@V2ray_Alpha-07, server: 45.87.175.157, port: 8080, type: ss, cipher: chacha20-ietf-poly1305, password: cvII85TrW6n0OGyfpHVS1u}
-  - {name: WiFi-@V2ray_Alpha-02 2, server: 23.157.40.113, port: 6679, type: ss, cipher: aes-256-gcm, password: TEzjfAYq2IjtuoS}
-  - {name: WiFi-@V2ray_Alpha-03 2, server: 176.124.199.255, port: 19999, type: ss, cipher: chacha20-ietf-poly1305, password: "%-MVa11&zp"}
-  - {name: WiFi-@V2ray_Alpha-04, server: 176.124.199.255, port: 30252, type: ss, cipher: chacha20-ietf-poly1305, password: Zgg@X0m515}
-  - {name: All-@V2ray_Alpha-1 2, server: 150.241.102.95, port: 21771, type: ss, cipher: chacha20-ietf-poly1305, password: 5mgZJzPv7hrLX4KMdPIeAW}
