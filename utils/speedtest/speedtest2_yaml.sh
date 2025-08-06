@@ -1,5 +1,5 @@
-# Download new Clash v1.18.0 from the backup repo
-wget https://github.com/Kuingsmile/clash-core/releases/download/v1.18.0/clash-linux-amd64-v1.18.0.gz
+# Download new Clash v1.18.0 from the backup repo with the correct tag
+wget https://github.com/Kuingsmile/clash-core/releases/download/1.18/clash-linux-amd64-v1.18.0.gz
 
 # Unzip it
 gunzip clash-linux-amd64-v1.18.0.gz

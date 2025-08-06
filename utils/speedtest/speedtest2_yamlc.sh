@@ -1,5 +1,5 @@
-# Download new Clash v1.18.0 from the backup repo
-wget https://github.com/Kuingsmile/clash-core/releases/download/v1.18.0/clash-linux-amd64-v1.18.0.gz
+# Download new Clash v1.18.0 from the backup repo with the correct tag
+wget https://github.com/Kuingsmile/clash-core/releases/download/1.18/clash-linux-amd64-v1.18.0.gz
 
 # Unzip it
 gunzip clash-linux-amd64-v1.18.0.gz
@@ -21,8 +21,8 @@ chmod +x ./clash && ./clash &
 
 # Install and configure proxychains
 sudo apt-get install proxychains
-sudo chmod 777 /etc/proxychains.conf
-mv -f proxychains.conf /etc/proxychains.conf
+# Using an absolute path is more robust
+sudo mv -f proxychains.conf /etc/proxychains.conf
 
 # Start Clash
 sudo pkill -f clash
