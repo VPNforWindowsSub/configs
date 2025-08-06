@@ -1,22 +1,16 @@
 # port of HTTP
 port: 7890
-
-# port of SOCKS5
 socks-port: 7891
-
 allow-lan: false
 mode: rule
 log-level: info
 external-controller: 127.0.0.1:9090
 
-# This section can be empty because we use providers
 proxies:
 
-# A single group that will contain proxies from ALL providers
 proxy-groups:
   - name: all
     type: load-balance
-    # The 'use' section now lists every provider defined below
     use:
       - local_merge
       - pool_ip1
@@ -24,86 +18,44 @@ proxy-groups:
       - pool_ip3
       - pool_crazy
       - pool_link
-      - pool_1999
     url: "http://www.gstatic.com/generate_204"
     interval: 300
 
-# Define one provider for each of your working sources
 proxy-providers:
-  # Provider 1: Your own locally generated list (most reliable)
   local_merge:
     type: file
     path: "./sub/sub_merge_yaml.yml"
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-
-  # Provider 2: The first IP-based pool
+    health-check: { enable: true, interval: 600, url: http://www.gstatic.com/generate_204 }
   pool_ip1:
     type: http
     url: "http://141.147.161.50:12580/clash/proxies"
     path: ./providers/pool_ip1.yml
-    optional: true # Makes this provider non-essential
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-
-  # Provider 3: The second IP-based pool
+    optional: true
+    health-check: { enable: true, interval: 600, url: http://www.gstatic.com/generate_204 }
   pool_ip2:
     type: http
     url: "http://155.248.172.106:12580/clash/proxies"
     path: ./providers/pool_ip2.yml
-    optional: true # Makes this provider non-essential
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-
-  # Provider 4: The third IP-based pool
+    optional: true
+    health-check: { enable: true, interval: 600, url: http://www.gstatic.com/generate_204 }
   pool_ip3:
     type: http
     url: "http://66.42.50.118:12580/clash/proxies"
     path: ./providers/pool_ip3.yml
-    optional: true # Makes this provider non-essential
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-
-  # Provider 5: crazygeeky.com
+    optional: true
+    health-check: { enable: true, interval: 600, url: http://www.gstatic.com/generate_204 }
   pool_crazy:
     type: http
     url: "https://proxy.crazygeeky.com/clash/proxies"
     path: ./providers/pool_crazy.yml
-    optional: true # Makes this provider non-essential
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-
-  # Provider 6: proxypool.link
+    optional: true
+    health-check: { enable: true, interval: 600, url: http://www.gstatic.com/generate_204 }
   pool_link:
     type: http
     url: "https://proxypool.link/clash/proxies"
     path: ./providers/pool_link.yml
-    optional: true # Makes this provider non-essential
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
-
-  # Provider 7: banyunxiaoxi.icu
-  pool_1999:
-    type: http
-    url: "https://proxypool1999.banyunxiaoxi.icu/clash/proxies"
-    path: ./providers/pool_1999.yml
-    optional: true # Makes this provider non-essential
-    health-check:
-      enable: true
-      interval: 600
-      url: http://www.gstatic.com/generate_204
+    optional: true
+    health-check: { enable: true, interval: 600, url: http://www.gstatic.com/generate_204 }
 
 rules:
   - DOMAIN-SUFFIX,githubusercontent.com,DIRECT
