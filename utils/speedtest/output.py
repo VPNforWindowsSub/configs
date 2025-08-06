@@ -62,9 +62,9 @@ def output_geo_balanced(all_nodes, total_proxies_in_final_file):
     final_proxies = []
     selected_node_links = set()
 
-    print("Selecting at least 5 nodes from every available country...")
+    print("Selecting at least 2 nodes from every available country...")
     for country, nodes in nodes_by_country.items():
-        nodes_to_take = min(5, len(nodes))
+        nodes_to_take = min(2, len(nodes))
         for i in range(nodes_to_take):
             node = nodes[i]
             if node['link'] not in selected_node_links:
