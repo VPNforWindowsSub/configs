@@ -1,6 +1,5 @@
 from sub_convert import sub_convert
 from subs_function import subs_function
-
 import json
 import re
 import os
@@ -448,19 +447,28 @@ class subs:
 
         corresponding_list = subs_function.fix_proxies_duplication(
             corresponding_proxies=corresponding_list)
+        
+        print(f"\nfinal sub length => {corresponding_list.__len__()}")
 
-        vless_count = 0
         for item in corresponding_list:
             proxy = item.get('c_clash', {})
             if isinstance(proxy, list):
                 proxy = proxy[0] if proxy else {}
-            if proxy.get('type') == 'vless':
-                vless_count += 1
-        print(f"-> [get_subs.py] VLESS nodes ready to be written: {vless_count}")
-        
-        print(f"\nfinal sub length => {corresponding_list.__len__()}")
+            
+            if (proxy.get('type') == 'vless' and 
+                'reality-opts' in proxy and 
+                'short-id' in proxy.get('reality-opts', {})):
+                
+                original_short_id = proxy['reality-opts']['short-id']
+                cleaned_short_id = str(original_short_id).strip()
+                
+                if cleaned_short_id:
+                    proxy['reality-opts']['short-id'] = cleaned_short_id
+                else:
+                    del proxy['reality-opts']['short-id']
 
         clash_proxies = [item['c_clash'][0] if isinstance(item['c_clash'], list) else item['c_clash'] for item in corresponding_list]
+
         final_clash_dict = {'proxies': clash_proxies}
 
         content_yaml = yaml.dump(final_clash_dict, default_flow_style=False, indent=2, sort_keys=False, allow_unicode=True)
