@@ -1,7 +1,7 @@
 # Clash
 wget -O clash-linux-amd64-v1.11.8.gz https://github.com/Dreamacro/clash/releases/download/v1.11.8/clash-linux-amd64-v1.11.8.gz
 gunzip clash-linux-amd64-v1.11.8.gz
-mv clash-linux-amd64-v* clash 
+mv clash-linux-amd64-v* clash # 
 
 wget -O lite-linux-amd64.gz https://github.com/xxf098/LiteSpeedTest/releases/download/v0.14.1/lite-linux-amd64-v0.14.1.gz
 gzip -d lite-linux-amd64.gz
