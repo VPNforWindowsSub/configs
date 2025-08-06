@@ -23,14 +23,10 @@ class subs_function:
             print(e)
             return "Err: failed to parse sub"
 
-    def is_line_valid(line, support_vless=False):
+    def is_line_valid(line):
         if (line.startswith("ssr://") or line.startswith("ss://")
-                or line.startswith("trojan://") or line.startswith("vmess://")):
-            return line
-
-        if(support_vless and line.startswith("vless://")):
-            return line
-
+                or line.startswith("trojan://") or line.startswith("vmess://") or line.startswith("vless://")):
+            return line 
         return ''
 
     def fix_proxies_name(corresponding_proxies: []):
