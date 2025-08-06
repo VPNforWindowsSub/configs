@@ -1,47 +1,34 @@
-echo "Fetching latest mihomo release URL..."
-MIHOMO_URL=$(curl -s "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest" | grep "browser_download_url.*mihomo-linux-amd64-v1-.*\.gz" | cut -d '"' -f 4 | head -n 1)
+# Download new Clash v1.18.0 from the backup repo
+wget https://github.com/Kuingsmile/clash-core/releases/download/v1.18.0/clash-linux-amd64-v1.18.0.gz
 
-if [ -z "$MIHOMO_URL" ]; then
-    echo "Failed to get mihomo download URL. Trying legacy name..."
-    MIHOMO_URL=$(curl -s "https://api.github.com/repos/MetaCubeX/mihomo/releases/latest" | grep "browser_download_url.*mihomo-linux-amd64-compatible.*\.gz" | cut -d '"' -f 4 | head -n 1)
-    if [ -z "$MIHOMO_URL" ]; then
-        echo "Failed to get mihomo download URL on fallback. Exiting."
-        exit 1
-    fi
-fi
+# Unzip it
+gunzip clash-linux-amd64-v1.18.0.gz
 
-echo "Downloading mihomo from: $MIHOMO_URL"
-wget -O clash.gz "$MIHOMO_URL"
-gunzip clash.gz
-mv mihomo clash
+# Rename the unzipped file to 'clash' for easy use
+mv clash-linux-amd64-v1.18.0 clash
 
-echo "Downloading latest LiteSpeedTest..."
-wget -O lite-linux-amd64.gz https://github.com/xxf098/LiteSpeedTest/releases/latest/download/lite-linux-amd64.gz
-gunzip lite-linux-amd64.gz
-LITE_BINARY_NAME=$(find . -name "lite-linux-amd64*")
-mv "$LITE_BINARY_NAME" lite-linux-amd64
+# Download the Lite Speed Tester
+wget -O lite-linux-amd64.gz https://github.com/xxf098/LiteSpeedTest/releases/download/v0.14.1/lite-linux-amd64-v0.14.1.gz
+gzip -d lite-linux-amd64.gz
 
-
-echo "Downloading configuration files..."
+# Download configs and proxychains setup
 wget -O clash_config.yml https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/utils/speedtest/clash_config_eu.yml
 wget -O proxychains.conf https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/utils/speedtest/proxychains.conf
 wget -O lite_config.json https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/utils/speedtest/lite_config_yaml.json
 
+# Initialize Clash
+chmod +x ./clash && ./clash &
 
-echo "Setting up ProxyChains..."
-sudo apt-get update
-sudo apt-get install -y proxychains
+# Install and configure proxychains
+sudo apt-get install proxychains
 sudo chmod 777 /etc/proxychains.conf
-sudo mv -f proxychains.conf /etc/proxychains.conf
+mv -f proxychains.conf /etc/proxychains.conf
 
-chmod +x ./clash
-chmod +x ./lite-linux-amd64
-
+# Start Clash
 sudo pkill -f clash
-
-echo "Starting Clash as gateway proxy..."
 ./clash -f clash_config.yml &
-sleep 5 
 
-echo "Running LiteSpeedTest through the proxy chain..."
+# Run LiteSpeedTest through the proxy chain
+sleep 5
+chmod +x ./lite-linux-amd64
 sudo nohup proxychains ./lite-linux-amd64 --config ./lite_config.json --test https://raw.githubusercontent.com/mahdibland/SSAggregator/master/sub/sub_merge_yaml.yml > speedtest.log 2>&1 &
