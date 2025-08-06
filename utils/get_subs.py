@@ -460,8 +460,10 @@ class subs:
         
         print(f"\nfinal sub length => {corresponding_list.__len__()}")
 
-        clash = list(map(lambda x: f"  - {x['c_clash']}", corresponding_list))
-        content_yaml = 'proxies:\n' + "\n".join(clash)
+        clash_proxies = [item['c_clash'][0] if isinstance(item['c_clash'], list) else item['c_clash'] for item in corresponding_list]
+        final_clash_dict = {'proxies': clash_proxies}
+
+        content_yaml = yaml.dump(final_clash_dict, default_flow_style=False, indent=2, sort_keys=False, allow_unicode=True)
 
         def content_write(file, output_type):
             file = open(file, 'w+', encoding='utf-8')
