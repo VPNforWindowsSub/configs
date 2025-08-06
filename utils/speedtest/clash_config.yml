@@ -4,33 +4,102 @@ port: 7890
 # port of SOCKS5
 socks-port: 7891
 
-# (HTTP and SOCKS5 in one port)
-# mixed-port: 7890
-
-# redir port for Linux and macOS
-# redir-port: 7892
-
 allow-lan: false
 mode: rule
 log-level: info
 external-controller: 127.0.0.1:9090
 
+# This section can be empty because we use providers
 proxies:
 
-#########################
+# A single group that will contain proxies from ALL providers
 proxy-groups:
   - name: all
     type: load-balance
+    # The 'use' section now lists every provider defined below
     use:
-      - all
-    url: 'http://www.gstatic.com/generate_204'
+      - local_merge
+      - pool_ip1
+      - pool_ip2
+      - pool_ip3
+      - pool_crazy
+      - pool_link
+      - pool_1999
+    url: "http://www.gstatic.com/generate_204"
     interval: 300
 
+# Define one provider for each of your working sources
 proxy-providers:
-  all:
+  # Provider 1: Your own locally generated list (most reliable)
+  local_merge:
+    type: file
+    path: "./sub/sub_merge_yaml.yml"
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  # Provider 2: The first IP-based pool
+  pool_ip1:
     type: http
-    url: "https://proxies.bihai.cf/clash/proxies?c=CN,HK,TW,US,CA,JP,SG,AU,CH,DE,GB,NL,FR,RU"
-    path: bihai/provider.yaml
+    url: "http://141.147.161.50:12580/clash/proxies"
+    path: ./providers/pool_ip1.yml
+    optional: true # Makes this provider non-essential
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  # Provider 3: The second IP-based pool
+  pool_ip2:
+    type: http
+    url: "http://155.248.172.106:12580/clash/proxies"
+    path: ./providers/pool_ip2.yml
+    optional: true # Makes this provider non-essential
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  # Provider 4: The third IP-based pool
+  pool_ip3:
+    type: http
+    url: "http://66.42.50.118:12580/clash/proxies"
+    path: ./providers/pool_ip3.yml
+    optional: true # Makes this provider non-essential
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  # Provider 5: crazygeeky.com
+  pool_crazy:
+    type: http
+    url: "https://proxy.crazygeeky.com/clash/proxies"
+    path: ./providers/pool_crazy.yml
+    optional: true # Makes this provider non-essential
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  # Provider 6: proxypool.link
+  pool_link:
+    type: http
+    url: "https://proxypool.link/clash/proxies"
+    path: ./providers/pool_link.yml
+    optional: true # Makes this provider non-essential
+    health-check:
+      enable: true
+      interval: 600
+      url: http://www.gstatic.com/generate_204
+
+  # Provider 7: banyunxiaoxi.icu
+  pool_1999:
+    type: http
+    url: "https://proxypool1999.banyunxiaoxi.icu/clash/proxies"
+    path: ./providers/pool_1999.yml
+    optional: true # Makes this provider non-essential
     health-check:
       enable: true
       interval: 600
@@ -40,4 +109,3 @@ rules:
   - DOMAIN-SUFFIX,githubusercontent.com,DIRECT
   - DOMAIN-SUFFIX,github.com,DIRECT
   - MATCH,all
-########################
