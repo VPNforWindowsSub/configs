@@ -17,45 +17,42 @@ jobs:
     name: Collect & SpeedTest & Filter
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3.7.0
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: "18.x"
-      - uses: bahmutov/npm-install@v1.10.9
+
+      - name: Install Node.js dependencies
+        uses: bahmutov/npm-install@v1
         with:
           working-directory: ./utils/localserver
-      - uses: actions/setup-python@v5.5.0
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
           cache: "pip"
-      # setup actions has built-in caching function
-      # - uses: actions/cache@v3
-      #   with:
-      #     path: ~/.cache/pip
-      #     key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-pip-
-      # - uses: actions/cache@v3
-      #   with:
-      #     path: ~/.cache/yarn
-      #     key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-      #     restore-keys: |
-      #       ${{ runner.os }}-node-
+
       - name: Set Timezone
         run: sudo timedatectl set-timezone 'Asia/Tehran'
+
       - name: Install Requirements
         run: |
           pip install -r ./utils/requirements.txt
 
       - name: Running Collector
         run: |
-          wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/download/v0.9.8/subconverter_linux64.tar.gz
+          wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -zxvf subconverter.tar.gz -C ./
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
           node ./utils/localserver/index.js &
           sleep 2
           python ./utils/list_merge.py
-      - name: Commit Changes
+
+      - name: Commit Collection Changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
@@ -64,18 +61,34 @@ jobs:
           git add ./utils/Country.mmdb
           git add README.md
           git checkout master
-          git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
-      - name: Push Changes
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
+          else
+            echo "No collection changes to commit."
+          fi
+
+      - name: Push Collection Changes
         uses: ad-m/github-push-action@master
         with:
           branch: master
 
+      - name: Fix Clash Config Paths with Absolute Path
+        run: |
+          echo "Current workspace is: ${{ github.workspace }}"
+          # The speedtest script below uses clash_config_eu.yml, so we patch it.
+          sed -i 's|path: "./sub/sub_merge_yaml.yml"|path: "${{ github.workspace }}/sub/sub_merge_yaml.yml"|' ./utils/speedtest/clash_config_eu.yml
+          echo "--- Patched clash_config_eu.yml ---"
+          cat ./utils/speedtest/clash_config_eu.yml
+          echo "---------------------------------"
+
       - name: Run Lite Speedtest
         run: |
           sleep 5
-          sudo sh ./utils/speedtest/speedtest2_yaml.sh
+          # Calling the robust script that downloads clash and uses proxychains
+          sudo sh ./utils/speedtest/speedtest2_yamlc.sh
           python ./utils/speedtest/output.py
-      - name: Commit changes
+
+      - name: Commit Speedtest changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
@@ -87,8 +100,13 @@ jobs:
           git add ./sub/sub_merge_base64.txt
           git add LogInfo.txt
           git add ./sub/splitted/*
-          git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Tested"
-      - name: Push Change
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Tested"
+          else
+            echo "No speedtest changes to commit."
+          fi
+
+      - name: Push Speedtest Change
         uses: ad-m/github-push-action@master
         with:
           branch: master
@@ -96,11 +114,12 @@ jobs:
       - name: Run Convertor & Formatter
         run: |
           sleep 5
-          wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/download/v0.9.8/subconverter_linux64.tar.gz
+          wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -zxvf subconverter.tar.gz -C ./
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
           python ./utils/eternity_convert.py
-      - name: Commit changes
+
+      - name: Commit Final changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
@@ -111,8 +130,13 @@ jobs:
           git add ./update/*
           git add LogInfo.txt
           git clean -f -d
-          git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Filtered"
-      - name: Push Change
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Filtered"
+          else
+            echo "No final changes to commit."
+          fi
+
+      - name: Push Final Change
         uses: ad-m/github-push-action@master
         with:
           branch: master
