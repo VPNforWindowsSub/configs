@@ -1,24 +1,18 @@
-# Download new Clash v1.18.0 from the backup repo with the correct tag
+# Download Clash
 wget https://github.com/Kuingsmile/clash-core/releases/download/1.18/clash-linux-amd64-v1.18.0.gz
-
-# Unzip it
 gunzip clash-linux-amd64-v1.18.0.gz
-
-# Rename the unzipped file to 'clash' for easy use
 mv clash-linux-amd64-v1.18.0 clash
 
 # Download the Lite Speed Tester
 wget -O lite-linux-amd64.gz https://github.com/xxf098/LiteSpeedTest/releases/download/v0.14.1/lite-linux-amd64-v0.14.1.gz
 gzip -d lite-linux-amd64.gz
 
-# Download configs
+# Download config (The line for clash_config.yml is REMOVED)
 wget -O lite_config.json https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/utils/speedtest/lite_config_yaml.json
-wget -O clash_config.yml https://raw.githubusercontent.com/mahdibland/ShadowsocksAggregator/master/utils/speedtest/clash_config_eu.yml
 
-# Initialize Clash
 chmod +x ./clash
-./clash -f clash_config.yml &
-sleep 5 # Wait for Clash to start
+./clash -f ./utils/speedtest/clash_config_eu.yml &
+sleep 5
 
 # Run LiteSpeedTest
 chmod +x ./lite-linux-amd64
