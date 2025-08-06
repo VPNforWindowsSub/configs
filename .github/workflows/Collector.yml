@@ -52,6 +52,13 @@ jobs:
           sleep 2
           python ./utils/list_merge.py
 
+      - name: Log VLESS Count Before Speed Test
+        run: |
+          echo "--- Verifying proxy file before speed test ---"
+          VLESS_COUNT=$(grep -c "type: vless" ./sub/sub_merge_yaml.yml || echo "0")
+          echo "-> [Collector.yml] VLESS nodes in sub_merge_yaml.yml: $VLESS_COUNT"
+          echo "--------------------------------------------"
+
       - name: Commit Collection Changes
         run: |
           git config --local user.email "actions@github.com"
@@ -96,6 +103,13 @@ jobs:
           # Calling the robust script that downloads Mihomo and uses proxychains
           sudo sh ./utils/speedtest/speedtest2_yamlc.sh
           python ./utils/speedtest/output.py
+
+      - name: Log VLESS Count After Speed Test
+        run: |
+          echo "--- Verifying final output after speed test ---"
+          VLESS_COUNT=$(grep -c "vless://" ./Eternity.txt || echo "0")
+          echo "-> [Collector.yml] VLESS nodes in final Eternity.txt: $VLESS_COUNT"
+          echo "-----------------------------------------------"
 
       - name: Commit Speedtest changes
         run: |
