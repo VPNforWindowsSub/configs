@@ -596,6 +596,57 @@ class sub_convert():
                             print(f'yaml_encode 解析 trojan 节点发生错误: {err}')
                             pass
 
+                    if 'vless://' in line:
+                        try:
+                            url_content = line.replace('vless://', '')
+                            part_list = re.split('#', url_content, maxsplit=1)
+                            yaml_url.setdefault('name', urllib.parse.unquote(part_list[1]))
+                            
+                            # Split UUID from the rest
+                            at_split = part_list[0].split('@')
+                            uuid = at_split[0]
+                            
+                            # Split server/port from query params
+                            query_split = at_split[1].split('?')
+                            server_info = query_split[0]
+                            query_params_str = query_split[1] if len(query_split) > 1 else ''
+                            
+                            # Server and port
+                            server_host_port = server_info.split(':')
+                            yaml_url.setdefault('server', server_host_port[0])
+                            yaml_url.setdefault('port', int(server_host_port[1]))
+
+                            yaml_url.setdefault('type', 'vless')
+                            yaml_url.setdefault('uuid', uuid)
+                            yaml_url.setdefault('udp', True)
+                            yaml_url.setdefault('skip-cert-verify', True)
+
+                            # Parse query parameters
+                            params = dict(urllib.parse.parse_qsl(query_params_str))
+
+                            if params.get('security') == 'tls':
+                                yaml_url.setdefault('tls', True)
+                                yaml_url.setdefault('sni', params.get('sni', server_host_port[0]))
+
+                            network = params.get('type', 'tcp')
+                            yaml_url.setdefault('network', network)
+
+                            if network == 'ws':
+                                ws_opts = {}
+                                ws_opts.setdefault('path', params.get('path', '/'))
+                                ws_opts.setdefault('headers', {'Host': params.get('host', server_host_port[0])})
+                                yaml_url.setdefault('ws-opts', ws_opts)
+                            
+                            if network == 'grpc':
+                                grpc_opts = {}
+                                grpc_opts.setdefault('grpc-service-name', params.get('serviceName', ''))
+                                yaml_url.setdefault('grpc-opts', grpc_opts)
+                            
+                            url_list.append(yaml_url)
+                        except Exception as err:
+                            print(f'yaml_encode 解析 vless 节点发生错误: {err}')
+                            pass
+                           
                 except Exception as e:
                     print(
                         f'failed to proccess yaml encoding the raw line: {line} & error: {e}')
@@ -702,6 +753,32 @@ class sub_convert():
                         trojan_proxy = str('\ntrojan://' + str(proxy['password']) + '@' + str(proxy['server']) + ':' + str(
                             proxy['port']) + trojan_go + '#' + str(urllib.parse.quote(proxy['name'])) + '\n')
                         protocol_url.append(trojan_proxy)
+
+                    elif proxy['type'] == 'vless':
+                        params = {}
+                        if proxy.get('network', 'tcp') != 'tcp':
+                            params['type'] = proxy['network']
+                        
+                        if proxy.get('tls'):
+                            params['security'] = 'tls'
+                            if 'sni' in proxy and proxy['sni']:
+                                params['sni'] = proxy['sni']
+                        
+                        if proxy.get('network') == 'ws':
+                            if 'ws-opts' in proxy and proxy['ws-opts']:
+                                if 'path' in proxy['ws-opts'] and proxy['ws-opts']['path']:
+                                    params['path'] = proxy['ws-opts']['path']
+                                if 'headers' in proxy['ws-opts'] and 'Host' in proxy['ws-opts']['headers'] and proxy['ws-opts']['headers']['Host']:
+                                    params['host'] = proxy['ws-opts']['headers']['Host']
+
+                        if proxy.get('network') == 'grpc':
+                            if 'grpc-opts' in proxy and proxy['grpc-opts'] and 'grpc-service-name' in proxy['grpc-opts'] and proxy['grpc-opts']['grpc-service-name']:
+                                params['serviceName'] = proxy['grpc-opts']['grpc-service-name']
+
+                        query_string = urllib.parse.urlencode(params)
+                        
+                        vless_proxy = str('\nvless://' + str(proxy['uuid']) + '@' + str(proxy['server']) + ':' + str(proxy['port']) + '?' + query_string + '#' + str(urllib.parse.quote(proxy['name'])) + '\n')
+                        protocol_url.append(vless_proxy)
 
                     # ssr 节点提取, 由 ssr_base64_decoded 中所有参数总体 base64 encode
                     elif proxy['type'] == 'ssr':
