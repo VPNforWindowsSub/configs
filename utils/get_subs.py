@@ -281,11 +281,12 @@ class subs:
 
         print(f"\nfinal sub length => {corresponding_list.__len__()}")
 
-        clash = list(map(lambda x: f"  - {x['c_clash']}", corresponding_list))
+        clash_proxies = [item['c_clash'][0] if isinstance(item['c_clash'], list) else item['c_clash'] for item in corresponding_list]
+        final_clash_dict = {'proxies': clash_proxies}
         mixed = list(map(lambda x: x["c_mixed"], corresponding_list))
         content_raw = "\n".join(mixed)
 
-        content_yaml = 'proxies:\n' + "\n".join(clash)
+        content_yaml = yaml.dump(final_clash_dict, default_flow_style=False, indent=2, sort_keys=False, allow_unicode=True)
         content_base64 = sub_convert.base64_encode(content_raw)
         content = content_raw
 
