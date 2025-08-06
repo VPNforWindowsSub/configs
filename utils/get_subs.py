@@ -449,6 +449,15 @@ class subs:
         corresponding_list = subs_function.fix_proxies_duplication(
             corresponding_proxies=corresponding_list)
 
+        vless_count = 0
+        for item in corresponding_list:
+            proxy = item.get('c_clash', {})
+            if isinstance(proxy, list):
+                proxy = proxy[0] if proxy else {}
+            if proxy.get('type') == 'vless':
+                vless_count += 1
+        print(f"-> [get_subs.py] VLESS nodes ready to be written: {vless_count}")
+        
         print(f"\nfinal sub length => {corresponding_list.__len__()}")
 
         clash = list(map(lambda x: f"  - {x['c_clash']}", corresponding_list))
