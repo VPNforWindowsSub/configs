@@ -4,6 +4,7 @@ import json
 import re
 import os
 import yaml
+import urllib.parse
 
 sub_list_json = './sub/sub_list.json'
 sub_merge_path = './sub/'
@@ -450,17 +451,25 @@ class subs:
         
         print(f"\nfinal sub length => {corresponding_list.__len__()}")
 
+        print("-> [get_subs.py] Applying comprehensive sanitization (tfo, alpn, short-id)...")
         for item in corresponding_list:
             proxy = item.get('c_clash', {})
             if isinstance(proxy, list):
                 proxy = proxy[0] if proxy else {}
-            
+
+            if 'tfo' in proxy:
+                del proxy['tfo']
+
+            if 'alpn' in proxy and isinstance(proxy['alpn'], list):
+                cleaned_alpn = [urllib.parse.unquote(v).strip() for v in proxy['alpn']]
+                proxy['alpn'] = cleaned_alpn
+
             if (proxy.get('type') == 'vless' and 
                 'reality-opts' in proxy and 
                 'short-id' in proxy.get('reality-opts', {})):
                 
-                original_short_id = proxy['reality-opts']['short-id']
-                cleaned_short_id = str(original_short_id).strip()
+                original_short_id = str(proxy['reality-opts']['short-id'])
+                cleaned_short_id = re.sub('[^0-9a-fA-F]', '', original_short_id)
                 
                 if cleaned_short_id:
                     proxy['reality-opts']['short-id'] = cleaned_short_id
