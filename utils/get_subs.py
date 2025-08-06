@@ -159,8 +159,8 @@ class subs:
 
                     content = subs_function.convert_sub(
                         each_url, 'mixed', "http://0.0.0.0:25500", False)
-                    content_clash = subs_function.convert_sub(
-                        each_url, 'clash', "http://0.0.0.0:25500", False)
+                    content_clash = subs_function.convert_sub_by_post(
+                        each_url, 'clash', "http://0.0.0.0:25500", False, extra_options="&udp=false")
 
                     if content == 'Err: No nodes found' or content == 'Err: failed to parse sub' or content_clash == 'Err: No nodes found' or content_clash == 'Err: failed to parse sub':
                         print("host convertor failed. just continue & ignore...")

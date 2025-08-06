@@ -8,6 +8,32 @@ import geoip2.database
 
 
 class subs_function:
+
+    def convert_sub_by_post(url: str, output: str, convertor_host="http://0.0.0.0:25500", show_url=False, extra_options=""):
+        try:
+            print(f"  - Downloading content from: {url}")
+            content = requests.get(url, timeout=60).text
+            if not content.strip():
+                print("  - Downloaded content is empty.")
+                return "Err: No nodes found"
+        except requests.exceptions.RequestException as e:
+            print(f"  - Failed to download subscription: {e}")
+            return "Err: failed to download sub"
+
+        try:
+            convert_url = f'{convertor_host}/sub?target={output}&insert=false&emoji=true&list=true&tfo=false&scv=false&fdn=false&sort=false{extra_options}'
+            headers = {'Content-Type': 'text/plain; charset=utf-8'}
+            
+            print("  - Posting content to local subconverter for processing...")
+            result = requests.post(convert_url, data=content.encode('utf-8'), headers=headers, timeout=240).text
+            
+            if result == "No nodes were found!":
+                return "Err: No nodes found"
+            return result
+        except Exception as e:
+            print(f"  - Failed to convert subscription content: {e}")
+            return "Err: failed to parse sub"
+
     def convert_sub(url: str, output: str, convertor_host="http://0.0.0.0:25500", show_url=False, extra_options=""):
         url = urllib.parse.quote(url, safe='')
         try:
