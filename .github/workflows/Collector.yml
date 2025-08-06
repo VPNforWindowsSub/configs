@@ -72,11 +72,20 @@ jobs:
         with:
           branch: master
 
-      - name: Fix Clash Config Paths with Absolute Path
+      - name: Prepare Safe Path for Mihomo Config
         run: |
-          echo "Current workspace is: ${{ github.workspace }}"
-          # The speedtest script below uses clash_config_eu.yml, so we patch it.
-          sed -i 's|path: "./sub/sub_merge_yaml.yml"|path: "${{ github.workspace }}/sub/sub_merge_yaml.yml"|' ./utils/speedtest/clash_config_eu.yml
+          # 1. Create the directory that Mihomo considers "safe"
+          echo "Creating Mihomo's safe configuration directory..."
+          mkdir -p /home/runner/.config/mihomo
+
+          # 2. Copy your generated proxy list into that safe directory
+          echo "Copying proxy list to the safe directory..."
+          cp ${{ github.workspace }}/sub/sub_merge_yaml.yml /home/runner/.config/mihomo/
+
+          # 3. Use sed to update the config file to point to the new, safe path
+          echo "Patching clash_config_eu.yml to use the safe path..."
+          sed -i 's|path: "./sub/sub_merge_yaml.yml"|path: "/home/runner/.config/mihomo/sub_merge_yaml.yml"|' ./utils/speedtest/clash_config_eu.yml
+          
           echo "--- Patched clash_config_eu.yml ---"
           cat ./utils/speedtest/clash_config_eu.yml
           echo "---------------------------------"
@@ -84,7 +93,7 @@ jobs:
       - name: Run Lite Speedtest
         run: |
           sleep 5
-          # Calling the robust script that downloads clash and uses proxychains
+          # Calling the robust script that downloads Mihomo and uses proxychains
           sudo sh ./utils/speedtest/speedtest2_yamlc.sh
           python ./utils/speedtest/output.py
 
