@@ -64,6 +64,7 @@ def output(list, num):
     # spliting different protocols
     os.makedirs(splitted_output, exist_ok=True)
     vmess_outputs = []
+    vless_outputs = []
     trojan_outputs = []
     ssr_outputs = []
     ss_outputs = []
@@ -71,6 +72,8 @@ def output(list, num):
     for output in output_list:
         if str(output).startswith("vmess://"):
             vmess_outputs.append(output)
+        if str(output).startswith("vless://"):
+            vless_outputs.append(output)
         if str(output).startswith("trojan://"):
             trojan_outputs.append(output)
         if str(output).startswith("ssr://"):
@@ -82,6 +85,12 @@ def output(list, num):
         vmess_content = "\n".join(vmess_outputs)
         f.write(vmess_content)
         print('Write vmess splitted Success!')
+        f.close()
+
+    with open(splitted_output.__add__("vless.txt"), 'w') as f:
+        vless_content = "\n".join(vless_outputs)
+        f.write(vless_content)
+        print('Write vless splitted Success!')
         f.close()
 
     with open(splitted_output.__add__("trojan.txt"), 'w') as f:
