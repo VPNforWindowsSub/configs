@@ -25,6 +25,10 @@ def output_geo_balanced(all_nodes, total_proxies_in_final_file):
     if not all_nodes:
         print("No nodes to process.")
         return
+ 
+    print(f"-> [output.py] Total nodes read from out.json: {len(all_nodes)}")
+    vless_nodes_in_json = [node for node in all_nodes if node.get("protocol", "").lower() == "vless"]
+    print(f"-> [output.py] VLESS nodes found in out.json: {len(vless_nodes_in_json)}")
 
     print("Sorting all nodes by speed...")
     all_nodes.sort(key=lambda x: x.get('avg_speed', 0), reverse=True)
