@@ -353,49 +353,15 @@ class subs:
                             safe_clash = []
                             for (index, cl) in enumerate(clash_content):
                                 try:
-                                    if re.search(ipv6, str(cl)) == None or re.search(ipv4, str(cl)) != None:
-                                        if re.search("path: /(.*?)\?(.*?)=(.*?)}", str(cl)) == None:
-                                            cl_res = yaml.safe_load(cl)
-                                            if cl_res:
-                                                cl_temp = cl_res[0]
-                                                if 'uuid' in cl_temp and cl_temp.get('uuid') and len(cl_temp['uuid']) != 36:
-                                                    bad_lines += 1
-                                                    continue
-                                                
-                                                proxy_type = cl_temp.get('type')
-
-                                                if proxy_type in ["ss", "ssr"]:
-                                                    if cl_temp.get("cipher") in valid_ss_cipher_methods:
-                                                        if proxy_type == "ss" and 'plugin' in cl_temp:
-                                                            if cl_temp.get('plugin') in valid_ss_plugins:
-                                                                if cl_temp.get('plugin') == 'obfs' and 'plugin-opts' in cl_temp:
-                                                                    if cl_temp['plugin-opts'].get('mode') in ['http', 'tls']:
-                                                                        safe_clash.append(cl_res)
-                                                                    else:
-                                                                        bad_lines += 1
-                                                                elif cl_temp.get('plugin') == 'v2ray-plugin' and 'plugin-opts' in cl_temp:
-                                                                    if cl_temp['plugin-opts'].get('mode') == 'websocket':
-                                                                        safe_clash.append(cl_res)
-                                                                    else:
-                                                                        bad_lines += 1
-                                                                else:
-                                                                    safe_clash.append(cl_res)
-                                                            else:
-                                                                bad_lines += 1
-                                                        else:
-                                                            safe_clash.append(cl_res)
-                                                    else:
-                                                        bad_lines += 1
-                                                
-                                                elif proxy_type == "vmess":
-                                                    if cl_temp.get("network") in ["h2", "grpc"] and not cl_temp.get("tls"):
-                                                        bad_lines += 1
-                                                    else:
-                                                        safe_clash.append(cl_res)
-
-                                                elif proxy_type in ["vless", "trojan"]:
-                                                    safe_clash.append(cl_res)
+                                    # Perform only a basic sanity check: is it valid YAML?
+                                    cl_res = yaml.safe_load(cl)
+                                    if cl_res and isinstance(cl_res, list) and cl_res[0].get('name') and cl_res[0].get('server'):
+                                        # If it parses and has a name and server, it's good enough for testing.
+                                        safe_clash.append(cl_res)
+                                    else:
+                                        bad_lines += 1
                                 except Exception as e:
+                                    # Catches malformed YAML
                                     bad_lines += 1
                             
                             if safe_clash.__len__() > 0:
