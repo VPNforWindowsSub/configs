@@ -27,6 +27,13 @@ class NoAliasDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
+def is_ip_address(address):
+    try:
+        parts = address.split('.')
+        return len(parts) == 4 and all(part.isdigit() and 0 <= int(part) <= 255 for part in parts)
+    except:
+        return False
+
 def substrings(string, left, right):
     try:
         value = string.replace('\n', '').replace(' ', '')
@@ -38,11 +45,9 @@ def substrings(string, left, right):
         return ""
 
 def eternity_convert(file, config, output, provider_file_enabled=True):
-    # Read the raw links of all successfully tested nodes from the local EternityBase file.
     with open(Eterniy_base_file, 'r', encoding='utf-8') as f:
         base_content = f.read()
 
-    # Convert the raw links into the Clash YAML format by POSTing them to the local subconverter.
     subconverter_url = "http://127.0.0.1:25500/sub?target=clash&udp=false"
     headers = {'Content-Type': 'text/plain; charset=utf-8'}
     try:
@@ -58,7 +63,6 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
         with open(log_file, 'r') as log_reader:
             log_lines = log_reader.readlines()
     except FileNotFoundError:
-        print(f"Log file not found at {log_file}")
         log_lines = []
 
     indexx = 0
@@ -92,6 +96,17 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
             line_parsed = yaml.safe_load(line)
             
             if line_parsed:
+                server = line_parsed.get('server', '')
+                if is_ip_address(server):
+                    if line_parsed.get('sni') == server:
+                        del line_parsed['sni']
+                    if 'ws-opts' in line_parsed and 'headers' in line_parsed.get('ws-opts', {}) and line_parsed['ws-opts']['headers'].get('Host') == server:
+                        del line_parsed['ws-opts']['headers']['Host']
+                        if not line_parsed['ws-opts']['headers']:
+                            del line_parsed['ws-opts']['headers']
+                
+                line_parsed['skip-cert-verify'] = True
+                
                 line_parsed['name'] = f"{line_parsed.get('name', '')} | {speed}"
                 
                 if "password" in line_parsed:
