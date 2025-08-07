@@ -12,6 +12,6 @@ sudo pkill -f clash
 ./clash -f ./utils/speedtest/clash_config_eu.yml &
 sleep 5
 
-echo "Running LiteSpeedTest with local config and local proxy list..."
+echo "Running LiteSpeedTest via Mihomo API..."
 chmod +x ./lite-linux-amd64
-sudo ./lite-linux-amd64 --config ./utils/speedtest/lite_config_yaml.json --test ./sub/sub_merge_yaml.yml 2>&1 | tee speedtest.log
+sudo ./lite-linux-amd64 --config ./utils/speedtest/lite_config_yaml.json 2>&1 | tee speedtest.log
