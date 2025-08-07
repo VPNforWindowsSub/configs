@@ -54,6 +54,24 @@ def reconstruct_link(node):
 
 
 def output_geo_balanced(raw_nodes, total_proxies_in_final_file):
+    # --- START: New code block to add ---
+    # Filter out nodes that failed the test (speed is 0 or key is missing)
+    successful_nodes = [node for node in raw_nodes if node.get("speed", 0) > 0 or node.get("delay", 0) > 0]
+
+    if not successful_nodes:
+        print("All node tests failed. No successful nodes to process. Exiting.")
+        # Create empty files to prevent the workflow from failing at later steps
+        open(Eternity_file_base64, 'w').close()
+        open(Eternity_file, 'w').close()
+        open(Eternity_Base, 'w').close()
+        open(sub_all_base64, 'w').close()
+        open(sub_all, 'w').close()
+        return
+    
+    # Replace raw_nodes with only the successful ones for further processing
+    raw_nodes = successful_nodes
+    # --- END: New code block to add ---
+
     if not raw_nodes:
         print("No nodes to process.")
         return
