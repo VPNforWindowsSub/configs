@@ -4,7 +4,7 @@
 from sub_convert import sub_convert
 from list_update import update_url
 from get_subs import subs
-import get_subs
+
 import json
 import re
 import os
@@ -344,9 +344,9 @@ class sub_merge():
                     proxies = ['    '+proxy for proxy in proxies]
                     proxies = [proxy+'\n' for proxy in proxies]
                 top_amount = len(proxies) - 1
-                
+
                 lines.insert(index+1, f'合并节点数量: `{top_amount}`\n')
-                
+
                 index += 5
                 for i in proxies:
                     index += 1
@@ -379,10 +379,21 @@ if __name__ == '__main__':
         'https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb')
 
     sub_list = sub_merge.read_list(sub_list_json)
-    
-    # --- START REPLACEMENT ---
-    # Call the new, simplified main function from get_subs.py
-    get_subs.main(sub_list)
-    # --- END REPLACEMENT ---
-    
+    sub_list_remote = sub_merge.read_list(sub_list_json, True)
+
+    # default method
+    # sub_merge.sub_merge(sub_list)
+    # sub_merge.readme_update(readme, sub_list)
+
+    # fixed convertor in default method
+    # subs.get_subs(sub_list)
+    # sub_merge.readme_update(readme, sub_list)
+
+    # using corresponding proxies method
+    # subs.get_subs_v2(sub_list)
+    # sub_merge.readme_update(readme, sub_list)
+
+    # eject sub converting using local method and using sub convertor instead (only yaml available there is no
+    # base64 or mixed type proxy in this method and other types will be handle using other workflows)
+    subs.get_subs_v3(list(filter(lambda x: x['id'] != 5, sub_list)))
     sub_merge.readme_update(readme, sub_list)
