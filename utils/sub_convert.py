@@ -743,23 +743,26 @@ class sub_convert():
                         network = proxy.get('network', 'tcp')
                         params['type'] = network
                         
-                        if proxy.get('tls', False):
-                            reality_opts = proxy.get('reality-opts', {})
-                            if reality_opts and reality_opts.get('public-key'):
-                                params['security'] = 'reality'
-                                params['sni'] = proxy.get('sni', '')
-                                params['fp'] = proxy.get('client-fingerprint', '')
-                                params['pbk'] = reality_opts.get('public-key')
-                                params['sid'] = reality_opts.get('short-id', '')
-                            else:
-                                params['security'] = 'tls'
-                                params['sni'] = proxy.get('sni', proxy.get('server'))
-                                params['fp'] = proxy.get('client-fingerprint', '')
+                        # Check if the server is a raw IP address
+                        server_is_ip = bool(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", proxy.get('server', '')))
 
+                        if proxy.get('tls', False):
+                            params['security'] = 'tls'
+                            # ONLY add SNI if the server is NOT an IP address
+                            if not server_is_ip:
+                                params['sni'] = proxy.get('sni', proxy.get('server'))
+                            # Add allowInsecure for IP-based servers to replicate original behavior
+                            else:
+                                params['allowInsecure'] = '1'
+                            
+                            params['fp'] = proxy.get('client-fingerprint', '')
+                        
                         if network == 'ws':
                             ws_opts = proxy.get('ws-opts', {})
                             params['path'] = ws_opts.get('path', '/')
-                            params['host'] = ws_opts.get('headers', {}).get('Host', proxy.get('server'))
+                            # ONLY add Host header if the server is NOT an IP address
+                            if not server_is_ip:
+                                params['host'] = ws_opts.get('headers', {}).get('Host', proxy.get('server'))
                         elif network == 'grpc':
                             grpc_opts = proxy.get('grpc-opts', {})
                             params['serviceName'] = grpc_opts.get('grpc-service-name', '')

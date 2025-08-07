@@ -10,7 +10,7 @@ from subs_function import subs_function
 from list_merge import sub_merge
 
 Eterniy_base_file = './EternityBase'
-Eterniy_file = './Eternity' # This is now only used for the backup function
+Eterniy_file = './Eternity'
 Eternity_yml_file = './Eternity.yml'
 readme = './README.md'
 log_file = './LogInfo.txt'
@@ -37,11 +37,9 @@ def substrings(string, left, right):
         return ""
 
 def eternity_convert(config_path, output_path):
-    # Read the raw links of all successfully tested nodes from the local EternityBase file.
     with open(Eterniy_base_file, 'r', encoding='utf-8') as f:
         base_content = f.read()
 
-    # Convert the raw links into the Clash YAML format by POSTing them to the local subconverter.
     subconverter_url = "http://127.0.0.1:25500/sub?target=clash&udp=false"
     headers = {'Content-Type': 'text/plain; charset=utf-8'}
     try:
@@ -52,7 +50,6 @@ def eternity_convert(config_path, output_path):
         print(f"Error contacting subconverter: {e}")
         return
 
-    # Load the generated YAML into a Python object
     try:
         provider_data = yaml.safe_load(all_provider_yaml)
         if not provider_data or 'proxies' not in provider_data:
@@ -63,24 +60,20 @@ def eternity_convert(config_path, output_path):
         print(f"Error parsing YAML from subconverter: {e}")
         return
 
-    # Load the speed test log file
     try:
         with open(log_file, 'r') as log_reader:
             log_lines = log_reader.readlines()
     except FileNotFoundError:
         log_lines = []
 
-    # Combine proxy data with speed test results
     for i, proxy in enumerate(proxies_list):
         if i < len(log_lines):
             speed = substrings(log_lines[i], "avg_speed:", "|")
             proxy['name'] = f"{proxy.get('name', '')} | {speed}"
 
-    # Load the main clash config template
     with open(config_path, 'r', encoding='utf-8') as config_f:
         config = yaml.safe_load(config_f.read())
 
-    # Create the list of proxy names for the proxy groups
     all_name = [p['name'] for p in proxies_list]
 
     proxy_groups = config.get('proxy-groups', [])
@@ -98,11 +91,9 @@ def eternity_convert(config_path, output_path):
             elif "Tier 4" in rule['name']:
                 rule['proxies'] = all_name[part_size*3:full_size]
 
-    # Build the final configuration dictionary
     config['proxies'] = proxies_list
     config['proxy-groups'] = proxy_groups
 
-    # Write the final, complete Eternity.yml file
     config_yaml = yaml.dump(config, default_flow_style=False, sort_keys=False,
                               allow_unicode=True, width=750, indent=2, Dumper=NoAliasDumper)
 
@@ -131,7 +122,6 @@ def backup(file):
 if __name__ == '__main__':
     sub_merge.geoip_update(
         'https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb')
-    # The script now only generates the YML file. It does not touch Eternity or Eternity.txt
     eternity_convert(config_file, Eternity_yml_file)
-    backup(Eterniy_file) # This will now back up the correct file created by output.py
+    backup(Eterniy_file)
     sub_merge.readme_update(readme, sub_merge.read_list(sub_list_json))
