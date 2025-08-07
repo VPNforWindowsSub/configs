@@ -1,8 +1,10 @@
 {
-  "speedtestMode": "pingonly",
-  "pingMethod": "tcp",
-  "sortMethod": "ping",
+  "speedtestMode": "all",
+  "pingMethod": "http",
+  "sortMethod": "speed",
   "concurrency": 40,
-  "timeout": 5,
-  "downloadUrl": "http://cachefly.cachefly.net/100mb.test"
+  "timeout": 8,
+  "pingUrl": "http://clients3.google.com/generate_204",
+  "downloadUrl": "http://cachefly.cachefly.net/100mb.test",
+  "downloadRetries": 1
 }
