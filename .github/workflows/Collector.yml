@@ -79,13 +79,15 @@ jobs:
         with:
           branch: master
 
-      - name: Prepare Clean Test Config with Absolute Path
+      - name: Prepare Safe Path for Test Config
         run: |
-          echo "Patching clash_test_config.yml to use absolute path..."
-          sed -i 's|PLACEHOLDER_FOR_PROXY_PATH|${{ github.workspace }}/sub/sub_merge_yaml.yml|' ./utils/speedtest/clash_test_config.yml
-          echo "--- Patched clash_test_config.yml ---"
-          cat ./utils/speedtest/clash_test_config.yml
-          echo "-----------------------------------"
+          echo "Creating Mihomo's safe configuration directory..."
+          mkdir -p /home/runner/.config/mihomo
+
+          echo "Copying proxy list to the safe directory..."
+          cp ${{ github.workspace }}/sub/sub_merge_yaml.yml /home/runner/.config/mihomo/
+          
+          echo "File copied. Mihomo will now be able to find it at the specified safe path."
 
       - name: Run Lite Speedtest
         run: |
