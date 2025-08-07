@@ -47,9 +47,26 @@ jobs:
         run: |
           wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -zxvf subconverter.tar.gz -C ./
+          
+          echo "Starting subconverter in the background..."
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
+          
+          echo "Waiting for subconverter to become ready..."
+          timeout=30
+          while ! curl -s -o /dev/null http://127.0.0.1:25500; do
+            sleep 1
+            timeout=$((timeout-1))
+            if [ $timeout -le 0 ]; then
+              echo "Error: subconverter failed to start within 30 seconds."
+              echo "--- Subconverter Log ---"
+              cat ./subconverter.log
+              exit 1
+            fi
+          done
+          echo "Subconverter is running."
+
           node ./utils/localserver/index.js &
-          sleep 2
+          sleep 2 # A small sleep for the node server is still fine
           python ./utils/list_merge.py
 
       - name: Log VLESS Count Before Speed Test
