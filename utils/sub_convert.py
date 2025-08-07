@@ -596,6 +596,57 @@ class sub_convert():
                             print(f'yaml_encode 解析 trojan 节点发生错误: {err}')
                             pass
 
+                    if 'vless://' in line:
+                        try:
+                            url_content = line.replace('vless://', '')
+                            part_list = re.split('#', url_content, maxsplit=1)
+                            yaml_url.setdefault('name', urllib.parse.unquote(part_list[1]))
+                            
+                            # Split UUID from the rest
+                            at_split = part_list[0].split('@')
+                            uuid = at_split[0]
+                            
+                            # Split server/port from query params
+                            query_split = at_split[1].split('?')
+                            server_info = query_split[0]
+                            query_params_str = query_split[1] if len(query_split) > 1 else ''
+                            
+                            # Server and port
+                            server_host_port = server_info.split(':')
+                            yaml_url.setdefault('server', server_host_port[0])
+                            yaml_url.setdefault('port', int(server_host_port[1]))
+
+                            yaml_url.setdefault('type', 'vless')
+                            yaml_url.setdefault('uuid', uuid)
+                            yaml_url.setdefault('udp', True)
+                            yaml_url.setdefault('skip-cert-verify', True)
+
+                            # Parse query parameters
+                            params = dict(urllib.parse.parse_qsl(query_params_str))
+
+                            if params.get('security') == 'tls':
+                                yaml_url.setdefault('tls', True)
+                                yaml_url.setdefault('sni', params.get('sni', server_host_port[0]))
+
+                            network = params.get('type', 'tcp')
+                            yaml_url.setdefault('network', network)
+
+                            if network == 'ws':
+                                ws_opts = {}
+                                ws_opts.setdefault('path', params.get('path', '/'))
+                                ws_opts.setdefault('headers', {'Host': params.get('host', server_host_port[0])})
+                                yaml_url.setdefault('ws-opts', ws_opts)
+                            
+                            if network == 'grpc':
+                                grpc_opts = {}
+                                grpc_opts.setdefault('grpc-service-name', params.get('serviceName', ''))
+                                yaml_url.setdefault('grpc-opts', grpc_opts)
+                            
+                            url_list.append(yaml_url)
+                        except Exception as err:
+                            print(f'yaml_encode 解析 vless 节点发生错误: {err}')
+                            pass
+                           
                 except Exception as e:
                     print(
                         f'failed to proccess yaml encoding the raw line: {line} & error: {e}')
@@ -627,140 +678,127 @@ class sub_convert():
                 sub_content = sub_convert.format(url_content)
 
             print("Formatting Completed!")
-            proxies_list = sub_content['proxies']
+            proxies_list = sub_content.get('proxies', [])
 
             protocol_url = []
             # 不同节点订阅链接内容 https://github.com/hoochanlon/fq-book/blob/master/docs/append/srvurl.md
-            for index in range(len(proxies_list)):
+            for index, proxy in enumerate(proxies_list):
                 try:
-                    proxy = proxies_list[index]
+                    proxy_type = proxy.get('type')
 
-                    # Vmess 节点提取, 由 Vmess 所有参数 dump JSON 后 base64 encode 得来。
-                    if proxy['type'] == 'vmess':
-
-                        yaml_default_config = {
-                            'name': 'Vmess Node', 'server': '0.0.0.0', 'port': 0, 'uuid': '', 'alterId': 0,
-                            'cipher': 'auto', 'network': 'ws',
-                            'ws-opts': {'path': '', 'headers': {'Host': ''}},
-                            'tls': '', 'sni': ''
-                        }
-                        #
-                        yaml_default_config.update(proxy)
-                        proxy_config = yaml_default_config
-
+                    # Vmess 节点提取
+                    if proxy_type == 'vmess':
                         vmess_value = {
-                            'v': 2, 'ps': proxy_config['name'], 'add': proxy_config['server'],
-                            'port': proxy_config['port'], 'id': proxy_config['uuid'], 'aid': proxy_config['alterId'],
-                            'scy': proxy_config['cipher'], 'net': proxy_config['network'], 'type': None, 'sni': proxy_config['sni']
+                            'v': '2',
+                            'ps': proxy.get('name', 'Vmess Node'),
+                            'add': proxy.get('server'),
+                            'port': proxy.get('port'),
+                            'id': proxy.get('uuid'),
+                            'aid': proxy.get('alterId', 0),
+                            'scy': proxy.get('cipher', 'auto'),
+                            'net': proxy.get('network', 'tcp'),
+                            'type': 'none'
                         }
+                        if proxy.get('tls', False):
+                            vmess_value['tls'] = 'tls'
+                            vmess_value['sni'] = proxy.get('sni', proxy.get('server'))
 
-                        if 'tls' in proxy:
-                            if proxy['tls'] == 'true' or proxy['tls'] == True:
-                                vmess_value['tls'] = 'tls'
-                            # else:
-                            #     vmess_value['tls'] = ''
-
-                        if 'ws-opts' in proxy:
-                            if proxy['ws-opts'] != None and proxy['ws-opts'] != {} and proxy['ws-opts'] != '':
-
-                                if 'headers' in proxy_config['ws-opts']:
-                                    if proxy_config['ws-opts']['headers']['Host'] != '':
-                                        vmess_value['host'] = proxy_config['ws-opts']['headers']['Host']
-
-                                if 'path' in proxy_config['ws-opts']:
-                                    if proxy_config['ws-opts']['path'] != '':
-                                        vmess_value['path'] = proxy_config['ws-opts']['path']
-
-                        vmess_raw_proxy = json.dumps(
-                            vmess_value, sort_keys=False, indent=2, ensure_ascii=False)
-                        vmess_proxy = str(
-                            '\nvmess://' + sub_convert.base64_encode(vmess_raw_proxy) + '\n')
+                        if proxy.get('network') == 'ws':
+                            ws_opts = proxy.get('ws-opts', {})
+                            vmess_value['path'] = ws_opts.get('path', '/')
+                            vmess_value['host'] = ws_opts.get('headers', {}).get('Host', proxy.get('server'))
+                        
+                        vmess_value = {k: v for k, v in vmess_value.items() if v is not None}
+                        vmess_raw_proxy = json.dumps(vmess_value, sort_keys=False, ensure_ascii=False)
+                        vmess_proxy = 'vmess://' + sub_convert.base64_encode(vmess_raw_proxy)
                         protocol_url.append(vmess_proxy)
 
-                    # SS 节点提取, 由 ss_base64_decoded 部分(参数: 'cipher', 'password', 'server', 'port') Base64 编码后 加 # 加注释(URL_encode)
-                    elif proxy['type'] == 'ss':
-                        ss_base64_decoded = str(proxy['cipher']) + ':' + str(
-                            proxy['password']) + '@' + str(proxy['server']) + ':' + str(proxy['port'])
-                        ss_base64 = sub_convert.base64_encode(
-                            ss_base64_decoded)
-                        ss_proxy = str('\nss://' + ss_base64 + '#' +
-                                       str(urllib.parse.quote(proxy['name'])) + '\n')
+                    # SS 节点提取
+                    elif proxy_type == 'ss':
+                        ss_base64_decoded = f"{proxy['cipher']}:{proxy['password']}@{proxy['server']}:{proxy['port']}"
+                        ss_base64 = sub_convert.base64_encode(ss_base64_decoded)
+                        ss_proxy = f"ss://{ss_base64}#{urllib.parse.quote(proxy['name'])}"
                         protocol_url.append(ss_proxy)
 
-                    # Trojan 节点提取, 由 trojan_proxy 中参数再加上 # 加注释(URL_encode) # trojan Go https://p4gefau1t.github.io/trojan-go/developer/url/
-                    elif proxy['type'] == 'trojan':
-                        if 'tls' in proxy.keys() and 'network' in proxy.keys():
-                            if proxy['tls'] == True and proxy['network'] != 'tcp':
-                                network_type = proxy['network']
-                                trojan_go = f'?security=tls&type={network_type}&headerType=none'
-                            elif proxy['tls'] == False and proxy['network'] != 'tcp':
-                                trojan_go = f'??allowInsecure=0&type={network_type}&headerType=none'
-                        else:
-                            trojan_go = '?allowInsecure=1'
-                        if 'sni' in proxy.keys():
-                            trojan_go = trojan_go+'&sni='+proxy['sni']
-                        trojan_proxy = str('\ntrojan://' + str(proxy['password']) + '@' + str(proxy['server']) + ':' + str(
-                            proxy['port']) + trojan_go + '#' + str(urllib.parse.quote(proxy['name'])) + '\n')
+                    # Trojan 节点提取
+                    elif proxy_type == 'trojan':
+                        params = {
+                            'sni': proxy.get('sni', proxy.get('server'))
+                        }
+                        if proxy.get('skip-cert-verify', False):
+                            params['allowInsecure'] = '1'
+                        if proxy.get('network') == 'ws':
+                            params['type'] = 'ws'
+                            ws_opts = proxy.get('ws-opts', {})
+                            params['path'] = ws_opts.get('path', '/')
+                            params['host'] = ws_opts.get('headers', {}).get('Host', proxy.get('server'))
+                        
+                        query_string = urllib.parse.urlencode({k: v for k, v in params.items() if v})
+                        trojan_proxy = f"trojan://{proxy['password']}@{proxy['server']}:{proxy['port']}?{query_string}#{urllib.parse.quote(proxy['name'])}"
                         protocol_url.append(trojan_proxy)
 
-                    # ssr 节点提取, 由 ssr_base64_decoded 中所有参数总体 base64 encode
-                    elif proxy['type'] == 'ssr':
-                        ssr_default_config = {}
-                        remarks = sub_convert.base64_encode(
-                            proxy['name']).replace('+', '-')
-                        server = proxy['server']
-                        port = str(proxy['port'])
-                        password = sub_convert.base64_encode(proxy['password'])
-                        cipher = proxy['cipher']
-                        protocol = proxy['protocol']
-                        obfs = proxy['obfs']
-                        param_dic = {'group': 'U1NSUHJvdmlkZXI',
-                                     'obfsparam': '', 'protoparam': ''}
-                        for key in param_dic.keys():
-                            try:
-                                param_dic.update(
-                                    {key: sub_convert.base64_encode(proxy[key])})
-                            except Exception:
-                                pass
-                        group, obfsparam, protoparam = param_dic[
-                            'group'], param_dic['obfsparam'], param_dic['protoparam']
-                        """
-                        for key in {'group', 'obfsparam', 'protoparam'}:
-                            if key in proxy:
-                                if key == 'group':
-                                    group = sub_convert.base64_encode(proxy[key])
-                                elif key == 'obfsparam':
-                                    obfsparam = sub_convert.base64_encode(proxy[key])
-                                elif key == 'protoparam':
-                                    protoparam = sub_convert.base64_encode(proxy[key])
-                            else:
-                                if key == 'group':
-                                    group = 'U1NSUHJvdmlkZXI'
-                                elif key == 'obfsparam':
-                                    obfsparam = ''
-                                elif key == 'protoparam':
-                                    protoparam = ''
-                        """
+                    # VLESS 节点提取 (Corrected and Enhanced with REALITY support)
+                    elif proxy_type == 'vless':
+                        params = {}
+                        network = proxy.get('network', 'tcp')
+                        params['type'] = network
+                        
+                        # Check if the server is a raw IP address
+                        server_is_ip = bool(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", proxy.get('server', '')))
 
-                        ssr_proxy = '\nssr://'+sub_convert.base64_encode(server+':'+port+':'+protocol+':'+cipher+':'+obfs+':' +
-                                                                         password+'/?group='+group+'&remarks='+remarks+'&obfsparam='+obfsparam+'&protoparam='+protoparam+'\n')
+                        if proxy.get('tls', False):
+                            params['security'] = 'tls'
+                            # ONLY add SNI if the server is NOT an IP address
+                            if not server_is_ip:
+                                params['sni'] = proxy.get('sni', proxy.get('server'))
+                            # Add allowInsecure for IP-based servers to replicate original behavior
+                            else:
+                                params['allowInsecure'] = '1'
+                            
+                            params['fp'] = proxy.get('client-fingerprint', '')
+                        
+                        if network == 'ws':
+                            ws_opts = proxy.get('ws-opts', {})
+                            params['path'] = ws_opts.get('path', '/')
+                            # ONLY add Host header if the server is NOT an IP address
+                            if not server_is_ip:
+                                params['host'] = ws_opts.get('headers', {}).get('Host', proxy.get('server'))
+                        elif network == 'grpc':
+                            grpc_opts = proxy.get('grpc-opts', {})
+                            params['serviceName'] = grpc_opts.get('grpc-service-name', '')
+                            params['mode'] = grpc_opts.get('grpc-mode', 'gun')
+
+                        query_string = urllib.parse.urlencode({k: v for k, v in params.items() if v})
+                        vless_proxy = f"vless://{proxy['uuid']}@{proxy['server']}:{proxy['port']}?{query_string}#{urllib.parse.quote(proxy['name'])}"
+                        protocol_url.append(vless_proxy)
+
+                    # SSR 节点提取
+                    elif proxy_type == 'ssr':
+                        remarks = sub_convert.base64_encode(proxy['name']).replace('+', '-')
+                        server = proxy['server']
+                        port = str(proxy.get('port'))
+                        password = sub_convert.base64_encode(proxy.get('password', ''))
+                        cipher = proxy.get('cipher')
+                        protocol = proxy.get('protocol')
+                        obfs = proxy.get('obfs')
+                        
+                        obfsparam = sub_convert.base64_encode(proxy.get('obfsparam', ''))
+                        protoparam = sub_convert.base64_encode(proxy.get('protoparam', ''))
+                        group = sub_convert.base64_encode(proxy.get('group', ''))
+                        
+                        ssr_params = f"/?obfsparam={obfsparam}&protoparam={protoparam}&remarks={remarks}&group={group}"
+                        main_part = f"{server}:{port}:{protocol}:{cipher}:{obfs}:{password}"
+                        ssr_proxy = 'ssr://' + sub_convert.base64_encode(main_part + ssr_params)
                         protocol_url.append(ssr_proxy)
 
                 except Exception as e:
-                    print(f'yaml decode Error in coverting servers {e} 错误')
+                    print(f"yaml_decode: Error converting server #{index}: {e} | Proxy data: {proxy}")
 
-            yaml_content = ''.join(protocol_url)
-
-            # note added here
-            yaml_content = list(
-                filter(lambda x: x != '', yaml_content.split("\n")))
-            yaml_content = "\n".join(yaml_content)
-
-            return yaml_content
+            return "\n".join(protocol_url)
         except Exception as err:
-            print(f'yaml decode 发生 {err} 错误')
+            print(f'yaml_decode has encountered a critical error: {err}')
             return '订阅内容解析错误'
-
+        
     def base64_decode(url_content):  # Base64 转换为 URL 链接内容
         if '-' in url_content:
             url_content = url_content.replace('-', '+')
