@@ -19,7 +19,7 @@ def read_json(file):
         time.sleep(30)
     with open(file, 'r', encoding='utf-8') as f:
         print('Reading out.json')
-        return json.load(f).get("nodes", [])
+        return json.load(f)
 
 def output_geo_balanced(all_nodes, total_proxies_in_final_file):
     if not all_nodes:

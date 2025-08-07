@@ -1,5 +1,5 @@
 # Clean up any previous binaries
-rm -f mihomo.gz clash lite-linux-amd64.gz lite-linux-amd64
+rm -f mihomo.gz clash lite-linux-amd64.gz lite-linux-amd64 singtools_linux32.tar.gz singtools
 
 echo "Downloading SingTools binary..."
 wget -O singtools_linux32.tar.gz https://github.com/Kdwkakcs/singtools/releases/download/vv0.2.0/singtools_linux32.tar.gz
@@ -9,7 +9,6 @@ tar -zxvf singtools_linux32.tar.gz
 chmod +x ./singtools
 
 echo "Running SingTools speed test..."
-# The -i flag specifies the input file with the proxy nodes.
-# sub_merge_yaml.yml is the file containing the collected proxies in a format SingTools can likely parse.
-# The default output is out.json, which is what the subsequent output.py script expects.
-./singtools test -i ./sub/sub_merge_yaml.yml -c ./utils/speedtest/singtools_config.json 2>&1 | tee speedtest.log
+# We use sub_merge_base64.txt as input, which is a standard format.
+# The -m flag saves the detailed metadata (including speeds) to out.json, which is what the next script needs.
+./singtools test -i ./sub/sub_merge_base64.txt -c ./utils/speedtest/singtools_config.json -m out.json 2>&1 | tee speedtest.log
