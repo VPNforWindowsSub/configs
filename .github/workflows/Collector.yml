@@ -139,9 +139,26 @@ jobs:
           sleep 5
           wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -zxvf subconverter.tar.gz -C ./
+          
+          echo "Starting subconverter in the background..."
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
-          sleep 2
+          
+          echo "Waiting for subconverter to become ready..."
+          timeout=30
+          while ! curl -s -f -o /dev/null http://127.0.0.1:25500; do
+            sleep 1
+            timeout=$((timeout-1))
+            if [ $timeout -le 0 ]; then
+              echo "Error: subconverter failed to start within 30 seconds."
+              echo "--- Subconverter Log ---"
+              cat ./subconverter.log
+              exit 1
+            fi
+          done
+          
+          echo "Subconverter is running. Proceeding with Python script."
           python ./utils/eternity_convert.py
+
 
       - name: Commit Final changes
         run: |
