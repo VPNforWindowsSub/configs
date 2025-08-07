@@ -42,10 +42,11 @@ def substrings(string, left, right):
 
 
 def eternity_convert(file, config, output, provider_file_enabled=True):
-    # # no conversion from base64 so udp is not a problem
-    # subconvertor not working with only proxy url
-    all_provider = subs_function.convert_sub(
-        "https://raw.githubusercontent.com/mahdibland/SSAggregator/master/sub/sub_merge_base64.txt", 'clash', "http://0.0.0.0:25500", False, extra_options="&udp=false")
+    with open(Eterniy_base_file, 'r', encoding='utf-8') as f:
+        base_content = f.read()
+
+    all_provider = subs_function.convert_sub_by_post(
+        base_content, 'clash', "http://0.0.0.0:25500", False, extra_options="&udp=false")
 
     ##########   Add Name to Logs Before making chaages to Proxies  ############
     temp_providers = all_provider.split('\n')
