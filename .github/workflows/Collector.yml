@@ -79,28 +79,17 @@ jobs:
         with:
           branch: master
 
-      - name: Prepare Safe Path for Mihomo Config
+      - name: Prepare Clean Test Config with Absolute Path
         run: |
-          # 1. Create the directory that Mihomo considers "safe"
-          echo "Creating Mihomo's safe configuration directory..."
-          mkdir -p /home/runner/.config/mihomo
-
-          # 2. Copy your generated proxy list into that safe directory
-          echo "Copying proxy list to the safe directory..."
-          cp ${{ github.workspace }}/sub/sub_merge_yaml.yml /home/runner/.config/mihomo/
-
-          # 3. Use sed to update the config file to point to the new, safe path
-          echo "Patching clash_config_eu.yml to use the safe path..."
-          sed -i 's|path: "./sub/sub_merge_yaml.yml"|path: "/home/runner/.config/mihomo/sub_merge_yaml.yml"|' ./utils/speedtest/clash_config_eu.yml
-          
-          echo "--- Patched clash_config_eu.yml ---"
-          cat ./utils/speedtest/clash_config_eu.yml
-          echo "---------------------------------"
+          echo "Patching clash_test_config.yml to use absolute path..."
+          sed -i 's|PLACEHOLDER_FOR_PROXY_PATH|${{ github.workspace }}/sub/sub_merge_yaml.yml|' ./utils/speedtest/clash_test_config.yml
+          echo "--- Patched clash_test_config.yml ---"
+          cat ./utils/speedtest/clash_test_config.yml
+          echo "-----------------------------------"
 
       - name: Run Lite Speedtest
         run: |
-          sleep 5
-          # Calling the robust script that downloads Mihomo and uses proxychains
+          # This script will now use the patched, clean config file
           sudo sh ./utils/speedtest/speedtest2_yamlc.sh
           python ./utils/speedtest/output.py
 
@@ -158,7 +147,6 @@ jobs:
           
           echo "Subconverter is running. Proceeding with Python script."
           python ./utils/eternity_convert.py
-
 
       - name: Commit Final changes
         run: |
