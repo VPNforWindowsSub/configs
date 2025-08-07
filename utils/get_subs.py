@@ -480,13 +480,13 @@ class subs:
         final_clash_dict = {'proxies': clash_proxies}
 
         content_yaml = yaml.dump(final_clash_dict, default_flow_style=False, indent=2, sort_keys=False, allow_unicode=True)
-        with open(f'{sub_merge_path}/{output_path}.yml', 'w', encoding='utf-8') as f:
+        with open(f'{sub_merge_path}/sub_merge_yaml.yml', 'w', encoding='utf-8') as f:
             f.write(content_yaml)
         print(f"Successfully wrote {len(clash_proxies)} nodes to YAML.")
 
         raw_links_str = sub_convert.yaml_decode(final_clash_dict)
         content_base64 = sub_convert.base64_encode(raw_links_str)
-        with open(f'{sub_merge_path}/{output_path}_base64.txt', 'w', encoding='utf-8') as f:
+        with open(f'{sub_merge_path}/sub_merge_base64.txt', 'w', encoding='utf-8') as f:
             f.write(content_base64)
         print(f"Successfully wrote {len(raw_links_str.splitlines())} nodes to Base64.")
         
