@@ -145,7 +145,7 @@ jobs:
           
           echo "Waiting for subconverter to become ready..."
           timeout=30
-          while ! curl -s -o /dev/null http://1227.0.0.1:25500; do
+          while ! curl -s -o /dev/null http://127.0.0.1:25500; do 
             sleep 1
             timeout=$((timeout-1))
             if [ $timeout -le 0 ]; then
