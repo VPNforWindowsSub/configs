@@ -14,4 +14,4 @@ sleep 5
 
 echo "Running LiteSpeedTest via Mihomo API..."
 chmod +x ./lite-linux-amd64
-sudo ./lite-linux-amd64 --config ./utils/speedtest/lite_config_yaml.json --test subs 2>&1 | tee speedtest.log
+sudo ./lite-linux-amd64 --config ./utils/speedtest/lite_config_yaml.json --test http://127.0.0.1:9090/proxies 2>&1 | tee speedtest.log
