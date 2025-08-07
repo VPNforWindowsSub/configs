@@ -10,7 +10,7 @@ from subs_function import subs_function
 from list_merge import sub_merge
 
 Eterniy_base_file = './EternityBase'
-Eterniy_file = './Eternity'
+Eterniy_file = './Eternity' # This is now only used for the backup function
 Eternity_yml_file = './Eternity.yml'
 readme = './README.md'
 log_file = './LogInfo.txt'
@@ -26,13 +26,6 @@ class NoAliasDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
         return True
 
-def is_ip_address(address):
-    try:
-        parts = address.split('.')
-        return len(parts) == 4 and all(part.isdigit() and 0 <= int(part) <= 255 for part in parts)
-    except:
-        return False
-
 def substrings(string, left, right):
     try:
         value = string.replace('\n', '').replace(' ', '')
@@ -43,105 +36,59 @@ def substrings(string, left, right):
     except ValueError:
         return ""
 
-def eternity_convert(file, config, output, provider_file_enabled=True):
+def eternity_convert(config_path, output_path):
+    # Read the raw links of all successfully tested nodes from the local EternityBase file.
     with open(Eterniy_base_file, 'r', encoding='utf-8') as f:
         base_content = f.read()
 
+    # Convert the raw links into the Clash YAML format by POSTing them to the local subconverter.
     subconverter_url = "http://127.0.0.1:25500/sub?target=clash&udp=false"
     headers = {'Content-Type': 'text/plain; charset=utf-8'}
     try:
         response = requests.post(subconverter_url, data=base_content.encode('utf-8'), headers=headers, timeout=60)
         response.raise_for_status()
-        all_provider = response.text
+        all_provider_yaml = response.text
     except requests.exceptions.RequestException as e:
         print(f"Error contacting subconverter: {e}")
         return
 
-    temp_providers = all_provider.split('\n')
+    # Load the generated YAML into a Python object
+    try:
+        provider_data = yaml.safe_load(all_provider_yaml)
+        if not provider_data or 'proxies' not in provider_data:
+            print("Could not parse proxies from subconverter output.")
+            return
+        proxies_list = provider_data['proxies']
+    except yaml.YAMLError as e:
+        print(f"Error parsing YAML from subconverter: {e}")
+        return
+
+    # Load the speed test log file
     try:
         with open(log_file, 'r') as log_reader:
             log_lines = log_reader.readlines()
     except FileNotFoundError:
         log_lines = []
 
-    indexx = 0
-    for line in temp_providers:
-        if line and line.strip() != 'proxies:':
-            if indexx < len(log_lines):
-                server_name = substrings(line, "name:", ",")
-                server_type = substrings(line, "type:", ",")
-                log_lines[indexx] = f"name: {server_name} | type: {server_type} | {log_lines[indexx]}"
-                indexx += 1
+    # Combine proxy data with speed test results
+    for i, proxy in enumerate(proxies_list):
+        if i < len(log_lines):
+            speed = substrings(log_lines[i], "avg_speed:", "|")
+            proxy['name'] = f"{proxy.get('name', '')} | {speed}"
 
-    with open(log_file, 'w') as log_writer:
-        log_writer.writelines(log_lines)
-
-    removed_bad_char = [line for line in all_provider.split("\n")[1:] if "�" not in line and line.strip()]
-    log_lines_without_bad_char = [line for line in log_lines if "�" not in line]
-
-    print(f"removed_bad_char count => {len(removed_bad_char)} & log_lines_without_bad_char count => {len(log_lines_without_bad_char)}")
-
-    num = 200
-    num = len(removed_bad_char) if len(removed_bad_char) <= num else num
-    
-    final_proxies_yaml_list = removed_bad_char[:num]
-    
-    proxy_all = []
-    for indexx, line in enumerate(final_proxies_yaml_list):
-        try:
-            speed = substrings(log_lines_without_bad_char[indexx], "avg_speed:", "|")
-            line_parsed = yaml.safe_load(line)
-            
-            if line_parsed:
-                # --- START: SANITIZATION LOGIC ---
-                server = line_parsed.get('server', '')
-                if is_ip_address(server):
-                    if line_parsed.get('sni') == server:
-                        del line_parsed['sni']
-                    if 'ws-opts' in line_parsed and 'headers' in line_parsed.get('ws-opts', {}) and line_parsed['ws-opts']['headers'].get('Host') == server:
-                        del line_parsed['ws-opts']['headers']['Host']
-                        if not line_parsed['ws-opts']['headers']:
-                            del line_parsed['ws-opts']['headers']
-                
-                line_parsed['skip-cert-verify'] = True
-                # --- END: SANITIZATION LOGIC ---
-                
-                line_parsed['name'] = f"{line_parsed.get('name', '')} | {speed}"
-                
-                proxy_all.append(line_parsed)
-
-        except (yaml.YAMLError, IndexError) as e:
-            print(f"Skipping line due to error: {e}. Line: {line}")
-            continue
-
-    # --- REGENERATE FINAL OUTPUT FILES FROM SANITIZED DATA ---
-    print("Regenerating final output files from sanitized data...")
-    sanitized_proxies_dict = {'proxies': proxy_all}
-    final_raw_links = sub_convert.yaml_decode(sanitized_proxies_dict)
-    
-    with open(Eternity_file, 'w', encoding='utf-8') as f:
-        f.write(final_raw_links)
-        print(f"Successfully wrote {len(final_raw_links.splitlines())} corrected links to Eternity.txt")
-
-    final_base64 = sub_convert.base64_encode(final_raw_links)
-    with open(Eterniy_file, 'w', encoding='utf-8') as f:
-        f.write(final_base64)
-        print(f"Successfully wrote corrected links to Eternity (Base64)")
-    # --- END REGENERATION ---
-
-    with open(config_file, 'r', encoding='utf-8') as config_f:
+    # Load the main clash config template
+    with open(config_path, 'r', encoding='utf-8') as config_f:
         config = yaml.safe_load(config_f.read())
 
-    all_name = [p['name'] for p in proxy_all]
+    # Create the list of proxy names for the proxy groups
+    all_name = [p['name'] for p in proxies_list]
 
     proxy_groups = config.get('proxy-groups', [])
-    proxy_group_fill = [rule['name'] for rule in proxy_groups if rule.get('proxies') is None]
-
     full_size = len(all_name)
     part_size = full_size // 4
     
     for rule in proxy_groups:
-        if rule['name'] in proxy_group_fill:
+        if rule.get('proxies') is None:
             if "Tier 1" in rule['name']:
                 rule['proxies'] = all_name[0:part_size]
             elif "Tier 2" in rule['name']:
@@ -151,14 +98,17 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
             elif "Tier 4" in rule['name']:
                 rule['proxies'] = all_name[part_size*3:full_size]
 
-    config['proxies'] = proxy_all
+    # Build the final configuration dictionary
+    config['proxies'] = proxies_list
     config['proxy-groups'] = proxy_groups
 
+    # Write the final, complete Eternity.yml file
     config_yaml = yaml.dump(config, default_flow_style=False, sort_keys=False,
                               allow_unicode=True, width=750, indent=2, Dumper=NoAliasDumper)
 
-    with open(output, 'w+', encoding='utf-8') as Eternity_yml:
-        Eternity_yml.write(config_yaml)
+    with open(output_path, 'w+', encoding='utf-8') as f:
+        f.write(config_yaml)
+    print(f"Successfully generated final config at {output_path}")
 
 def backup(file):
     try:
@@ -181,6 +131,7 @@ def backup(file):
 if __name__ == '__main__':
     sub_merge.geoip_update(
         'https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb')
-    eternity_convert(Eterniy_file, config_file, output=Eternity_yml_file)
-    backup(Eterniy_file)
+    # The script now only generates the YML file. It does not touch Eternity or Eternity.txt
+    eternity_convert(config_file, Eternity_yml_file)
+    backup(Eterniy_file) # This will now back up the correct file created by output.py
     sub_merge.readme_update(readme, sub_merge.read_list(sub_list_json))
