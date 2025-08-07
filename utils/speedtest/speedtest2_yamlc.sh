@@ -1,17 +1,15 @@
-echo "Downloading Mihomo v1.19.12 binary..."
-wget -O mihomo.gz https://github.com/MetaCubeX/mihomo/releases/download/v1.19.12/mihomo-linux-amd64-v1.19.12.gz
-gunzip -c mihomo.gz > clash
+# --- SETUP ---
 
+# Download the Lite Speed Tester
 echo "Downloading LiteSpeedTest binary..."
 wget -O lite-linux-amd64.gz https://github.com/xxf098/LiteSpeedTest/releases/download/v0.14.1/lite-linux-amd64-v0.14.1.gz
 gzip -d lite-linux-amd64.gz
 
-echo "Starting Mihomo with the dedicated test configuration..."
-chmod +x ./clash
-sudo pkill -f clash
-./clash -f ./utils/speedtest/clash_test_config.yml &
-sleep 5
+# --- EXECUTION ---
 
-echo "Running LiteSpeedTest with Base64 list via clean Mihomo gateway..."
+# Run the speed test tool directly.
+# It will read its config, see there is no proxy gateway,
+# and connect directly to the nodes in the --test file.
+echo "Running LiteSpeedTest directly..."
 chmod +x ./lite-linux-amd64
 sudo ./lite-linux-amd64 --config ./utils/speedtest/lite_config_yaml.json --test ./sub/sub_merge_base64.txt 2>&1 | tee speedtest.log
