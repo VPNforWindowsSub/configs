@@ -3,6 +3,7 @@ import base64
 import os
 import time
 import geoip2.database
+import urllib.parse
 
 out_json = './out.json'
 
@@ -19,32 +20,84 @@ def read_json(file):
         time.sleep(30)
     with open(file, 'r', encoding='utf-8') as f:
         print('Reading out.json')
+        # SingTools outputs a direct JSON array of nodes
         return json.load(f)
 
-def output_geo_balanced(all_nodes, total_proxies_in_final_file):
-    if not all_nodes:
+def reconstruct_link(node):
+    """Reconstructs the subscription link from a singtools node object."""
+    protocol_type = node.get('type', '')
+    
+    if protocol_type == 'vless':
+        uuid = node.get('uuid', '')
+        server = node.get('server', '')
+        port = node.get('port', '')
+        name = urllib.parse.quote(node.get('name', ''))
+        
+        params = {
+            'type': node.get('network', 'tcp'),
+            'security': 'tls' if node.get('tls', {}).get('enabled') else 'none',
+            'sni': node.get('tls', {}).get('server_name', ''),
+            'fp': node.get('tls', {}).get('fingerprint', ''),
+        }
+        
+        if params['type'] == 'ws':
+            ws_opts = node.get('transport', {})
+            params['path'] = ws_opts.get('path', '/')
+            params['host'] = ws_opts.get('headers', {}).get('Host', '')
+
+        query_string = urllib.parse.urlencode({k: v for k, v in params.items() if v})
+        return f"vless://{uuid}@{server}:{port}?{query_string}#{name}"
+        
+    # Add other protocol reconstructions here if needed (e.g., vmess, trojan)
+    # For now, return a placeholder if not VLESS
+    return ""
+
+
+def output_geo_balanced(raw_nodes, total_proxies_in_final_file):
+    if not raw_nodes:
         print("No nodes to process.")
         return
- 
-    print(f"-> [output.py] Total nodes read from out.json: {len(all_nodes)}")
+
+    # --- Start of new pre-processing section ---
+    all_nodes = []
+    for node in raw_nodes:
+        # Map singtools keys to the format this script expects
+        new_node = {
+            "id": node.get("id", ""),
+            "remarks": node.get("name", ""),
+            "protocol": node.get("type", ""),
+            "ping": node.get("delay", 0),
+            "avg_speed": node.get("speed", 0), # speed is in B/s
+            "max_speed": node.get("speed", 0), # singtools doesn't provide max, use avg
+            "server_ip": node.get("ip", ""),
+            "link": reconstruct_link(node) # Reconstruct the link
+        }
+        all_nodes.append(new_node)
+    # --- End of new pre-processing section ---
+
+    print(f"-> [output.py] Total nodes read and formatted: {len(all_nodes)}")
     vless_nodes_in_json = [node for node in all_nodes if node.get("protocol", "").lower() == "vless"]
-    print(f"-> [output.py] VLESS nodes found in out.json: {len(vless_nodes_in_json)}")
+    print(f"-> [output.py] VLESS nodes found: {len(vless_nodes_in_json)}")
 
     print("Sorting all nodes by speed...")
     all_nodes.sort(key=lambda x: x.get('avg_speed', 0), reverse=True)
-    
+
     all_nodes_no_ssr = [p for p in all_nodes if p.get("protocol", "").lower() != "ssr"]
 
     source_pool_size = 1000
     source_pool = all_nodes_no_ssr[:source_pool_size]
-    
+
     print(f"Processing top {len(source_pool)} nodes to build the final list...")
     processed_nodes = []
     with geoip2.database.Reader('./utils/Country.mmdb') as reader:
         for node in source_pool:
             try:
-                server_host = node.get("remarks", "").split(" - ")[0]
-                ip_address = server_host if '.' in server_host and server_host.replace('.', '').isdigit() else node.get('server_ip', '8.8.8.8')
+                # Use server_ip if available, otherwise fallback to remarks
+                ip_address = node.get('server_ip')
+                if not ip_address:
+                    server_host = node.get("remarks", "").split(" - ")[0]
+                    ip_address = server_host if '.' in server_host and server_host.replace('.', '').isdigit() else '8.8.8.8'
+
                 country = reader.country(ip_address).country.iso_code
                 node['country'] = country
                 processed_nodes.append(node)
@@ -84,12 +137,12 @@ def output_geo_balanced(all_nodes, total_proxies_in_final_file):
 
     print("Sorting the final list by speed...")
     final_proxies.sort(key=lambda x: x.get('avg_speed', 0), reverse=True)
-    
+
     final_proxies = final_proxies[:total_proxies_in_final_file]
 
     print(f"Final list generated with {len(final_proxies)} nodes.")
 
-    final_output_links = [proxy['link'] for proxy in final_proxies]
+    final_output_links = [proxy['link'] for proxy in final_proxies if proxy['link']]
     eternity_content_base64 = base64.b64encode('\n'.join(final_output_links).encode('utf-8')).decode('ascii')
 
     with open(Eternity_file_base64, 'w', encoding='utf-8') as f:
@@ -111,20 +164,20 @@ def output_geo_balanced(all_nodes, total_proxies_in_final_file):
         f1.close()
         print('Write Log Success!')
 
-    full_output_links = [proxy['link'] for proxy in all_nodes_no_ssr]
+    full_output_links = [proxy['link'] for proxy in all_nodes_no_ssr if proxy['link']]
     full_content_base64 = base64.b64encode('\n'.join(full_output_links).encode('utf-8')).decode('ascii')
-    
+
     with open(sub_all_base64, 'w+', encoding='utf-8') as f:
         f.write(full_content_base64)
         print('Write All Base64 Success!')
-    
+
     with open(Eternity_Base, 'w') as f:
         f.write('\n'.join(full_output_links))
         print('Write Base Success!')
     with open(sub_all, 'w') as f:
         f.write('\n'.join(full_output_links))
         print('Write All Success!')
-    
+
     os.makedirs(splitted_output, exist_ok=True)
     vmess_outputs, vless_outputs, trojan_outputs, ss_outputs = [], [], [], []
 
@@ -139,10 +192,10 @@ def output_geo_balanced(all_nodes, total_proxies_in_final_file):
     with open(splitted_output.__add__("trojan.txt"), 'w') as f: f.write("\n".join(trojan_outputs))
     with open(splitted_output.__add__("ss.txt"), 'w') as f: f.write("\n".join(ss_outputs))
     print('Write splitted files Success!')
-    
+
     return '\n'.join(full_output_links)
 
 if __name__ == '__main__':
-    num = 165 
-    all_nodes = read_json(out_json)
-    output_geo_balanced(all_nodes, num)
+    num = 165
+    raw_nodes_from_json = read_json(out_json)
+    output_geo_balanced(raw_nodes_from_json, num)
