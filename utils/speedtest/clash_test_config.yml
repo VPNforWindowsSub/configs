@@ -14,7 +14,7 @@ external-controller: 127.0.0.1:9090
 proxy-providers:
   local_proxies:
     type: file
-    path: "PLACEHOLDER_FOR_PROXY_PATH"
+    path: "/home/runner/.config/mihomo/sub_merge_yaml.yml"
     health-check:
       enable: false # Health checks are not needed for this simple test.
 
