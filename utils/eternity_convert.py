@@ -86,8 +86,7 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
     num = len(removed_bad_char) if len(removed_bad_char) <= num else num
     
     final_proxies_yaml_list = removed_bad_char[:num]
-    all_provider = "proxies:\n" + "\n".join(final_proxies_yaml_list)
-
+    
     proxy_all = []
     skip_names_index = []
     for indexx, line in enumerate(final_proxies_yaml_list):
@@ -122,14 +121,26 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
             print(f"Skipping line due to error: {e}. Line: {line}")
             continue
 
-    if provider_file_enabled:
-        providers_files = {'all': provider_path + 'provider-all.yml'}
-        eternity_providers = {'all': all_provider}
-        print('Writing content to provider')
-        for key in providers_files.keys():
-            with open(providers_files[key], 'w', encoding='utf-8') as provider_file:
-                provider_file.write(eternity_providers[key])
-        print('Done!\n')
+    # --- START: REGENERATE FINAL OUTPUT FILES ---
+    print("Regenerating final output files from sanitized data...")
+    
+    # Create a dictionary in the format that yaml_decode expects
+    sanitized_proxies_dict = {'proxies': proxy_all}
+    
+    # Convert the sanitized YAML data back into raw vless:// links
+    final_raw_links = sub_convert.yaml_decode(sanitized_proxies_dict)
+    
+    # Write the corrected raw links to Eternity.txt
+    with open(Eternity_file, 'w', encoding='utf-8') as f:
+        f.write(final_raw_links)
+        print(f"Successfully wrote {len(final_raw_links.splitlines())} corrected links to Eternity.txt")
+
+    # Write the corrected Base64 links to Eternity
+    final_base64 = sub_convert.base64_encode(final_raw_links)
+    with open(Eterniy_file, 'w', encoding='utf-8') as f:
+        f.write(final_base64)
+        print(f"Successfully wrote corrected links to Eternity (Base64)")
+    # --- END: REGENERATE FINAL OUTPUT FILES ---
 
     with open(config_file, 'r', encoding='utf-8') as config_f:
         config = yaml.safe_load(config_f.read())
