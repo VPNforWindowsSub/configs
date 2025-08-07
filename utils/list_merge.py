@@ -29,7 +29,7 @@ ipv6 = r'(([0-9a-fA-F]{1,4}:){7,7}[0-9a-fA-F]{1,4}|([0-9a-fA-F]{1,4}:){1,7}:|([0
 
 def add_valid(line):
     if (line.__contains__("ssr://") or line.__contains__("ss://")
-            or line.__contains__("trojan://") or line.__contains__("vmess://")):
+            or line.__contains__("trojan://") or line.__contains__("vmess://") or line.__contains__("vless://")):
         return line
     return ''
 
@@ -154,7 +154,7 @@ class sub_merge():
 #         content_list = list(set(content_list))
 #         print("now is " + str(content_list.__len__()))
         content_list = list(filter(lambda x: x.startswith("ssr://") or x.startswith("ss://")
-                                   or x.startswith("trojan://") or x.startswith("vmess://"), content_list))
+                                            or x.startswith("trojan://") or x.startswith("vmess://") or x.startswith("vless://"), content_list))
 
         content_list = list(
             filter(lambda x: x.__contains__("订阅内容解析错误") == False, content_list))
@@ -344,9 +344,9 @@ class sub_merge():
                     proxies = ['    '+proxy for proxy in proxies]
                     proxies = [proxy+'\n' for proxy in proxies]
                 top_amount = len(proxies) - 1
-                
+
                 lines.insert(index+1, f'合并节点数量: `{top_amount}`\n')
-                
+
                 index += 5
                 for i in proxies:
                     index += 1
