@@ -324,9 +324,10 @@ class subs:
         corresponding_id = 0
         bad_lines = 0
         for (index, url_container) in enumerate(content_urls):
-            ids = content_urls[index]['id']
-            remarks = content_urls[index]['remarks']
-            if type(url_container['url']) == list:
+            urls_to_process = url_container["url"]
+            if not isinstance(urls_to_process, list):
+                urls_to_process = [urls_to_process]
+                
                 for each_url in url_container["url"]:
                     print("gather server from " + each_url)
 
