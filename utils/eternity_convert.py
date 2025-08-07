@@ -21,7 +21,6 @@ update_path = './update/'
 sub_list_json = './sub/sub_list.json'
 
 config_file = './update/provider/config.yml'
-config_global_file = './update/provider/config-global.yml'
 
 class NoAliasDumper(yaml.SafeDumper):
     def ignore_aliases(self, data):
@@ -88,13 +87,13 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
     final_proxies_yaml_list = removed_bad_char[:num]
     
     proxy_all = []
-    skip_names_index = []
     for indexx, line in enumerate(final_proxies_yaml_list):
         try:
             speed = substrings(log_lines_without_bad_char[indexx], "avg_speed:", "|")
             line_parsed = yaml.safe_load(line)
             
             if line_parsed:
+                # --- START: SANITIZATION LOGIC ---
                 server = line_parsed.get('server', '')
                 if is_ip_address(server):
                     if line_parsed.get('sni') == server:
@@ -105,15 +104,9 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
                             del line_parsed['ws-opts']['headers']
                 
                 line_parsed['skip-cert-verify'] = True
+                # --- END: SANITIZATION LOGIC ---
                 
                 line_parsed['name'] = f"{line_parsed.get('name', '')} | {speed}"
-                
-                if "password" in line_parsed:
-                    password_str = str(line_parsed.get("password"))
-                    line_parsed["password"] = password_str
-                    if re.match(r'^\d+\.?\d*[eE][-+]?\d+$', password_str):
-                        skip_names_index.append(indexx)
-                        continue
                 
                 proxy_all.append(line_parsed)
 
@@ -121,31 +114,25 @@ def eternity_convert(file, config, output, provider_file_enabled=True):
             print(f"Skipping line due to error: {e}. Line: {line}")
             continue
 
-    # --- START: REGENERATE FINAL OUTPUT FILES ---
+    # --- REGENERATE FINAL OUTPUT FILES FROM SANITIZED DATA ---
     print("Regenerating final output files from sanitized data...")
-    
-    # Create a dictionary in the format that yaml_decode expects
     sanitized_proxies_dict = {'proxies': proxy_all}
-    
-    # Convert the sanitized YAML data back into raw vless:// links
     final_raw_links = sub_convert.yaml_decode(sanitized_proxies_dict)
     
-    # Write the corrected raw links to Eternity.txt
     with open(Eternity_file, 'w', encoding='utf-8') as f:
         f.write(final_raw_links)
         print(f"Successfully wrote {len(final_raw_links.splitlines())} corrected links to Eternity.txt")
 
-    # Write the corrected Base64 links to Eternity
     final_base64 = sub_convert.base64_encode(final_raw_links)
     with open(Eterniy_file, 'w', encoding='utf-8') as f:
         f.write(final_base64)
         print(f"Successfully wrote corrected links to Eternity (Base64)")
-    # --- END: REGENERATE FINAL OUTPUT FILES ---
+    # --- END REGENERATION ---
 
     with open(config_file, 'r', encoding='utf-8') as config_f:
         config = yaml.safe_load(config_f.read())
 
-    all_name = [p['name'] for i, p in enumerate(proxy_all) if i not in skip_names_index]
+    all_name = [p['name'] for p in proxy_all]
 
     proxy_groups = config.get('proxy-groups', [])
     proxy_group_fill = [rule['name'] for rule in proxy_groups if rule.get('proxies') is None]
