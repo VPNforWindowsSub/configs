@@ -302,7 +302,7 @@ class subs:
             content_write(write_list[index], content_type[index])
         print('Done!\n')
 
-    def get_subs_v3(content_urls: [], output_path="sub_merge_yaml", should_cleanup=True, specific_files_cleanup=["05.txt"]):
+    def get_subs_v3(content_urls: [], output_path="sub_merge", should_cleanup=True, specific_files_cleanup=["05.txt"]):
         if content_urls == []:
             return
 
@@ -477,19 +477,20 @@ class subs:
                     del proxy['reality-opts']['short-id']
 
         clash_proxies = [item['c_clash'][0] if isinstance(item['c_clash'], list) else item['c_clash'] for item in corresponding_list]
-
         final_clash_dict = {'proxies': clash_proxies}
 
         content_yaml = yaml.dump(final_clash_dict, default_flow_style=False, indent=2, sort_keys=False, allow_unicode=True)
+        with open(f'{sub_merge_path}/{output_path}.yml', 'w', encoding='utf-8') as f:
+            f.write(content_yaml)
+        print(f"Successfully wrote {len(clash_proxies)} nodes to YAML.")
 
-        def content_write(file, output_type):
-            file = open(file, 'w+', encoding='utf-8')
-            file.write(output_type)
-            file.close
-
-        content_write(f'{sub_merge_path}/{output_path}.yml', content_yaml)
+        raw_links_str = sub_convert.yaml_decode(final_clash_dict)
+        content_base64 = sub_convert.base64_encode(raw_links_str)
+        with open(f'{sub_merge_path}/{output_path}_base64.txt', 'w', encoding='utf-8') as f:
+            f.write(content_base64)
+        print(f"Successfully wrote {len(raw_links_str.splitlines())} nodes to Base64.")
+        
         print('Done!\n')
-
 
 if __name__ == "__main__":
     subs.get_subs([])
