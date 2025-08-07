@@ -1,190 +1,173 @@
-name: Collect
-
-on:
-  workflow_dispatch:
-
-  push:
-    paths:
-      - "./EternityBase"
-      - "./sub/sub_merge_base64.txt"
-      - "./sub/sub_merge_yaml.yml"
-
-  schedule:
-    - cron: "0 0,11 * * *"
-
-jobs:
-  main:
-    name: Collect & SpeedTest & Filter
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18.x"
-
-      - name: Install Node.js dependencies
-        uses: bahmutov/npm-install@v1
-        with:
-          working-directory: ./utils/localserver
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-          cache: "pip"
-
-      - name: Set Timezone
-        run: sudo timedatectl set-timezone 'Asia/Tehran'
-
-      - name: Install Requirements
-        run: |
-          pip install -r ./utils/requirements.txt
-
-      - name: Running Collector
-        run: |
-          wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
-          tar -zxvf subconverter.tar.gz -C ./
-          
-          echo "Starting subconverter in the background..."
-          chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
-          
-          echo "Waiting for subconverter to become ready..."
-          timeout=30
-          while ! curl -s -o /dev/null http://127.0.0.1:25500; do
-            sleep 1
-            timeout=$((timeout-1))
-            if [ $timeout -le 0 ]; then
-              echo "Error: subconverter failed to start within 30 seconds."
-              echo "--- Subconverter Log ---"
-              cat ./subconverter.log
-              exit 1
-            fi
-          done
-          echo "Subconverter is running."
-
-          node ./utils/localserver/index.js &
-          sleep 2 # A small sleep for the node server is still fine
-          python ./utils/list_merge.py
-
-      - name: Log VLESS Count Before Speed Test
-        run: |
-          echo "--- Verifying proxy file before speed test ---"
-          VLESS_COUNT=$(grep -c "type: vless" ./sub/sub_merge_yaml.yml || echo "0")
-          echo "-> [Collector.yml] VLESS nodes in sub_merge_yaml.yml: $VLESS_COUNT"
-          echo "--------------------------------------------"
-
-      - name: Commit Collection Changes
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git pull origin master
-          git add ./sub
-          git add ./utils/Country.mmdb
-          git add README.md
-          git checkout master
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
-          else
-            echo "No collection changes to commit."
-          fi
-
-      - name: Push Collection Changes
-        uses: ad-m/github-push-action@master
-        with:
-          branch: master
-
-      - name: Prepare Safe Path for Test Config
-        run: |
-          echo "Creating Mihomo's safe configuration directory..."
-          mkdir -p /home/runner/.config/mihomo
-
-          echo "Copying proxy list to the safe directory..."
-          cp ${{ github.workspace }}/sub/sub_merge_yaml.yml /home/runner/.config/mihomo/
-          
-          echo "File copied. Mihomo will now be able to find it at the specified safe path."
-
-      - name: Run Lite Speedtest
-        run: |
-          # This script will now use the patched, clean config file
-          sudo sh ./utils/speedtest/speedtest2_yamlc.sh
-          python ./utils/speedtest/output.py
-
-      - name: Log VLESS Count After Speed Test
-        run: |
-          echo "--- Verifying final output after speed test ---"
-          VLESS_COUNT=$(grep -c "vless://" ./Eternity.txt || echo "0")
-          echo "-> [Collector.yml] VLESS nodes in final Eternity.txt: $VLESS_COUNT"
-          echo "-----------------------------------------------"
-
-      - name: Commit Speedtest changes
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git pull origin master
-          git add EternityBase
-          git add Eternity
-          git add Eternity.txt
-          git add ./sub/sub_merge.txt
-          git add ./sub/sub_merge_base64.txt
-          git add LogInfo.txt
-          git add ./sub/splitted/*
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Tested"
-          else
-            echo "No speedtest changes to commit."
-          fi
-
-      - name: Push Speedtest Change
-        uses: ad-m/github-push-action@master
-        with:
-          branch: master
-
-      - name: Run Convertor & Formatter
-        run: |
-          sleep 5
-          wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
-          tar -zxvf subconverter.tar.gz -C ./
-          
-          echo "Starting subconverter in the background..."
-          chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
-          
-          echo "Waiting for subconverter to become ready..."
-          timeout=30
-          while ! curl -s -o /dev/null http://127.0.0.1:25500; do 
-            sleep 1
-            timeout=$((timeout-1))
-            if [ $timeout -le 0 ]; then
-              echo "Error: subconverter failed to start within 30 seconds."
-              echo "--- Subconverter Log ---"
-              cat ./subconverter.log
-              exit 1
-            fi
-          done
-          
-          echo "Subconverter is running. Proceeding with Python script."
-          python ./utils/eternity_convert.py
-
-      - name: Commit Final changes
-        run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
-          git pull origin master
-          git add Eternity.yml
-          git add Eternity
-          git add README.md
-          git add ./update/*
-          git add LogInfo.txt
-          git clean -f -d
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Filtered"
-          else
-            echo "No final changes to commit."
-          fi
-
-      - name: Push Final Change
-        uses: ad-m/github-push-action@master
-        with:
-          branch: master
+   name: Collect
+   
+   on:
+     workflow_dispatch:
+   
+     push:
+       paths:
+         - "./EternityBase"
+         - "./sub/sub_merge_base64.txt"
+         - "./sub/sub_merge_yaml.yml"
+   
+     schedule:
+       - cron: "0 0,11 * * *"
+   
+   jobs:
+     main:
+       name: Collect & SpeedTest & Filter
+       runs-on: ubuntu-latest
+       steps:
+         - name: Checkout code
+           uses: actions/checkout@v4
+   
+         - name: Setup Node.js
+           uses: actions/setup-node@v4
+           with:
+             node-version: "18.x"
+   
+         - name: Install Node.js dependencies
+           uses: bahmutov/npm-install@v1
+           with:
+             working-directory: ./utils/localserver
+   
+         - name: Setup Python
+           uses: actions/setup-python@v5
+           with:
+             python-version: "3.11"
+             cache: "pip"
+   
+         - name: Set Timezone
+           run: sudo timedatectl set-timezone 'Asia/Tehran'
+   
+         - name: Install Requirements
+           run: |
+             pip install -r ./utils/requirements.txt
+   
+         - name: Running Collector
+           run: |
+             wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
+             tar -zxvf subconverter.tar.gz -C ./
+             chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
+             node ./utils/localserver/index.js &
+             sleep 2
+             python ./utils/list_merge.py
+   
+         - name: Log VLESS Count Before Speed Test
+           run: |
+             echo "--- Verifying proxy file before speed test ---"
+             VLESS_COUNT=$(grep -c "type: vless" ./sub/sub_merge_yaml.yml || echo "0")
+             echo "-> [Collector.yml] VLESS nodes in sub_merge_yaml.yml: $VLESS_COUNT"
+             echo "--------------------------------------------"
+   
+         - name: Commit Collection Changes
+           run: |
+             git config --local user.email "actions@github.com"
+             git config --local user.name "GitHub Actions"
+             git pull origin master
+             git add ./sub
+             git add ./utils/Country.mmdb
+             git add README.md
+             git checkout master
+             if ! git diff-index --quiet HEAD; then
+               git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
+             else
+               echo "No collection changes to commit."
+             fi
+   
+         - name: Push Collection Changes
+           uses: ad-m/github-push-action@master
+           with:
+             branch: master
+   
+         - name: Prepare Safe Path for Test Config
+           run: |
+             echo "Creating Mihomo's safe configuration directory..."
+             mkdir -p /home/runner/.config/mihomo
+   
+             echo "Copying proxy list to the safe directory..."
+             cp ${{ github.workspace }}/sub/sub_merge_yaml.yml /home/runner/.config/mihomo/
+   
+             echo "File copied. Mihomo will now be able to find it at the specified safe path."
+   
+         - name: Run Lite Speedtest
+           run: |
+             # This script will now use the patched, clean config file
+             sudo sh ./utils/speedtest/speedtest2_yamlc.sh
+             python ./utils/speedtest/output.py
+   
+         - name: Log VLESS Count After Speed Test
+           run: |
+             echo "--- Verifying final output after speed test ---"
+             VLESS_COUNT=$(grep -c "vless://" ./Eternity.txt || echo "0")
+             echo "-> [Collector.yml] VLESS nodes in final Eternity.txt: $VLESS_COUNT"
+             echo "-----------------------------------------------"
+   
+         - name: Commit Speedtest changes
+           run: |
+             git config --local user.email "actions@github.com"
+             git config --local user.name "GitHub Actions"
+             git pull origin master
+             git add EternityBase
+             git add Eternity
+             git add Eternity.txt
+             git add ./sub/sub_merge.txt
+             git add ./sub/sub_merge_base64.txt
+             git add LogInfo.txt
+             git add ./sub/splitted/*
+             if ! git diff-index --quiet HEAD; then
+               git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Tested"
+             else
+               echo "No speedtest changes to commit."
+             fi
+   
+         - name: Push Speedtest Change
+           uses: ad-m/github-push-action@master
+           with:
+             branch: master
+   
+         - name: Run Convertor & Formatter
+           run: |
+             sleep 5
+             wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
+             tar -zxvf subconverter.tar.gz -C ./
+   
+             echo "Starting subconverter in the background..."
+             chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
+   
+             echo "Waiting for subconverter to become ready..."
+             timeout=30
+             while ! curl -s -o /dev/null http://127.0.0.1:25500; do
+               sleep 1
+               timeout=$((timeout-1))
+               if [ $timeout -le 0 ]; then
+                 echo "Error: subconverter failed to start within 30 seconds."
+                 echo "--- Subconverter Log ---"
+                 cat ./subconverter.log
+                 exit 1
+               fi
+             done
+   
+             echo "Subconverter is running. Proceeding with Python script."
+             python ./utils/eternity_convert.py
+   
+         - name: Commit Final changes
+           run: |
+             git config --local user.email "actions@github.com"
+             git config --local user.name "GitHub Actions"
+             git pull origin master
+             git add Eternity.yml
+             git add Eternity
+             git add README.md
+             git add ./update/*
+             git add LogInfo.txt
+             git clean -f -d
+             if ! git diff-index --quiet HEAD; then
+               git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Filtered"
+             else
+               echo "No final changes to commit."
+             fi
+   
+         - name: Push Final Change
+           uses: ad-m/github-push-action@master
+           with:
+             branch: master
