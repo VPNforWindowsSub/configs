@@ -142,12 +142,13 @@ class subs_function:
         COUNTRY_NAME_MAPPING = {
             'United States': 'USA',
             'United Kingdom': 'UK',
-            'Hong Kong': 'Hong-Kong',
             'Russian Federation': 'Russia',
-            'Turkey': 'Turkey'
+            'The Netherlands': 'Netherlands',
+            'Türkiye': 'Turkey',
+            'United Arab Emirates': 'Emirates'
         }
         
-        exclude_list_of_countries = ['IL']
+        exclude_list_of_countries = ['IL', 'BH', 'IR']
         
         print("  Step 2.1: Collecting unique domain names for resolution...", flush=True)
         unique_servers = set()
