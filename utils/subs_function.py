@@ -8,12 +8,6 @@ import geoip2.database
 import concurrent.futures
 
 def resolve_domain(server_name):
-    """
-    Resolves a single domain name to an IP address.
-    Returns the original name and the resolved IP.
-    If resolution fails for any reason, it returns the original name for both,
-    ensuring the main process never crashes.
-    """
     try:
         if all(c in '0123456789.' for c in server_name):
              return server_name, server_name
