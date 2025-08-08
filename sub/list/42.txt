@@ -173,6 +173,8 @@
   - {name: v2rayse_test_4, server: ca-trojan.bonds.id, port: 443, type: trojan, password: bc7593fe-0604-4fbe-a70bYWVzLTI1Ni1nY206Q1VuZFNabllzUEtjdTaclWNFc1RmRBNk5NQU5KSnga3fa58ac5a3ef0-b4ab-11eb-b65e-1239d0255272, skip-cert-verify: true}
   - {name: defaultName_1, server: 124.15.12.24, port: 251, type: http, username: username, password: password, tls: false, skip-cert-verify: true}
   - {name: defaultName_2, server: 124.15.12.24, port: 2312, type: socks5, skip-cert-verify: true}
+  - {name: Hys-1.2.3.4, server: 1.2.3.4, port: 12854, type: hysteria, auth_str: pekopeko, auth-str: pekopeko, up: 50, down: 250, fast-open: false, protocol: udp, sni: wechat.com, skip-cert-verify: true, alpn: [h3]}
+  - {name: test, server: 1.2.3.4, port: 7777, type: vless, uuid: abc-def-ghi-fge-zsx, tls: true, tfo: false, skip-cert-verify: true, network: tcp}
   - {name: 🇺🇸 _US_美国_1, server: 38.91.102.123, port: 9102, type: ss, cipher: aes-256-gcm, password: e4FCWrgpkji3QY}
   - {name: 🇭🇰 _HK_香港_1, server: 8.210.20.159, port: 45751, type: vmess, uuid: 3a0d252e-cddf-4695-ab0f-95a0ce7abcc0, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: http, http-opts: {method: GET, path: [/]}}
   - {name: 🇲🇴 _MO_澳门->🇨🇳_CN_中国, server: 45.64.22.22, port: 443, type: vmess, uuid: e55ed7b2-ed4f-480c-8b99-08482da1e4c7, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /OB7jTM5cTTrL}}
@@ -183,13 +185,6 @@
   - {name: 🇭🇰 _HK_香港_2, server: 8.210.153.242, port: 48577, type: vmess, uuid: dd3c5ce4-6741-4cdb-a54d-bf43475969e5, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: http, http-opts: {method: GET, path: [/]}}
   - {name: _BZ_伯利兹, server: 203.30.188.188, port: 443, type: vmess, uuid: 40d496a6-ceeb-4096-baeb-4cc52b205621, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /ECTCJ0DF}}
   - {name: 🇭🇰 _HK_香港_3, server: 8.210.206.163, port: 45719, type: vmess, uuid: a220dad2-a34e-4460-b0f7-eaba9c46e639, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: http, http-opts: {method: GET, path: [/]}}
-  - {name: v2rayse_test_1, server: 198.57.27.218, port: 5004, type: ss, cipher: aes-256-gcm, password: g5MeD6Ft3CWlJId}
-  - {name: v2rayse_test_2, server: 154.23.190.162, port: 443, type: vmess, uuid: b9984674-f771-4e67-a198-c7e60720ba2c, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
-  - {name: v2rayse_test_3, server: 20.239.49.44, port: 59814, type: ssr, cipher: dummy, password: 3df57276-03ef-45cf-bdd4-4edb6dfaa0ef, protocol: origin, obfs: plain, protocol-param: "", obfs-param: ""}
-  - {name: v2rayse_test_4, server: ca-trojan.bonds.id, port: 443, type: trojan, password: bc7593fe-0604-4fbe-a70bYWVzLTI1Ni1nY206Q1VuZFNabllzUEtjdTaclWNFc1RmRBNk5NQU5KSnga3fa58ac5a3ef0-b4ab-11eb-b65e-1239d0255272, skip-cert-verify: true}
-  - {name: http_proxy, server: 124.15.12.24, port: 251, type: http, username: username, password: password, tls: false, skip-cert-verify: true}
-  - {name: socks5_proxy, server: 124.15.12.24, port: 2312, type: socks5, skip-cert-verify: true}
-  - {name: telegram_proxy, server: 1.2.3.4, port: 123, type: socks5, username: username, password: password, skip-cert-verify: true}
   - {name: "@filternet0142🌼کانال،آموزشی،ما،در،تلگرام🇺🇸", server: 38.91.102.30, port: 8090, type: ss, cipher: aes-256-gcm, password: PCnnH6SQSnfoS27}
   - {name: "@filternet0142🌼کانال،آموزشی،ما،در،تلگرام🇺🇸 2", server: 38.91.102.30, port: 9101, type: ss, cipher: aes-256-gcm, password: e4FCWrgpkji3QY}
   - {name: "@filternet0142🌼کانال،آموزشی،ما،در،تلگرام🇨🇳", server: 47.104.237.32, port: 50002, type: vmess, uuid: 418048af-a293-4b99-9b0c-98ca3580dd24, alterId: 64, cipher: auto, tls: false, skip-cert-verify: true}
@@ -548,7 +543,7 @@
   - {name: github.com/mehdimoghaddam-cell_1790, server: 85.208.108.60, port: 6379, type: ss, cipher: aes-256-gcm, password: zDNVedRFPQexG9v}
   - {name: 🇯🇵 _JP_日本_9_1, server: ap-northeast-1.openssl3.com, port: 443, type: trojan, password: tune7jerky7HAYRICK, sni: ap-northeast-1.openssl3.com, skip-cert-verify: true}
   - {name: 🇯🇵 _JP_日本_6_2, server: ap-northeast-1.openssl3.com, port: 443, type: trojan, password: tune7jerky7HAYRICK, sni: ap-northeast-1.openssl3.com, skip-cert-verify: true}
-  - {name: _UA_乌克兰, server: 45.80.111.169, port: 8880, type: vmess, uuid: e3dba91f-b31c-473a-8f17-92e1dedda38f, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
+  - {name: 🇺🇦 _UA_乌克兰, server: 45.80.111.169, port: 8880, type: vmess, uuid: e3dba91f-b31c-473a-8f17-92e1dedda38f, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
   - {name: github.com/mehdimoghaddam-cell_520, server: 85.208.108.60, port: 2375, type: ss, cipher: aes-256-gcm, password: faBAoD54k87UJG7}
   - {name: 🇩🇪 _DE_德国_2, server: 165.227.175.88, port: 28164, type: vmess, uuid: eba8ccf5-5ab9-4b6b-de4b-83ab920c1005, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
   - {name: 🇯🇵 _JP_日本_3_2, server: 85.208.108.60, port: 2375, type: ss, cipher: aes-256-gcm, password: faBAoD54k87UJG7}
@@ -780,7 +775,7 @@
   - {name: 🇨🇳 Relay_🇹🇼TW-🇱🇹LT_329, server: 211.72.35.152, port: 3389, type: trojan, password: 8b475d9e868e43e0, skip-cert-verify: true}
   - {name: _220, server: 194.156.99.39, port: 443, type: trojan, password: xxoo, skip-cert-verify: true}
   - {name: 🇨🇳 Relay_🇨🇳CN-🇯🇵JP_34, server: jp01a.roc-taiwan.net.ua, port: 65011, type: trojan, password: 96983eb4-c8f1-316e-ab00-500014ed3d8b, skip-cert-verify: true}
-  - {name: Cloudflare-US01-90, server: cf-us01-90.clashzone.xyz, port: 8443, type: vmess, uuid: 430b6895-2e0f-4716-9410-e1339d0f9af6, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /v2us01, headers: {Host: cf-us01-90.clashzone.xyz}}}
+  - {name: 🇺🇸 Cloudflare-US01-90, server: cf-us01-90.clashzone.xyz, port: 8443, type: vmess, uuid: 430b6895-2e0f-4716-9410-e1339d0f9af6, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /v2us01, headers: {Host: cf-us01-90.clashzone.xyz}}}
   - {name: 🇬🇧 Relay_🇬🇧GB-🇬🇧GB_139, server: content-provider20.cdn-delivery.akamaicd.com, port: 443, type: trojan, password: shefelnak, skip-cert-verify: true}
   - {name: 🇨🇳 Relay_🇹🇼TW-🇹🇼TW_302, server: 60.249.3.230, port: 3389, type: trojan, password: 182228812d1e0f23, skip-cert-verify: true}
   - {name: 🇨🇳 Relay_🇹🇼TW-🇱🇹LT_293, server: 211.72.35.152, port: 3389, type: trojan, password: 7b06d22a8a7c764f, skip-cert-verify: true}
@@ -939,7 +934,7 @@
   - {name: 🇫🇷 Relay_🇫🇷FR-🇫🇷FR_121, server: de.tjvpn.org, port: 443, type: trojan, password: c60fbf90-4b55-11ed-b935-225401db9d57, skip-cert-verify: true}
   - {name: VN_522, server: 103.195.236.24, port: 443, type: trojan, password: 8078dd51-d4d9-4024-89df-50e358a00a54, skip-cert-verify: true}
   - {name: github.com/mehdimoghaddam-cell_431_2, server: KR-203-194.shoptunnel.live, port: 31990, type: vmess, uuid: a6a37e04-5e81-44c9-be53-baa3ff46eb8b, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true}
-  - {name: TJ-UK01, server: uk01.clashzone.xyz, port: 54122, type: trojan, password: 430b6895-2e0f-4716-9410-e1339d0f9af6, sni: filimo.com, skip-cert-verify: true}
+  - {name: 🇬🇧 TJ-UK01, server: uk01.clashzone.xyz, port: 54122, type: trojan, password: 430b6895-2e0f-4716-9410-e1339d0f9af6, sni: filimo.com, skip-cert-verify: true}
   - {name: 🇸🇬 _US_美国->🇸🇬_SG_新加坡_2, server: dosg.gmlovebaipiao.tech, port: 8443, type: vmess, uuid: 706596c5-2315-41e9-c97b-5a4d32ffd5e6, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /GenshinMinecraft, headers: {Host: dosg.gmlovebaipiao.tech}}}
   - {name: US_385, server: 172.99.190.7, port: 7307, type: ss, cipher: aes-256-gcm, password: FoOiGlkAA9yPEGP}
   - {name: github.com/mehdimoghaddam-cell_212, server: 148.66.56.99, port: 800, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
@@ -1125,7 +1120,7 @@
   - {name: github.com/mehdimoghaddam-cell_140, server: 148.66.56.99, port: 800, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
   - {name: Pool_🇺🇸US_491, server: 206.119.112.6, port: 8189, type: vmess, uuid: a90597c1-bab3-4217-ad6f-0838675c8638, alterId: 10, cipher: auto, tls: true, skip-cert-verify: true}
   - {name: 🇦🇺 Relay_🇦🇺AU-🇦🇺AU_18, server: jgwxn4.gaox.ml, port: 443, type: trojan, password: e8c1ab3c-89b3-4933-92df-682e6dce7819, skip-cert-verify: true}
-  - {name: Relay_🇺🇦UA-🇺🇦UA_341, server: v2cross.com.04.v2ce.com, port: 443, type: trojan, password: vGWCNNfBHwSY6m6M, skip-cert-verify: true}
+  - {name: 🇺🇦 Relay_🇺🇦UA-🇺🇦UA_341, server: v2cross.com.04.v2ce.com, port: 443, type: trojan, password: vGWCNNfBHwSY6m6M, skip-cert-verify: true}
   - {name: US_504, server: 138.2.113.248, port: 443, type: trojan, password: 9c822f05-cfdc-479a-9534-60f3d4127435, skip-cert-verify: true}
   - {name: SG_262, server: uk.liangyuandian.top, port: 443, type: trojan, password: 18304160-03d4-4c55-95c1-586c0a5f3a0a, skip-cert-verify: true}
   - {name: 🇯🇵 Relay_🇯🇵JP-🇯🇵JP_207, server: 153.121.74.146, port: 2053, type: trojan, password: 96983eb4-c8f1-316e-ab00-500014ed3d8b, skip-cert-verify: true}
@@ -1229,6 +1224,7 @@
   - {name: github.com/mehdimoghaddam-cell_103, server: 148.66.56.99, port: 809, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
   - {name: github.com/mehdimoghaddam-cell_225, server: 148.66.56.99, port: 803, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
   - {name: github.com/mehdimoghaddam-cell_662, server: 148.66.56.99, port: 801, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
+  - {name: "@BINNER_IRAN", server: mt2.qowch.com, port: 443, type: vless, uuid: a61eb3a2-1adb-48cb-ab46-ce225769de16, tls: true, tfo: false, skip-cert-verify: true, servername: android-club.ir, network: ws, ws-opts: {path: "users?ed=2048", headers: {Host: mt2.qowch.com}}}
   - {name: 🇷🇺 _RU_俄罗斯联邦, server: eu-east-ruo.openssl3.com, port: 443, type: trojan, password: 9KogHwaY7hVD, sni: eu-east-ruo.openssl3.com, skip-cert-verify: true}
   - {name: 🇳🇱 Relay_🇳🇱NL-🇳🇱NL_262, server: fra13.yukiss.eu.org, port: 18818, type: trojan, password: 8a03bc28-2a33-42c4-be59-30464dbb9954, skip-cert-verify: true}
   - {name: Pool_🇳🇱NL_205_1, server: 85.208.108.60, port: 6679, type: ss, cipher: aes-256-gcm, password: TEzjfAYq2IjtuoS}
@@ -1249,7 +1245,7 @@
   - {name: US_537, server: 150.230.96.103, port: 443, type: trojan, password: da777aae-defb-41d0-a183-2c27da2b4677, skip-cert-verify: true}
   - {name: github.com/mehdimoghaddam-cell_130, server: 148.66.56.99, port: 803, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
   - {name: github.com/mehdimoghaddam-cell_156, server: 148.66.56.99, port: 810, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
-  - {name: Cloudflare-US01-90, server: cf-us01-90.clashzone.xyz, port: 8443, type: vmess, uuid: 430b6895-2e0f-4716-9410-e1339d0f9af6, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /v2us01, headers: {Host: cf-us01-90.clashzone.xyz}}}
+  - {name: 🇺🇸 Cloudflare-US01-90, server: cf-us01-90.clashzone.xyz, port: 8443, type: vmess, uuid: 430b6895-2e0f-4716-9410-e1339d0f9af6, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /v2us01, headers: {Host: cf-us01-90.clashzone.xyz}}}
   - {name: github.com/mehdimoghaddam-cell_143, server: 148.66.56.99, port: 801, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
   - {name: US_450_1, server: 129.146.242.130, port: 443, type: trojan, password: 05742120-ce23-4cc8-88f5-6d221ce45bf4, skip-cert-verify: true}
   - {name: _201, server: kr1.api-aws.com, port: 443, type: trojan, password: 036ba5aa-fcb7-4e6f-95b5-a857cb354aa8, skip-cert-verify: true}
@@ -1270,7 +1266,7 @@
   - {name: Cloudflare-AZ01_81, server: cf-az01-81.clashzone.xyz, port: 8443, type: vmess, uuid: 430b6895-2e0f-4716-9410-e1339d0f9af6, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /v2az81, headers: {Host: cf-az01-81.clashzone.xyz}}}
   - {name: _219, server: 138.124.183.216, port: 443, type: trojan, password: xxoo, skip-cert-verify: true}
   - {name: _172, server: wide.wideladder.top, port: 10051, type: trojan, password: 8297c993-2c30-4448-aa4e-6283e271e413, skip-cert-verify: true}
-  - {name: TJ-UK01, server: uk01.clashzone.xyz, port: 54122, type: trojan, password: 430b6895-2e0f-4716-9410-e1339d0f9af6, sni: filimo.com, skip-cert-verify: true}
+  - {name: 🇬🇧 TJ-UK01, server: uk01.clashzone.xyz, port: 54122, type: trojan, password: 430b6895-2e0f-4716-9410-e1339d0f9af6, sni: filimo.com, skip-cert-verify: true}
   - {name: 🇺🇸 Relay_🇺🇸US-🇺🇸US_536, server: los2.playstone.info, port: 23443, type: trojan, password: Gl123qwe, skip-cert-verify: true}
   - {name: github.com/mehdimoghaddam-cell_433, server: gcssg.sylu.cyou, port: 443, type: vmess, uuid: 12e08256-da5d-4b1c-aeca-8c973ccceef8, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /Falling42gcssgnode, headers: {Host: gcssg.sylu.cyou}}}
   - {name: github.com/mehdimoghaddam-cell_373, server: 146.59.92.219, port: 2096, type: vmess, uuid: aca71b13-ec8a-466d-c28f-43516d3cf246, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
@@ -1728,7 +1724,7 @@
   - {name: 🇨🇳 Relay_🇹🇼TW-🇱🇹LT_337, server: 211.72.35.152, port: 3389, type: trojan, password: 3febb05ea76a940f, skip-cert-verify: true}
   - {name: 🇨🇳 Relay_🇹🇼TW-🇱🇹LT_338, server: 211.72.35.157, port: 3389, type: trojan, password: 0cc6b4268dea0ba8, skip-cert-verify: true}
   - {name: 🇨🇳 Relay_🇹🇼TW-🇱🇹LT_339, server: 211.72.35.157, port: 3389, type: trojan, password: 8b475d9e868e43e0, skip-cert-verify: true}
-  - {name: Relay_🇺🇦UA-🇺🇦UA_341, server: v2cross.com.04.v2ce.com, port: 443, type: trojan, password: vGWCNNfBHwSY6m6M, skip-cert-verify: true}
+  - {name: 🇺🇦 Relay_🇺🇦UA-🇺🇦UA_341, server: v2cross.com.04.v2ce.com, port: 443, type: trojan, password: vGWCNNfBHwSY6m6M, skip-cert-verify: true}
   - {name: 🇺🇸 Relay_🇺🇸US-🇸🇬SG_482, server: sg.liangyuandian.top, port: 443, type: trojan, password: 53f20cd4-b381-4a80-8059-7bcd484bbb52, skip-cert-verify: true}
   - {name: 🇺🇸 Relay_🇺🇸US-🇺🇸US_483, server: kr05.wangxd.life, port: 3052, type: trojan, password: 3a2c0c6c-9ee5-c05f-c951-fcd73831983e, skip-cert-verify: true}
   - {name: 🇺🇸 Relay_🇺🇸US-🇺🇸US_484, server: jgwdj4.gaox.ml, port: 443, type: trojan, password: c09eb137-bf68-4658-84e0-102d94b74168, skip-cert-verify: true}
@@ -1800,7 +1796,7 @@
   - {name: 🇯🇵 _JP_日本_11, server: 85.208.108.60, port: 5500, type: ss, cipher: aes-256-gcm, password: KixLvKzwjekG00rm}
   - {name: 🇺🇸 _US_美国->🇳🇱_NL_荷兰, server: 104.17.103.249, port: 2086, type: vmess, uuid: ddcd66fd-c716-439c-9ab8-2adb1400ff48, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /aries}}
   - {name: 🇺🇸 _US_美国_4, server: 172.67.199.34, port: 2053, type: vmess, uuid: 8947fbe5-c1c7-4716-8564-2092ce776f92, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /DQsafRJn/}}
-  - {name: _UA_乌克兰, server: 45.80.111.169, port: 8880, type: vmess, uuid: e3dba91f-b31c-473a-8f17-92e1dedda38f, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
+  - {name: 🇺🇦 _UA_乌克兰, server: 45.80.111.169, port: 8880, type: vmess, uuid: e3dba91f-b31c-473a-8f17-92e1dedda38f, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
   - {name: 🇩🇪 _DE_德国_2, server: 165.227.175.88, port: 28164, type: vmess, uuid: eba8ccf5-5ab9-4b6b-de4b-83ab920c1005, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /}}
   - {name: 🇯🇵 _JP_日本_12, server: 85.208.108.60, port: 5004, type: ss, cipher: aes-256-gcm, password: g5MeD6Ft3CWlJId}
   - {name: 🇭🇰 _CN_中国->🇭🇰_HK_香港_4, server: cm1.jcnode.top, port: 30000, type: vmess, uuid: 26fa6937-cc38-42ce-9cbc-02836d324f56, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /, headers: {Host: cm1.jcnode.top}}}
@@ -2004,6 +2000,7 @@
   - {name: 🇺🇸 _BZ_伯利兹->🇺🇸_US_美国_2, server: 203.30.191.192, port: 443, type: vmess, uuid: 56a2188b-2ab7-402c-b9b8-34847fdf0958, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /5QNROSRV}}
   - {name: 🇨🇾 _CY_塞浦路斯_2, server: 203.24.108.8, port: 443, type: vmess, uuid: 40d496a6-ceeb-4096-baeb-4cc52b205621, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /ECTCJ0DF}}
   - {name: 🇺🇸 +_US_美国_4, server: 52.13.16.81, port: 443, type: ss, cipher: aes-256-cfb, password: amazonskr05}
+  - {name: "@BINNER_IRAN_2", server: mt2.qowch.com, port: 443, type: vless, uuid: a61eb3a2-1adb-48cb-ab46-ce225769de16, tls: true, tfo: false, skip-cert-verify: true, servername: android-club.ir, network: ws, ws-opts: {path: "users?ed=2048", headers: {Host: mt2.qowch.com}}}
   - {name: 🇯🇵 +_JP_日本_10, server: 85.208.108.60, port: 5600, type: ss, cipher: aes-256-gcm, password: Y6R9pAtvxxzmGC}
   - {name: 🇯🇵 +_JP_日本_11, server: 85.208.108.60, port: 8888, type: ss, cipher: aes-256-gcm, password: Y6R9pAtvxxzmGC}
   - {name: 🇯🇵 +_JP_日本_12, server: 85.208.108.60, port: 5001, type: ss, cipher: aes-256-gcm, password: Y6R9pAtvxxzmGC}
@@ -2394,17 +2391,19 @@
   - {name: "@VMESSIRANکانالتلگرام_18", server: de-1.wumaojichang.ml, port: 35769, type: vmess, uuid: d3978bd0-dade-4181-81de-bae3091339f1, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /de-1.wumaojichang.ml, headers: {Host: de-1.wumaojichang.ml}}}
   - {name: "@VMESSIRANکانالتلگرام_19", server: v48.idcloudhost.de, port: 80, type: vmess, uuid: 00974d71-032f-4f5c-941b-612fb426252a, alterId: 0, cipher: auto, tls: false, skip-cert-verify: true, network: ws, ws-opts: {path: /, headers: {Host: v48.idcloudhost.de}}}
   - {name: 🇨🇦 @vpn_proxy66🇨🇦CA, server: 196.247.59.156, port: 806, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
-  - {name: "@vpn_proxy66🇬🇧GB1", server: 212.102.53.78, port: 443, type: ss, cipher: aes-128-gcm, password: shadowsocks}
+  - {name: 🇬🇧 @vpn_proxy66🇬🇧GB1, server: 212.102.53.78, port: 443, type: ss, cipher: aes-128-gcm, password: shadowsocks}
   - {name: 🇷🇺 @vpn_proxy66🇷🇺RU, server: 79.133.109.56, port: 1036, type: ss, cipher: chacha20-ietf-poly1305, password: )1N1E6v0SU_rGTpg}
-  - {name: "@vpn_proxy66🇺🇸US01", server: 144.168.60.70, port: 252, type: ss, cipher: aes-256-cfb, password: bwhskrskr03}
-  - {name: "@vpn_proxy66🇺🇸US02", server: 93.179.112.70, port: 253, type: ss, cipher: aes-256-cfb, password: bwhskrskr06}
-  - {name: "@vpn_proxy66🇺🇸US03", server: 198.181.56.163, port: 238, type: ss, cipher: aes-256-cfb, password: bwhskrskr05}
-  - {name: "@vpn_proxy66🇺🇸US04", server: 172.96.192.58, port: 254, type: ss, cipher: aes-256-cfb, password: bwhskrskr03}
-  - {name: "@vpn_proxy66🇺🇸US5", server: 97.64.31.80, port: 247, type: ss, cipher: aes-256-cfb, password: bwhskrskr03}
-  - {name: "@vpn_proxy66🇺🇸US6", server: 162.251.61.221, port: 809, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
-  - {name: "@vpn_proxy66🇺🇸US7", server: 162.251.61.221, port: 805, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
-  - {name: 🇩🇪 Germany - Hetzner - 1, server: z6.gozargah.one, port: 443, type: trojan, password: fc417d14-f39a-47b7-9e91-ed79825315b3, sni: z6.gozargah.one, skip-cert-verify: true}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US01, server: 144.168.60.70, port: 252, type: ss, cipher: aes-256-cfb, password: bwhskrskr03}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US02, server: 93.179.112.70, port: 253, type: ss, cipher: aes-256-cfb, password: bwhskrskr06}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US03, server: 198.181.56.163, port: 238, type: ss, cipher: aes-256-cfb, password: bwhskrskr05}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US04, server: 172.96.192.58, port: 254, type: ss, cipher: aes-256-cfb, password: bwhskrskr03}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US5, server: 97.64.31.80, port: 247, type: ss, cipher: aes-256-cfb, password: bwhskrskr03}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US6, server: 162.251.61.221, port: 809, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
+  - {name: 🇺🇸 @vpn_proxy66🇺🇸US7, server: 162.251.61.221, port: 805, type: ss, cipher: chacha20-ietf-poly1305, password: G!yBwPWH3Vao}
+  - {name: 🇩🇪 Germany - Hetzner - 1, server: z6.gozargah.one, port: 443, type: trojan, password: fc417d14-f39a-47b7-9e91-ed79825315b3, sni: z6.gozargah.one, alpn: [http%2F1.1], skip-cert-verify: true}
   - {name: 🇩🇪 Germany - Hetzner - 2, server: z9.gozargah.one, port: 443, type: trojan, password: bcf96c9b-30bf-4ab0-bc28-6076218f2a14, sni: z9.gozargah.one, skip-cert-verify: true}
+  - {name: 🇩🇪 Germany - 1, server: 172.64.144.94, port: 443, type: vless, uuid: 750c8368-d447-240c-df40-8b31b81f0fe4, tls: true, tfo: false, skip-cert-verify: true, servername: sadday7.online, network: ws, ws-opts: {path: /hntyws, headers: {Host: sadday7.online}}}
+  - {name: 🇩🇪 Germany - 2, server: goodfamily8.site, port: 443, type: vless, uuid: 143936f6-a026-c319-11e3-76f85363617e, tls: true, tfo: false, skip-cert-verify: true, servername: goodfamily8.site, network: ws, ws-opts: {path: /dbxxws, headers: {Host: goodfamily8.site}}}
   - {name: 🇺🇸 USA 🇺🇸 Harrisburg, server: 23.237.33.106, port: 443, type: vmess, uuid: 176b598f-445b-41ac-9d2a-430c5c4df26a, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, servername: clash1.trump2023.net, network: ws, ws-opts: {path: /dongtaiwang.com, headers: {Host: clash1.trump2023.net}}}
   - {name: 🇩🇪 Germany - Cloudflare, server: 172.67.178.55, port: 443, type: vmess, uuid: 0145bfef-aa53-416f-90d4-8634295dab57, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, servername: www.aoopmiss.cf, network: ws, ws-opts: {path: /live, headers: {Host: www.aoopmiss.cf}}}
   - {name: 🇺🇸 USA 🇺🇸 Los Angeles, server: 38.72img.xyz, port: 443, type: vmess, uuid: 81d93f62-15a2-4994-adb9-0b5d906aac7e, alterId: 0, cipher: auto, tls: true, skip-cert-verify: true, network: ws, ws-opts: {path: /, headers: {Host: 38.72img.xyz}}}
