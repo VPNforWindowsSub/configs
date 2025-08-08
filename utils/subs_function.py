@@ -8,6 +8,12 @@ import geoip2.database
 import concurrent.futures
 
 def resolve_domain(server_name):
+    """
+    Resolves a single domain name to an IP address.
+    Returns the original name and the resolved IP.
+    If resolution fails for any reason, it returns the original name for both,
+    ensuring the main process never crashes.
+    """
     try:
         if all(c in '0123456789.' for c in server_name):
              return server_name, server_name
@@ -132,6 +138,14 @@ class subs_function:
             'RELAY': '🏁',
             'NOWHERE': '🇦🇶',
         }
+
+        COUNTRY_NAME_MAPPING = {
+            'United States': 'USA',
+            'United Kingdom': 'UK',
+            'Hong Kong': 'Hong-Kong',
+            'Russian Federation': 'Russia',
+            'Turkey': 'Turkey'
+        }
         
         exclude_list_of_countries = ['IL']
         
@@ -166,26 +180,37 @@ class subs_function:
                 if isinstance(proxy, list): proxy = proxy[0]
 
                 server = str(proxy['server'])
-                ip = resolved_ips.get(server, server) # Use pre-resolved IP
+                ip = resolved_ips.get(server, server)
 
                 try:
                     response = ip_reader.country(ip)
                     country_code = response.country.iso_code
+                    country_name = response.country.name
+                    if not country_name:
+                        country_name = country_code or 'Unknown'
                 except Exception:
                     ip = '0.0.0.0'
                     country_code = 'NOWHERE'
+                    country_name = 'Unknown'
 
-                if country_code == 'CLOUDFLARE': country_code = 'RELAY'
-                elif country_code == 'PRIVATE': country_code = 'RELAY'
+                if country_code == 'CLOUDFLARE':
+                    country_code = 'RELAY'
+                    country_name = 'Relay'
+                elif country_code == 'PRIVATE':
+                    country_code = 'RELAY'
+                    country_name = 'Relay'
                 
                 name_emoji = emoji.get(country_code, emoji['NOWHERE'])
 
+                country_name_to_use = COUNTRY_NAME_MAPPING.get(country_name, country_name)
+                country_name_formatted = country_name_to_use.replace(' ', '-')
+                
                 if total_proxies >= 9999:
-                    proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>5d}'
+                    proxy['name'] = f'{name_emoji}{country_name_formatted}-{index:0>5d}'
                 elif total_proxies >= 999:
-                    proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>4d}'
+                    proxy['name'] = f'{name_emoji}{country_name_formatted}-{index:0>4d}'
                 else:
-                    proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>3d}'
+                    proxy['name'] = f'{name_emoji}{country_name_formatted}-{index:0>3d}'
 
                 c_proxy["c_clash"] = proxy
                 
@@ -194,7 +219,7 @@ class subs_function:
 
         print("  Step 2.3 COMPLETE. All proxies renamed.", flush=True)
         return list(filter(lambda c: c not in excluded_proxies, corresponding_proxies))
-
+    
     def fix_proxies_duplication(corresponding_proxies: []):
         print(f"Starting fast de-duplication on {len(corresponding_proxies)} nodes...", flush=True)
         
