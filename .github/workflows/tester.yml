@@ -1,0 +1,227 @@
+# .github/workflows/tester.yml
+
+name: Test Proxies
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 */6 * * *" # Runs every 6 hours
+
+jobs:
+  test-and-sort-proxies:
+    name: Test and Sort Proxies
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Python Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geoip2
+
+      - name: Download GeoLite2 Country Database
+        run: wget -O utils/GeoLite2-Country.mmdb https://git.io/GeoLite2-Country.mmdb
+
+      - name: Prepare Proxy List from Local File
+        run: |
+          echo "Preparing proxy list from local file: sub/sub_merge_base64.txt"
+          echo "Decoding the list to raw proxy links..."
+          base64 -d ./sub/sub_merge_base64.txt > proxies.txt
+          echo "Total proxies prepared for testing: $(wc -l < proxies.txt)"
+
+      - name: Create Full Sing-Box Config and Tag Map
+        run: |
+          cat <<'EOF' > convert_to_singbox.py
+          import json
+          import urllib.parse
+          import sys
+          import base64
+
+          INPUT_FILE = 'proxies.txt'
+          CONFIG_OUTPUT_FILE = 'singbox_config.json'
+          MAP_OUTPUT_FILE = 'tag_map.json'
+
+          def parse_vless(link, index):
+              at_split = link.split('@')
+              if len(at_split) > 1:
+                  server_part = at_split[1].split('?')[0].split('#')[0]
+                  if ':' in server_part and ']:' not in server_part and server_part.count(':') > 1:
+                      last_colon_index = server_part.rfind(':')
+                      hostname = server_part[:last_colon_index]
+                      port = int(server_part[last_colon_index+1:])
+                      parsed_url = urllib.parse.urlparse(link)
+                  else:
+                      parsed_url = urllib.parse.urlparse(link)
+                      hostname = parsed_url.hostname
+                      port = parsed_url.port
+              else:
+                  raise ValueError("Invalid VLESS link structure")
+
+              params = urllib.parse.parse_qs(parsed_url.query)
+              
+              original_tag = urllib.parse.unquote(parsed_url.fragment) if parsed_url.fragment else f"proxy-{index}"
+              safe_tag = f"proxy-{index}"
+
+              config = {
+                  "type": "vless", "tag": safe_tag, "server": hostname,
+                  "server_port": port, "uuid": parsed_url.username
+              }
+
+              if params.get('security', [''])[0] == 'tls':
+                  config["tls"] = {"enabled": True, "insecure": True, "server_name": params.get('sni', [hostname])[0]}
+
+              if params.get('type', [''])[0] == 'ws':
+                  ws_opts = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [hostname])[0]}}
+                  config["transport"] = {"type": "ws", **ws_opts}
+              
+              return config, safe_tag, original_tag
+
+          def parse_vmess(link, index):
+              encoded_part = link.replace("vmess://", "")
+              encoded_part += '=' * (-len(encoded_part) % 4)
+              decoded_json = json.loads(base64.b64decode(encoded_part).decode())
+
+              original_tag = decoded_json.get('ps', f"proxy-{index}")
+              safe_tag = f"proxy-{index}"
+
+              config = {
+                  "type": "vmess", "tag": safe_tag, "server": decoded_json.get('add'),
+                  "server_port": int(decoded_json.get('port')), "uuid": decoded_json.get('id'),
+                  "security": decoded_json.get('scy', 'auto'), "alter_id": decoded_json.get('aid', 0)
+              }
+
+              if decoded_json.get('tls', '') == 'tls':
+                  config["tls"] = {"enabled": True, "insecure": True, "server_name": decoded_json.get('sni', decoded_json.get('add'))}
+
+              if decoded_json.get('net', '') == 'ws':
+                  ws_opts = {"path": decoded_json.get('path', '/'), "headers": {"Host": decoded_json.get('host', decoded_json.get('add'))}}
+                  config["transport"] = {"type": "ws", **ws_opts}
+
+              return config, safe_tag, original_tag
+
+          def parse_ss(link, index):
+              parsed_url = urllib.parse.urlparse(link)
+              original_tag = urllib.parse.unquote(parsed_url.fragment) if parsed_url.fragment else f"proxy-{index}"
+              safe_tag = f"proxy-{index}"
+
+              if parsed_url.username and parsed_url.hostname:
+                  user_info_part, server_part = parsed_url.netloc.rsplit('@', 1)
+                  method, password = urllib.parse.unquote(user_info_part).split(':', 1)
+                  server, port = server_part.split(':', 1)
+              else:
+                  encoded_part = parsed_url.netloc
+                  encoded_part += '=' * (-len(encoded_part) % 4)
+                  decoded_part = base64.urlsafe_b64decode(encoded_part).decode()
+                  
+                  user_info, server_info = decoded_part.rsplit('@', 1)
+                  method, password = user_info.split(':', 1)
+                  server, port = server_info.split(':', 1)
+
+              config = {
+                  "type": "shadowsocks", "tag": safe_tag, "server": server,
+                  "server_port": int(port), "method": method, "password": password
+              }
+              return config, safe_tag, original_tag
+
+          def parse_trojan(link, index):
+              parsed_url = urllib.parse.urlparse(link)
+              params = urllib.parse.parse_qs(parsed_url.query)
+
+              original_tag = urllib.parse.unquote(parsed_url.fragment) if parsed_url.fragment else f"proxy-{index}"
+              safe_tag = f"proxy-{index}"
+
+              config = {
+                  "type": "trojan", "tag": safe_tag, "server": parsed_url.hostname,
+                  "server_port": int(parsed_url.port), "password": parsed_url.username
+              }
+              
+              config["tls"] = {"enabled": True, "insecure": True, "server_name": params.get('sni', [parsed_url.hostname])[0]}
+              
+              return config, safe_tag, original_tag
+
+          parsers = {
+              'vless://': parse_vless, 'vmess://': parse_vmess,
+              'ss://': parse_ss, 'trojan://': parse_trojan
+          }
+
+          outbounds = []; tag_map = {}; skipped_count = 0
+          try:
+              with open(INPUT_FILE, 'r', encoding='utf-8') as f:
+                  links = [line.strip() for line in f if line.strip()]
+              
+              print(f"Read {len(links)} total links. Processing...")
+              
+              for i, link in enumerate(links):
+                  parser = None
+                  for prefix, p_func in parsers.items():
+                      if link.startswith(prefix):
+                          parser = p_func
+                          break
+                  
+                  if parser:
+                      try:
+                          proxy_config, safe_tag, original_tag = parser(link, i + 1)
+                          if proxy_config:
+                              outbounds.append(proxy_config)
+                              tag_map[safe_tag] = original_tag
+                      except Exception:
+                          skipped_count += 1
+                  else:
+                      skipped_count += 1
+
+          except FileNotFoundError:
+              print(f"Error: Input file '{INPUT_FILE}' not found.", file=sys.stderr)
+              sys.exit(1)
+
+          final_config = {
+              "log": {"level": "warn"},
+              "inbounds": [{"type": "tun", "tag": "tun-in"}],
+              "outbounds": outbounds
+          }
+
+          with open(CONFIG_OUTPUT_FILE, 'w') as f: json.dump(final_config, f, indent=2)
+          with open(MAP_OUTPUT_FILE, 'w', encoding='utf-8') as f: json.dump(tag_map, f, indent=2, ensure_ascii=False)
+
+          print(f"Successfully processed {len(outbounds)} nodes. Skipped {skipped_count} unsupported or invalid links.")
+          print(f"Created config '{CONFIG_OUTPUT_FILE}' and map '{MAP_OUTPUT_FILE}'.")
+          EOF
+          python convert_to_singbox.py
+
+      - name: Download and Prepare singtools
+        run: |
+          echo "Downloading singtools..."
+          wget -O singtools.tar.gz https://github.com/Kdwkakcs/singtools/releases/download/vv0.2.0/singtools_linux32.tar.gz
+          echo "Extracting singtools..."
+          tar -xzvf singtools.tar.gz
+          chmod +x ./singtools
+          echo "singtools is ready."
+          ./singtools -v
+
+      - name: Run Speed Test with singtools
+        run: |
+          echo "Starting the speed test with full sing-box config..."
+          ./singtools test -i singbox_config.json -c utils/speedtest/config.json -o out.json -m meta.json -d -r -e warn -f ""
+
+      - name: Process Test Results
+        run: |
+          echo "Processing metadata, sorting, and creating geo-balanced lists..."
+          python utils/speedtest/process_results.py
+
+      - name: Commit and Push Results
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git pull origin ${{ github.ref_name }}
+          git add Eternity Eternity.txt full.txt full_base64.txt
+          if ! git diff --staged --quiet; then
+            git commit -m "✅ Update geo-balanced proxy lists - $(date -u)"
+            git push
+          else
+            echo "No changes to commit."
+          fi
