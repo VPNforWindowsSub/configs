@@ -5,7 +5,26 @@ import json
 import base64
 import socket
 import geoip2.database
+import concurrent.futures
 
+def resolve_domain(server_name):
+    """
+    Resolves a single domain name to an IP address.
+    Returns the original name and the resolved IP.
+    If resolution fails for any reason, it returns the original name for both,
+    ensuring the main process never crashes.
+    """
+    try:
+        # It's already an IP, no need to resolve.
+        if all(c in '0123456789.' for c in server_name):
+             return server_name, server_name
+        # This is the line that can fail.
+        ip = socket.gethostbyname(server_name)
+        return server_name, ip
+    except (socket.gaierror, UnicodeError, Exception):
+        # Catch DNS errors, invalid name errors, and any other unexpected exceptions.
+        # Return the original server name as the "IP" to handle it gracefully.
+        return server_name, server_name
 
 class subs_function:
 
@@ -125,32 +144,40 @@ class subs_function:
         }
         
         exclude_list_of_countries = ['IL']
+        
+        print("  Step 2.1: Collecting unique domain names for resolution...", flush=True)
+        unique_servers = set()
+        for item in corresponding_proxies:
+            proxy = item['c_clash']
+            if isinstance(proxy, list): proxy = proxy[0]
+            server = proxy.get('server', '')
+            if server and not all(c in '0123456789.' for c in server):
+                unique_servers.add(server)
+        print(f"  Found {len(unique_servers)} unique domains to resolve.", flush=True)
+
+        print("  Step 2.2: Resolving domain names concurrently (this may take a moment)...", flush=True)
+        resolved_ips = {}
+        with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
+            future_to_server = {executor.submit(resolve_domain, server): server for server in unique_servers}
+            for future in concurrent.futures.as_completed(future_to_server):
+                server, ip = future.result()
+                resolved_ips[server] = ip
+        print("  Step 2.2 COMPLETE. All domains resolved.", flush=True)
+
+        print("  Step 2.3: Renaming proxies with resolved IPs...", flush=True)
         excluded_proxies = []
+        with geoip2.database.Reader('./utils/Country.mmdb') as ip_reader:
+            total_proxies = len(corresponding_proxies)
+            for (index, c_proxy) in enumerate(corresponding_proxies):
+                if (index + 1) % 5000 == 0:
+                    print(f"  ... Renaming progress: {index + 1}/{total_proxies} nodes processed.", flush=True)
 
-        for (index, c_proxy) in enumerate(corresponding_proxies):
-            proxy = c_proxy['c_clash']
-            # decoded_yaml = yaml.safe_load(proxy)
-            # # for safety i add both scenario
-            # if type(decoded_yaml) == list:
-            #     proxy = decoded_yaml[0]
-            # else:
-            #     proxy = decoded_yaml
+                proxy = c_proxy['c_clash']
+                if isinstance(proxy, list): proxy = proxy[0]
 
-            if type(proxy) == list:
-                proxy = proxy[0]
+                server = str(proxy['server'])
+                ip = resolved_ips.get(server, server) # Use pre-resolved IP
 
-            server = str(proxy['server'])
-
-            if server.replace('.', '').isdigit():
-                ip = server
-            else:
-                try:
-                    # https://cloud.tencent.com/developer/article/1569841
-                    ip = socket.gethostbyname(server)
-                except Exception:
-                    ip = server
-
-            with geoip2.database.Reader('./utils/Country.mmdb') as ip_reader:
                 try:
                     response = ip_reader.country(ip)
                     country_code = response.country.iso_code
@@ -158,116 +185,52 @@ class subs_function:
                     ip = '0.0.0.0'
                     country_code = 'NOWHERE'
 
-            if country_code == 'CLOUDFLARE':
-                country_code = 'RELAY'
-            elif country_code == 'PRIVATE':
-                country_code = 'RELAY'
+                if country_code == 'CLOUDFLARE': country_code = 'RELAY'
+                elif country_code == 'PRIVATE': country_code = 'RELAY'
                 
-            if country_code in emoji:
-                name_emoji = emoji[country_code]
-            else:
-                name_emoji = emoji['NOWHERE']
+                name_emoji = emoji.get(country_code, emoji['NOWHERE'])
 
-            # proxy_index = proxies_list.index(proxy)
-            if len(corresponding_proxies) >= 999:
-                proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>4d}'
-            elif len(corresponding_proxies) <= 999 and len(corresponding_proxies) > 99:
-                proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>3d}'
-            elif len(corresponding_proxies) <= 99:
-                proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>2d}'
+                if total_proxies >= 9999:
+                    proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>5d}'
+                elif total_proxies >= 999:
+                    proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>4d}'
+                else:
+                    proxy['name'] = f'{name_emoji}{country_code}-{ip}-{index:0>3d}'
 
-            # corresponding_proxies[index]["c_clash"] = f"  - {proxy}"
-            corresponding_proxies[index]["c_clash"] = proxy
-            
-            # add exclude list
-            if country_code in exclude_list_of_countries or name_emoji == emoji['NOWHERE']:
-                excluded_proxies.append(c_proxy)
+                c_proxy["c_clash"] = proxy
+                
+                if country_code in exclude_list_of_countries or name_emoji == emoji['NOWHERE']:
+                    excluded_proxies.append(c_proxy)
 
+        print("  Step 2.3 COMPLETE. All proxies renamed.", flush=True)
         return list(filter(lambda c: c not in excluded_proxies, corresponding_proxies))
 
     def fix_proxies_duplication(corresponding_proxies: []):
-        print("\nBefore was " + str(corresponding_proxies.__len__()) + "\n")
-        begin = 0
-        raw_length = len(corresponding_proxies)
-        length = len(corresponding_proxies)
-        while begin < length:
-            if (begin + 1) == 1:
-                print(f'\n-----Restart-----\nStarting Quantity {length}')
-            elif (begin + 1) % 100 == 0:
-                print(
-                    f'Current Benchmark {begin + 1}-----Current Quantity {length}')
-            elif (begin + 1) == length and (begin + 1) % 100 != 0:
-                repetition = raw_length - length
-                print(
-                    f'Current Benchmark {begin + 1}-----Current Quantity {length}\nNumber of Repetition {repetition}\n-----Deduplication Completed-----\n')
-            # proxy_compared = yaml.safe_load(
-            #     corresponding_proxies[begin]["c_clash"])
-            proxy_compared = corresponding_proxies[begin]["c_clash"]
-            if type(proxy_compared) == list:
-                proxy_compared = proxy_compared[0]
+        print(f"Starting fast de-duplication on {len(corresponding_proxies)} nodes...", flush=True)
+        
+        seen_fingerprints = set()
+        unique_proxies = []
+        
+        for item in corresponding_proxies:
+            proxy = item.get("c_clash")
+            if isinstance(proxy, list):
+                proxy = proxy[0] if proxy else {}
 
-            begin_2 = begin + 1
-            while begin_2 <= (length - 1):
-                check = False
-                # correspond_next_proxy = yaml.safe_load(
-                #     corresponding_proxies[begin_2]["c_clash"])
-                correspond_next_proxy = corresponding_proxies[begin_2]["c_clash"]
-                if type(correspond_next_proxy) == list:
-                    correspond_next_proxy = correspond_next_proxy[0]
-                if proxy_compared['server'] == correspond_next_proxy['server'] and proxy_compared['port'] == correspond_next_proxy['port']:
-                    check = True
-                    if 'net' in correspond_next_proxy and 'net' in proxy_compared:
-                        if proxy_compared['net'] != correspond_next_proxy['net']:
-                            check = False
+            fingerprint = (
+                proxy.get('server'),
+                proxy.get('port'),
+                proxy.get('type'),
+                proxy.get('cipher'),
+                proxy.get('network'),
+                proxy.get('obfs'),
+                json.dumps(proxy.get('ws-opts', {}), sort_keys=True)
+            )
 
-                    if 'tls' in correspond_next_proxy and 'tls' in proxy_compared:
-                        if proxy_compared['tls'] != correspond_next_proxy['tls']:
-                            check = False
+            if fingerprint not in seen_fingerprints:
+                seen_fingerprints.add(fingerprint)
+                unique_proxies.append(item)
 
-                    #if 'id' in correspond_next_proxy and 'id' in proxy_compared:
-                    #    if proxy_compared['id'] != correspond_next_proxy['id']:
-                    #        check = False
-
-                    if 'ws-opts' in correspond_next_proxy and 'ws-opts' in proxy_compared:
-                        if proxy_compared['ws-opts'] != correspond_next_proxy['ws-opts']:
-                            check = False
-
-                    #if 'uuid' in correspond_next_proxy and 'uuid' in proxy_compared:
-                    #    if proxy_compared['uuid'] != correspond_next_proxy['uuid']:
-                    #        check = False
-
-                    #if 'password' in correspond_next_proxy and 'password' in proxy_compared:
-                    #    if proxy_compared['password'] != correspond_next_proxy['password']:
-                    #        check = False
-
-                    if 'cipher' in correspond_next_proxy and 'cipher' in proxy_compared:
-                        if proxy_compared['cipher'] != correspond_next_proxy['cipher']:
-                            check = False
-
-                    if 'type' in correspond_next_proxy and 'type' in proxy_compared:
-                        if proxy_compared['type'] != correspond_next_proxy['type']:
-                            check = False
-
-                    # due to conversion we could have udp off or on for same proxies
-                    # if 'udp' in correspond_next_proxy and 'udp' in proxy_compared:
-                    #     if proxy_compared['udp'] != correspond_next_proxy['udp']:
-                    #         check = False
-
-                    if 'network' in correspond_next_proxy and 'network' in proxy_compared:
-                        if proxy_compared['network'] != correspond_next_proxy['network']:
-                            check = False
-
-                    if 'obfs' in correspond_next_proxy and 'obfs' in proxy_compared:
-                        if proxy_compared['obfs'] != correspond_next_proxy['obfs']:
-                            check = False
-
-                    if check:
-                        corresponding_proxies.pop(begin_2)
-                        length -= 1
-
-                begin_2 += 1
-            begin += 1
-
-        print("\nNow is " + str(corresponding_proxies.__len__()) + "\n")
-
-        return corresponding_proxies
+        removed_count = len(corresponding_proxies) - len(unique_proxies)
+        print(f"Fast de-duplication finished. Removed {removed_count} duplicates. Final count: {len(unique_proxies)}", flush=True)
+        
+        return unique_proxies
