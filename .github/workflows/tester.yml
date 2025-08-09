@@ -218,7 +218,7 @@ jobs:
           git pull origin ${{ github.ref_name }}
           git add Eternity Eternity.txt full.txt full_base64.txt
           if ! git diff --staged --quiet; then
-            git commit -m "✔️ Update proxy lists"
+            git commit -m "✔️ Updated proxy lists"
             git push
           else
             echo "No changes to commit."
