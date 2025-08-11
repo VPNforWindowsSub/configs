@@ -201,11 +201,11 @@ class subs_function:
                 country_name_formatted = country_name_to_use.replace(' ', '-')
                 
                 if total_proxies >= 9999:
-                    proxy['name'] = f'{name_emoji}{country_name_formatted}-{index:0>5d}'
+                    proxy['name'] = f'{name_emoji} {country_name_formatted}-{index:0>5d}'
                 elif total_proxies >= 999:
-                    proxy['name'] = f'{name_emoji}{country_name_formatted}-{index:0>4d}'
+                    proxy['name'] = f'{name_emoji} {country_name_formatted}-{index:0>4d}'
                 else:
-                    proxy['name'] = f'{name_emoji}{country_name_formatted}-{index:0>3d}'
+                    proxy['name'] = f'{name_emoji} {country_name_formatted}-{index:0>3d}'
 
                 c_proxy["c_clash"] = proxy
                 
