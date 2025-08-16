@@ -147,9 +147,10 @@ class subs_function:
         print("  Step 2.1: Collecting unique domain names for resolution...", flush=True)
         unique_servers = set()
         for item in corresponding_proxies:
-            proxy = item['c_clash']
-            if isinstance(proxy, list): proxy = proxy[0]
-            server = proxy.get('server', '')
+            proxy = item.get('c_clash', {})
+            if isinstance(proxy, list):
+                proxy = proxy[0] if proxy else {}
+            server = str(proxy.get('server', ''))
             if server and not all(c in '0123456789.' for c in server):
                 unique_servers.add(server)
         print(f"  Found {len(unique_servers)} unique domains to resolve.", flush=True)
