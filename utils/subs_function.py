@@ -172,10 +172,11 @@ class subs_function:
                 if (index + 1) % 5000 == 0:
                     print(f"  ... Renaming progress: {index + 1}/{total_proxies} nodes processed.", flush=True)
 
-                proxy = c_proxy['c_clash']
-                if isinstance(proxy, list): proxy = proxy[0]
+                proxy = c_proxy.get('c_clash', {})
+                if isinstance(proxy, list):
+                    proxy = proxy[0] if proxy else {}
 
-                server = str(proxy['server'])
+                server = str(proxy.get('server', ''))
                 ip = resolved_ips.get(server, server)
 
                 try:
