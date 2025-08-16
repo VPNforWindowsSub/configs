@@ -224,7 +224,7 @@ class subs_function:
         unique_proxies = []
         
         for item in corresponding_proxies:
-            proxy = item.get("c_clash")
+            proxy = item.get("c_clash", {})
             if isinstance(proxy, list):
                 proxy = proxy[0] if proxy else {}
 
