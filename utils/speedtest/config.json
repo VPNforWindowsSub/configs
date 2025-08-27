@@ -2,11 +2,10 @@
   "speedtestMode": "all",
   "sortMethod": "speed",
   "pingMethod": "http",
-  "downloadUrl": "https://speed.cloudflare.com/__down?bytes=5000000",
-  "concurrency": 40,
+  "concurrency": 32,
   "timeout": 15,
-  "downloadTimeout": 30,
-  "downloadRetries": 1,
+  "retryAttempts": 2,
+  "downloadUrl": "https://speed.cloudflare.com/__down?bytes=4000000",
   "logLevel": "WARN",
   "removeDup": true
 }
