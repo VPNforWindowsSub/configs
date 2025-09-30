@@ -10,7 +10,7 @@ import re
 META_FILE = 'meta.json'
 TAG_MAP_FILE = 'tag_map.json'
 GEOIP_DB = 'utils/GeoLite2-Country.mmdb'
-BLOCKED_COUNTRIES = ['IR', 'CN']
+BLOCKED_COUNTRIES = ['IR']
 
 # Output files
 FULL_OUTPUT_FILE = 'full.txt'
