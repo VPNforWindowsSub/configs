@@ -213,6 +213,28 @@ def process_and_save_results():
     if removed_count > 0:
         print(f"Filtered out {removed_count} nodes from blocked countries ({', '.join(BLOCKED_COUNTRIES)}).")
 
+
+    print("Deduplicating proxies by configuration...")
+    def get_proxy_signature(link):
+        """Extract the proxy configuration without the tag for deduplication."""
+        if '#' in link:
+            return link.split('#')[0]
+        return link
+
+    seen_signatures = {}
+    for node in processed_nodes:
+        signature = get_proxy_signature(node['link'])
+        
+        if signature not in seen_signatures:
+            seen_signatures[signature] = node
+        else:
+            if node['health_score'] > seen_signatures[signature]['health_score']:
+                seen_signatures[signature] = node
+
+    dup_removed_count = len(processed_nodes) - len(seen_signatures)
+    processed_nodes = list(seen_signatures.values())
+    print(f"Removed {dup_removed_count} duplicate configurations, keeping highest health_score instances.")
+
     if not processed_nodes:
         print("No valid nodes left after filtering. Aborting.")
         for f in [FULL_OUTPUT_FILE, FULL_OUTPUT_BASE64_FILE, ETERNITY_OUTPUT_FILE, ETERNITY_OUTPUT_BASE64_FILE]: open(f, 'w').close()
