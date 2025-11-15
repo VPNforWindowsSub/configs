@@ -189,68 +189,68 @@ jobs:
           EOF
           python convert_to_singbox.py
 
-    - name: Filter Blocked Countries Before Testing
-            run: |
-          python3 << 'EOF'
-import json
-import socket
-import geoip2.database
+      - name: Filter Blocked Countries Before Testing
+        run: |
+          python3 <<'EOF'
+          import json
+          import socket
+          import geoip2.database
 
-BLOCKED_COUNTRIES = ['IR', 'IL', 'BH']
+          BLOCKED_COUNTRIES = ['IR', 'IL', 'BH']
 
-with open('singbox_config.json', 'r') as f:
-    config = json.load(f)
+          with open('singbox_config.json', 'r') as f:
+              config = json.load(f)
 
-with open('tag_map.json', 'r') as f:
-    tag_map = json.load(f)
+          with open('tag_map.json', 'r') as f:
+              tag_map = json.load(f)
 
-original_count = len(config['outbounds'])
-filtered_outbounds = []
-filtered_tag_map = {}
+          original_count = len(config['outbounds'])
+          filtered_outbounds = []
+          filtered_tag_map = {}
 
-with geoip2.database.Reader('utils/GeoLite2-Country.mmdb') as reader:
-    for outbound in config['outbounds']:
-        server = outbound.get('server', '')
-        
-        if server.replace('.', '').isdigit():
-            ip = server
-        else:
-            try:
-                ip = socket.gethostbyname(server)
-            except:
-                ip = None
-        
-        if ip:
-            try:
-                country_code = reader.country(ip).country.iso_code
-                if country_code not in BLOCKED_COUNTRIES:
-                    filtered_outbounds.append(outbound)
-                    tag = outbound.get('tag')
-                    if tag in tag_map:
-                        filtered_tag_map[tag] = tag_map[tag]
-            except:
-                filtered_outbounds.append(outbound)
-                tag = outbound.get('tag')
-                if tag in tag_map:
-                    filtered_tag_map[tag] = tag_map[tag]
-        else:
-            filtered_outbounds.append(outbound)
-            tag = outbound.get('tag')
-            if tag in tag_map:
-                filtered_tag_map[tag] = tag_map[tag]
+          with geoip2.database.Reader('utils/GeoLite2-Country.mmdb') as reader:
+              for outbound in config['outbounds']:
+                  server = outbound.get('server', '')
+                  
+                  if server.replace('.', '').isdigit():
+                      ip = server
+                  else:
+                      try:
+                          ip = socket.gethostbyname(server)
+                      except:
+                          ip = None
+                  
+                  if ip:
+                      try:
+                          country_code = reader.country(ip).country.iso_code
+                          if country_code not in BLOCKED_COUNTRIES:
+                              filtered_outbounds.append(outbound)
+                              tag = outbound.get('tag')
+                              if tag in tag_map:
+                                  filtered_tag_map[tag] = tag_map[tag]
+                      except:
+                          filtered_outbounds.append(outbound)
+                          tag = outbound.get('tag')
+                          if tag in tag_map:
+                              filtered_tag_map[tag] = tag_map[tag]
+                  else:
+                      filtered_outbounds.append(outbound)
+                      tag = outbound.get('tag')
+                      if tag in tag_map:
+                          filtered_tag_map[tag] = tag_map[tag]
 
-config['outbounds'] = filtered_outbounds
+          config['outbounds'] = filtered_outbounds
 
-with open('singbox_config.json', 'w') as f:
-    json.dump(config, f, indent=2)
+          with open('singbox_config.json', 'w') as f:
+              json.dump(config, f, indent=2)
 
-with open('tag_map.json', 'w') as f:
-    json.dump(filtered_tag_map, f, indent=2, ensure_ascii=False)
+          with open('tag_map.json', 'w') as f:
+              json.dump(filtered_tag_map, f, indent=2, ensure_ascii=False)
 
-removed = original_count - len(filtered_outbounds)
-print(f"Filtered out {removed} nodes from blocked countries: {', '.join(BLOCKED_COUNTRIES)}")
-print(f"Remaining nodes for testing: {len(filtered_outbounds)}")
-EOF
+          removed = original_count - len(filtered_outbounds)
+          print(f"Filtered out {removed} nodes from blocked countries: {', '.join(BLOCKED_COUNTRIES)}")
+          print(f"Remaining nodes for testing: {len(filtered_outbounds)}")
+          EOF
 
       - name: Download and Prepare singtools
         run: |
@@ -268,78 +268,78 @@ EOF
           ./singtools test -i singbox_config.json -c utils/speedtest/config.json -o out_pass1.json -m meta_pass1.json -d -r -e warn -f ""
           
           echo "=== Extracting successful nodes for second pass ==="
-          python3 << 'EOF'
-import json
+          python3 <<'EOF'
+          import json
 
-with open('meta_pass1.json', 'r') as f:
-    pass1_meta = json.load(f)
+          with open('meta_pass1.json', 'r') as f:
+              pass1_meta = json.load(f)
 
-successful_tags = [node['tag'] for node in pass1_meta if node.get('avg_speed', 0) > 0]
-print(f"Found {len(successful_tags)} successful nodes from first pass")
+          successful_tags = [node['tag'] for node in pass1_meta if node.get('avg_speed', 0) > 0]
+          print(f"Found {len(successful_tags)} successful nodes from first pass")
 
-with open('out_pass1.json', 'r') as f:
-    pass1_config = json.load(f)
+          with open('out_pass1.json', 'r') as f:
+              pass1_config = json.load(f)
 
-pass2_config = {
-    "log": pass1_config.get("log", {"level": "warn"}),
-    "inbounds": pass1_config.get("inbounds", []),
-    "outbounds": [ob for ob in pass1_config.get("outbounds", []) if ob.get("tag") in successful_tags]
-}
+          pass2_config = {
+              "log": pass1_config.get("log", {"level": "warn"}),
+              "inbounds": pass1_config.get("inbounds", []),
+              "outbounds": [ob for ob in pass1_config.get("outbounds", []) if ob.get("tag") in successful_tags]
+          }
 
-with open('singbox_pass2.json', 'w') as f:
-    json.dump(pass2_config, f, indent=2)
+          with open('singbox_pass2.json', 'w') as f:
+              json.dump(pass2_config, f, indent=2)
 
-print(f"Created pass2 config with {len(pass2_config['outbounds'])} nodes")
-EOF
+          print(f"Created pass2 config with {len(pass2_config['outbounds'])} nodes")
+          EOF
           
           echo "=== SECOND PASS: Latency-only test ==="
-          cat > utils/speedtest/config_pass2.json << 'CONFIGEOF'
-{
-  "speedtestMode": "pingonly",
-  "sortMethod": "ping",
-  "pingMethod": "http",
-  "concurrency": 64,
-  "timeout": 10,
-  "logLevel": "WARN",
-  "removeDup": false
-}
-CONFIGEOF
+          cat > utils/speedtest/config_pass2.json <<'CONFIGEOF'
+          {
+            "speedtestMode": "pingonly",
+            "sortMethod": "ping",
+            "pingMethod": "http",
+            "concurrency": 64,
+            "timeout": 10,
+            "logLevel": "WARN",
+            "removeDup": false
+          }
+          CONFIGEOF
           
           ./singtools test -i singbox_pass2.json -c utils/speedtest/config_pass2.json -o out_pass2.json -m meta_pass2.json -e warn -f ""
           
           echo "=== Merging results ==="
-          python3 << 'EOF'
-import json
+          python3 <<'EOF'
+          import json
 
-with open('meta_pass1.json', 'r') as f:
-    pass1 = json.load(f)
-with open('meta_pass2.json', 'r') as f:
-    pass2 = json.load(f)
+          with open('meta_pass1.json', 'r') as f:
+              pass1 = json.load(f)
+          with open('meta_pass2.json', 'r') as f:
+              pass2 = json.load(f)
 
-pass2_delays = {node['tag']: node.get('delay', 0) for node in pass2}
+          pass2_delays = {node['tag']: node.get('delay', 0) for node in pass2}
 
-merged = []
-for node in pass1:
-    if node.get('avg_speed', 0) > 0:
-        tag = node['tag']
-        delay1 = node.get('delay', 0)
-        delay2 = pass2_delays.get(tag, 0)
-        
-        if delay2 > 0:
-            avg_delay = (delay1 + delay2) / 2
-        else:
-            avg_delay = delay1
-        
-        node['delay'] = avg_delay
-        node['delay_pass1'] = delay1
-        node['delay_pass2'] = delay2
-        merged.append(node)
+          merged = []
+          for node in pass1:
+              if node.get('avg_speed', 0) > 0:
+                  tag = node['tag']
+                  delay1 = node.get('delay', 0)
+                  delay2 = pass2_delays.get(tag, 0)
+                  
+                  if delay2 > 0:
+                      avg_delay = (delay1 + delay2) / 2
+                  else:
+                      avg_delay = delay1
+                  
+                  node['delay'] = avg_delay
+                  node['delay_pass1'] = delay1
+                  node['delay_pass2'] = delay2
+                  merged.append(node)
 
-with open('meta.json', 'w') as f:
-    json.dump(merged, f, indent=2)
+          with open('meta.json', 'w') as f:
+              json.dump(merged, f, indent=2)
 
-print(f"Merged results: {len(merged)} nodes with averaged latency")
-EOF
+          print(f"Merged results: {len(merged)} nodes with averaged latency")
+          EOF
           
           cp out_pass1.json out.json
           echo "Two-pass testing complete!"
