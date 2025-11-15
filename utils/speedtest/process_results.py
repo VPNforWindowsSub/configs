@@ -10,7 +10,7 @@ import re
 META_FILE = 'meta.json'
 TAG_MAP_FILE = 'tag_map.json'
 GEOIP_DB = 'utils/GeoLite2-Country.mmdb'
-BLOCKED_COUNTRIES = ['IR']
+BLOCKED_COUNTRIES = ['IR', 'IL', 'BH']
 
 # Output files
 FULL_OUTPUT_FILE = 'full.txt'
@@ -21,11 +21,13 @@ ETERNITY_OUTPUT_BASE64_FILE = 'Eternity'
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
 TOP_POOL_SIZE = 1000
-NODES_PER_COUNTRY = 1
+# --- THIS IS THE FIX: Define default and country-specific limits ---
+NODES_PER_COUNTRY = 1  # Default for all countries
 COUNTRY_NODE_LIMITS = {
     'TR': 4,
     'CN': 2
 }
+# --- END OF FIX ---
 
 def is_ip_address(address):
     """Checks if a string is a valid IPv4 address."""
@@ -206,6 +208,12 @@ def process_and_save_results():
                     'health_score': node.get('health_score', 0),
                     'country': 'XX'
                 })
+
+    initial_count = len(processed_nodes)
+    processed_nodes = [node for node in processed_nodes if node.get('country') not in BLOCKED_COUNTRIES]
+    removed_count = initial_count - len(processed_nodes)
+    if removed_count > 0:
+        print(f"Filtered out {removed_count} nodes from blocked countries ({', '.join(BLOCKED_COUNTRIES)}).")
 
     if not processed_nodes:
         print("No valid nodes left after filtering. Aborting.")
