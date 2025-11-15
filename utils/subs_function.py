@@ -64,7 +64,7 @@ class subs_function:
             return line 
         return ''
 
-    def fix_proxies_name(corresponding_proxies: []):
+    def fix_proxies_name(corresponding_proxies: list):
         emoji = {
             'AD': '🇦🇩', 'AE': '🇦🇪', 'AF': '🇦🇫', 'AG': '🇦🇬',
             'AI': '🇦🇮', 'AL': '🇦🇱', 'AM': '🇦🇲', 'AO': '🇦🇴',
@@ -217,12 +217,12 @@ class subs_function:
         print("  Step 2.3 COMPLETE. All proxies renamed.", flush=True)
         return list(filter(lambda c: c not in excluded_proxies, corresponding_proxies))
     
-    def fix_proxies_duplication(corresponding_proxies: []):
+    def fix_proxies_duplication(corresponding_proxies: list):
         print(f"Starting fast de-duplication on {len(corresponding_proxies)} nodes...", flush=True)
-        
+
         seen_fingerprints = set()
         unique_proxies = []
-        
+
         for item in corresponding_proxies:
             proxy = item.get("c_clash", {})
             if isinstance(proxy, list):
@@ -232,10 +232,16 @@ class subs_function:
                 proxy.get('server'),
                 proxy.get('port'),
                 proxy.get('type'),
+                proxy.get('uuid'),
+                proxy.get('password'),
                 proxy.get('cipher'),
                 proxy.get('network'),
                 proxy.get('obfs'),
-                json.dumps(proxy.get('ws-opts', {}), sort_keys=True)
+                proxy.get('tls'),
+                proxy.get('sni'),
+                json.dumps(proxy.get('ws-opts', {}), sort_keys=True),
+                json.dumps(proxy.get('grpc-opts', {}), sort_keys=True),
+                json.dumps(proxy.get('reality-opts', {}), sort_keys=True)
             )
 
             if fingerprint not in seen_fingerprints:
@@ -244,5 +250,5 @@ class subs_function:
 
         removed_count = len(corresponding_proxies) - len(unique_proxies)
         print(f"Fast de-duplication finished. Removed {removed_count} duplicates. Final count: {len(unique_proxies)}", flush=True)
-        
+
         return unique_proxies
