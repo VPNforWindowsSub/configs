@@ -21,13 +21,11 @@ ETERNITY_OUTPUT_BASE64_FILE = 'Eternity'
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
 TOP_POOL_SIZE = 1000
-# --- THIS IS THE FIX: Define default and country-specific limits ---
-NODES_PER_COUNTRY = 1  # Default for all countries
+NODES_PER_COUNTRY = 1
 COUNTRY_NODE_LIMITS = {
     'TR': 4,
     'CN': 2
 }
-# --- END OF FIX ---
 
 def is_ip_address(address):
     """Checks if a string is a valid IPv4 address."""
