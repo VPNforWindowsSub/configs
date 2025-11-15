@@ -18,7 +18,9 @@ valid_ss_plugins = ["obfs","v2ray-plugin"]
 
 class subs:
 
-    def get_subs_v3(content_urls: [], output_path="sub_merge", should_cleanup=True, specific_files_cleanup=["05.txt"]):
+    def get_subs_v3(content_urls: list, output_path="sub_merge", should_cleanup=True, specific_files_cleanup=None):
+        if specific_files_cleanup is None:
+            specific_files_cleanup = ["05.txt"]
         if content_urls == []:
             return
 
@@ -76,9 +78,11 @@ class subs:
                                             cl_res = yaml.safe_load(cl)
                                             if cl_res:
                                                 cl_temp = cl_res[0]
-                                                if 'uuid' in cl_temp and cl_temp.get('uuid') and len(cl_temp['uuid']) != 36:
-                                                    bad_lines += 1
-                                                    continue
+                                                if 'uuid' in cl_temp and cl_temp.get('uuid'):
+                                                    uuid_len = len(cl_temp['uuid'])
+                                                    if uuid_len < 32 or uuid_len > 40:
+                                                        bad_lines += 1
+                                                        continue
 
                                                 proxy_type = cl_temp.get('type')
 
@@ -106,7 +110,8 @@ class subs:
                                                         bad_lines += 1
 
                                                 elif proxy_type == "vmess":
-                                                    if cl_temp.get("network") in ["h2", "grpc"] and not cl_temp.get("tls"):
+                                                    network = cl_temp.get("network")
+                                                    if network == "h2" and cl_temp.get("tls") == False:
                                                         bad_lines += 1
                                                     else:
                                                         safe_clash.append(cl_res)
