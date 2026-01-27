@@ -22,7 +22,22 @@ jobs:
           pip install geoip2
 
       - name: Download GeoLite2 Country Database
-        run: wget -O utils/GeoLite2-Country.mmdb https://git.io/GeoLite2-Country.mmdb
+        run: |
+          MAX_RETRIES=2
+          RETRY_COUNT=0
+          PRIMARY_URL="https://git.io/GeoLite2-Country.mmdb"
+          FALLBACK_URL="https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb"
+          OUTPUT_FILE="utils/GeoLite2-Country.mmdb"
+          
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            wget -O "$OUTPUT_FILE" "$PRIMARY_URL" && break
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 3
+          done
+          
+          if [ ! -s "$OUTPUT_FILE" ]; then
+            wget -O "$OUTPUT_FILE" "$FALLBACK_URL" || exit 1
+          fi
 
       - name: Prepare Proxy List from Local File
         run: |
