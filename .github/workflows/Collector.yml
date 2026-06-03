@@ -79,23 +79,148 @@ jobs:
           sleep 2
           
           cat <<'EOF' > utils/chunk_collector.py
-          import sys
-          from get_subs import subs
+          import sys, os, re, json, base64, urllib.parse, yaml, requests
+          from requests.adapters import HTTPAdapter
           from list_merge import sub_merge
-          
+
+          def dict_to_uri(p):
+              try:
+                  ptype = p.get('type', '').lower()
+                  name = urllib.parse.quote(p.get('name', ''))
+                  server = p.get('server', '')
+                  port = p.get('port', '')
+                  if not server or not port: return None
+
+                  if ptype == 'ss':
+                      method = p.get('cipher', p.get('method', ''))
+                      password = p.get('password', '')
+                      cred = base64.b64encode(f"{method}:{password}".encode()).decode('ascii')
+                      return f"ss://{cred}@{server}:{port}#{name}"
+
+                  elif ptype == 'vmess':
+                      v = {
+                          "v": "2", "ps": p.get('name', ''), "add": server, "port": port,
+                          "id": p.get('uuid', ''), "aid": p.get('alterId', 0),
+                          "scy": p.get('cipher', 'auto'), "net": p.get('network', 'tcp'),
+                          "type": "none", "tls": "tls" if p.get('tls') else ""
+                      }
+                      if p.get('sni') or p.get('servername'): v['sni'] = p.get('sni', p.get('servername'))
+                      if 'ws-opts' in p:
+                          v['path'] = p['ws-opts'].get('path', '/')
+                          v['host'] = p['ws-opts'].get('headers', {}).get('Host', '')
+                      elif 'grpc-opts' in p:
+                          v['path'] = p['grpc-opts'].get('grpc-service-name', '')
+                      
+                      b64 = base64.b64encode(json.dumps({k:v for k,v in v.items() if v}).encode()).decode('ascii')
+                      return f"vmess://{b64}"
+
+                  elif ptype in ['vless', 'trojan']:
+                      password = p.get('uuid', '') if ptype == 'vless' else p.get('password', '')
+                      params = {}
+                      net = p.get('network', 'tcp')
+                      if net != 'tcp': params['type'] = net
+                      if p.get('tls'): params['security'] = 'tls'
+                      if p.get('sni') or p.get('servername'): params['sni'] = p.get('sni', p.get('servername'))
+                      if p.get('flow'): params['flow'] = p.get('flow')
+                      if p.get('client-fingerprint'): params['fp'] = p.get('client-fingerprint')
+
+                      if net == 'ws' and 'ws-opts' in p:
+                          params['path'] = p['ws-opts'].get('path', '/')
+                          host = p['ws-opts'].get('headers', {}).get('Host', '')
+                          if host: params['host'] = host
+                      elif net == 'grpc' and 'grpc-opts' in p:
+                          params['serviceName'] = p['grpc-opts'].get('grpc-service-name', '')
+
+                      qs = urllib.parse.urlencode({k:v for k,v in params.items() if v})
+                      return f"{ptype}://{password}@{server}:{port}?{qs}#{name}"
+              except Exception:
+                  pass
+              return None
+
           start_idx = int(sys.argv[1])
           end_idx = int(sys.argv[2])
+          output_path = f"chunk_{start_idx}"
           
           # Download GeoIP
           sub_merge.geoip_update('https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb')
           
           # Load and filter list
           sub_list = sub_merge.read_list('./sub/sub_list.json')
-          filtered_list = list(filter(lambda x: x['id'] != 5, sub_list))
+          chunk = list(filter(lambda x: x['id'] != 5, sub_list))[start_idx:end_idx]
+          if not chunk: sys.exit(0)
+
+          session = requests.Session()
+          session.mount('http://', HTTPAdapter(max_retries=2))
+          session.mount('https://', HTTPAdapter(max_retries=2))
+
+          all_clash_proxies = []
+          for url_container in chunk:
+              ids = url_container['id']
+              repo_links = []
+              
+              for each_url in url_container.get("url", []):
+                  print(f"===> Processing URL: {each_url}", flush=True)
+                  try:
+                      resp = session.get(each_url, timeout=15)
+                      resp.raise_for_status()
+                      text = resp.text
+                      extracted = []
+                      
+                      # 1. Native YAML/JSON Clash Parsing
+                      try:
+                          data = yaml.safe_load(text)
+                          if isinstance(data, dict) and 'proxies' in data:
+                              for p in data['proxies']:
+                                  if isinstance(p, dict):
+                                      uri = dict_to_uri(p)
+                                      if uri: extracted.append(uri)
+                      except Exception:
+                          pass
+
+                      # 2. Direct Regex (Plain Text)
+                      matches = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', text)
+                      for m in matches: extracted.append(f"{m.group(1)}://{m.group(2)}")
+                          
+                      # 3. Base64 Decode Regex
+                      try:
+                          b64_text = text.strip()
+                          b64_text += '=' * (-len(b64_text) % 4)
+                          b64_text = b64_text.replace('-', '+').replace('_', '/')
+                          decoded = base64.b64decode(b64_text).decode('utf-8', errors='ignore')
+                          matches_b64 = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', decoded)
+                          for m in matches_b64: extracted.append(f"{m.group(1)}://{m.group(2)}")
+                      except Exception:
+                          pass
+                          
+                      # 4. Fallback Subconverter
+                      if not extracted:
+                          print(f"No direct links found, falling back to subconverter...", flush=True)
+                          try:
+                              sc_resp = session.post("http://127.0.0.1:25500/sub?target=mixed", data=text.encode('utf-8'), timeout=15)
+                              if sc_resp.status_code == 200:
+                                  decoded_sc = base64.b64decode(sc_resp.text.strip()).decode('utf-8', errors='ignore')
+                                  matches_sc = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', decoded_sc)
+                                  for m in matches_sc: extracted.append(f"{m.group(1)}://{m.group(2)}")
+                          except Exception: pass
+                              
+                      extracted = list(set(extracted))
+                      print(f"Found {len(extracted)} links from {each_url}", flush=True)
+                      repo_links.extend(extracted)
+                  except Exception as e:
+                      print(f"Failed to process {each_url}: {e}", flush=True)
+              
+              repo_links = list(set(repo_links))
+              os.makedirs('./sub/list/', exist_ok=True)
+              with open(f'./sub/list/{ids:02d}.txt', 'w', encoding='utf-8') as f: f.write("\n".join(repo_links))
+              for link in repo_links: all_clash_proxies.append({"link": link})
           
-          chunk = filtered_list[start_idx:end_idx]
-          if chunk:
-              subs.get_subs_v3(chunk, output_path=f"chunk_{start_idx}", should_cleanup=False)
+          unique_links = list(set([p['link'] for p in all_clash_proxies]))
+          os.makedirs('./sub/', exist_ok=True)
+          with open(f'./sub/{output_path}.yml', 'w', encoding='utf-8') as f:
+              yaml.dump({'proxies': [{"type": p.split("://")[0]} for p in unique_links]}, f, default_flow_style=False, sort_keys=False)
+          with open(f'./sub/{output_path}_base64.txt', 'w', encoding='utf-8') as f:
+              f.write(base64.b64encode("\n".join(unique_links).encode('utf-8')).decode('ascii'))
+          print(f"Successfully wrote {len(unique_links)} nodes.", flush=True)
           EOF
           python utils/chunk_collector.py ${{ matrix.start }} ${{ matrix.end }}
 
