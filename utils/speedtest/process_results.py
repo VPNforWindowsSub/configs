@@ -169,10 +169,6 @@ def process_and_save_results():
     with open(FULL_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
     with open(FULL_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(full_links_str.encode()).decode())
     with open(ETERNITY_BASE_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
-    
-    # Restoring old sub_merge files behavior
-    with open(SUB_ALL_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
-    with open(SUB_ALL_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(full_links_str.encode()).decode())
 
     # Restoring splitted files logic
     os.makedirs(SPLITTED_OUTPUT_DIR, exist_ok=True)
