@@ -18,10 +18,52 @@ ETERNITY_OUTPUT_BASE64_FILE = 'Eternity'
 ETERNITY_BASE_FILE = 'EternityBase'
 LOG_INFO_FILE = 'LogInfo.txt'
 
-# Additional Outputs (re-added based on edge cases)
+# Additional Outputs
 SPLITTED_OUTPUT_DIR = "./sub/splitted/"
-SUB_ALL_FILE = "./sub/sub_merge.txt"
-SUB_ALL_BASE64_FILE = "./sub/sub_merge_base64.txt"
+
+EMOJI = {
+    'AD': '🇦🇩', 'AE': '🇦🇪', 'AF': '🇦🇫', 'AG': '🇦🇬', 'AI': '🇦🇮', 'AL': '🇦🇱', 'AM': '🇦🇲', 'AO': '🇦🇴',
+    'AQ': '🇦🇶', 'AR': '🇦🇷', 'AS': '🇦🇸', 'AT': '🇦🇹', 'AU': '🇦🇺', 'AW': '🇦🇼', 'AX': '🇦🇽', 'AZ': '🇦🇿',
+    'BA': '🇧🇦', 'BB': '🇧🇧', 'BD': '🇧🇩', 'BE': '🇧🇪', 'BF': '🇧🇫', 'BG': '🇧🇬', 'BH': '🇧🇭', 'BI': '🇧🇮',
+    'BJ': '🇧🇯', 'BL': '🇧🇱', 'BM': '🇧🇲', 'BN': '🇧🇳', 'BO': '🇧🇴', 'BQ': '🇧🇶', 'BR': '🇧🇷', 'BS': '🇧🇸',
+    'BT': '🇧🇹', 'BV': '🇧🇻', 'BW': '🇧🇼', 'BY': '🇧🇾', 'BZ': '🇧🇿', 'CA': '🇨🇦', 'CC': '🇨🇨', 'CD': '🇨🇩',
+    'CF': '🇨🇫', 'CG': '🇨🇬', 'CH': '🇨🇭', 'CI': '🇨🇮', 'CK': '🇨🇰', 'CL': '🇨🇱', 'CM': '🇨🇲', 'CN': '🇨🇳',
+    'CO': '🇨🇴', 'CR': '🇨🇷', 'CU': '🇨🇺', 'CV': '🇨🇻', 'CW': '🇨🇼', 'CX': '🇨🇽', 'CY': '🇨🇾', 'CZ': '🇨🇿',
+    'DE': '🇩🇪', 'DJ': '🇩🇯', 'DK': '🇩🇰', 'DM': '🇩🇲', 'DO': '🇩🇴', 'DZ': '🇩🇿', 'EC': '🇪🇨', 'EE': '🇪🇪',
+    'EG': '🇪🇬', 'EH': '🇪🇭', 'ER': '🇪🇷', 'ES': '🇪🇸', 'ET': '🇪🇹', 'EU': '🇪🇺', 'FI': '🇫🇮', 'FJ': '🇫🇯',
+    'FK': '🇫🇰', 'FM': '🇫🇲', 'FO': '🇫🇴', 'FR': '🇫🇷', 'GA': '🇬🇦', 'GB': '🇬🇧', 'GD': '🇬🇩', 'GE': '🇬🇪',
+    'GF': '🇬🇫', 'GG': '🇬🇬', 'GH': '🇬🇭', 'GI': '🇬🇮', 'GL': '🇬🇱', 'GM': '🇬🇲', 'GN': '🇬🇳', 'GP': '🇬🇵',
+    'GQ': '🇬🇶', 'GR': '🇬🇷', 'GS': '🇬🇸', 'GT': '🇬🇹', 'GU': '🇬🇺', 'GW': '🇬🇼', 'GY': '🇬🇾', 'HK': '🇭🇰',
+    'HM': '🇭🇲', 'HN': '🇭🇳', 'HR': '🇭🇷', 'HT': '🇭🇹', 'HU': '🇭🇺', 'ID': '🇮🇩', 'IE': '🇮🇪', 'IL': '🇮🇱',
+    'IM': '🇮🇲', 'IN': '🇮🇳', 'IO': '🇮🇴', 'IQ': '🇮🇶', 'IR': '🇮🇷', 'IS': '🇮🇸', 'IT': '🇮🇹', 'JE': '🇯🇪',
+    'JM': '🇯🇲', 'JO': '🇯🇴', 'JP': '🇯🇵', 'KE': '🇰🇪', 'KG': '🇰🇬', 'KH': '🇰🇭', 'KI': '🇰🇮', 'KM': '🇰🇲',
+    'KN': '🇰🇳', 'KP': '🇰🇵', 'KR': '🇰🇷', 'KW': '🇰🇼', 'KY': '🇰🇾', 'KZ': '🇰🇿', 'LA': '🇱🇦', 'LB': '🇱🇧',
+    'LC': '🇱🇨', 'LI': '🇱🇮', 'LK': '🇱🇰', 'LR': '🇱🇷', 'LS': '🇱🇸', 'LT': '🇱🇹', 'LU': '🇱🇺', 'LV': '🇱🇻',
+    'LY': '🇱🇾', 'MA': '🇲🇦', 'MC': '🇲🇨', 'MD': '🇲🇩', 'ME': '🇲🇪', 'MF': '🇲🇫', 'MG': '🇲🇬', 'MH': '🇲🇭',
+    'MK': '🇲🇰', 'ML': '🇲🇱', 'MM': '🇲🇲', 'MN': '🇲🇳', 'MO': '🇲🇴', 'MP': '🇲🇵', 'MQ': '🇲🇶', 'MR': '🇲🇷',
+    'MS': '🇲🇸', 'MT': '🇲🇹', 'MU': '🇲🇺', 'MV': '🇲🇻', 'MW': '🇲🇼', 'MX': '🇲🇽', 'MY': '🇲🇾', 'MZ': '🇲🇿',
+    'NA': '🇳🇦', 'NC': '🇳🇨', 'NE': '🇳🇪', 'NF': '🇳🇫', 'NG': '🇳🇬', 'NI': '🇳🇮', 'NL': '🇳🇱', 'NO': '🇳🇴',
+    'NP': '🇳🇵', 'NR': '🇳🇷', 'NU': '🇳🇺', 'NZ': '🇳🇿', 'OM': '🇴🇲', 'PA': '🇵🇦', 'PE': '🇵🇪', 'PF': '🇵🇫',
+    'PG': '🇵🇬', 'PH': '🇵🇭', 'PK': '🇵🇰', 'PL': '🇵🇱', 'PM': '🇵🇲', 'PN': '🇵🇳', 'PR': '🇵🇷', 'PS': '🇵🇸',
+    'PT': '🇵🇹', 'PW': '🇵🇼', 'PY': '🇵🇾', 'QA': '🇶🇦', 'RE': '🇷🇪', 'RO': '🇷🇴', 'RS': '🇷🇸', 'RU': '🇷🇺',
+    'RW': '🇷🇼', 'SA': '🇸🇦', 'SB': '🇸🇧', 'SC': '🇸🇨', 'SD': '🇸🇩', 'SE': '🇸🇪', 'SG': '🇸🇬', 'SH': '🇸🇭',
+    'SI': '🇸🇮', 'SJ': '🇸🇯', 'SK': '🇸🇰', 'SL': '🇸🇱', 'SM': '🇸🇲', 'SN': '🇸🇳', 'SO': '🇸🇴', 'SR': '🇸🇷',
+    'SS': '🇸🇸', 'ST': '🇸🇹', 'SV': '🇸🇻', 'SX': '🇸🇽', 'SY': '🇸🇾', 'SZ': '🇸🇿', 'TC': '🇹🇨', 'TD': '🇹🇩',
+    'TF': '🇹🇫', 'TG': '🇹🇬', 'TH': '🇹🇭', 'TJ': '🇹🇯', 'TK': '🇹🇰', 'TL': '🇹🇱', 'TM': '🇹🇲', 'TN': '🇹🇳',
+    'TO': '🇹🇴', 'TR': '🇹🇷', 'TT': '🇹🇹', 'TV': '🇹🇻', 'TW': '🇹🇼', 'TZ': '🇹🇿', 'UA': '🇺🇦', 'UG': '🇺🇬',
+    'UM': '🇺🇲', 'US': '🇺🇸', 'UY': '🇺🇾', 'UZ': '🇺🇿', 'VA': '🇻🇦', 'VC': '🇻🇨', 'VE': '🇻🇪', 'VG': '🇻🇬',
+    'VI': '🇻🇮', 'VN': '🇻🇳', 'VU': '🇻🇺', 'WF': '🇼🇫', 'WS': '🇼🇸', 'XK': '🇽🇰', 'YE': '🇾🇪', 'YT': '🇾🇹',
+    'ZA': '🇿🇦', 'ZM': '🇿🇲', 'ZW': '🇿🇼', 'RELAY': '🏁', 'NOWHERE': '🇦🇶'
+}
+
+COUNTRY_NAME_MAPPING = {
+    'United States': 'USA',
+    'United Kingdom': 'UK',
+    'Russian Federation': 'Russia',
+    'The Netherlands': 'Netherlands',
+    'Türkiye': 'Turkey',
+    'United Arab Emirates': 'Emirates'
+}
 
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
@@ -48,12 +90,15 @@ def get_ip_from_node(node):
     except socket.gaierror:
         return ''
 
+def get_proxy_signature(link):
+    if '#' in link:
+        return link.split('#')[0]
+    return link
+
 def ensure_empty_files():
-    """Create empty files if everything fails to prevent workflow breakdown."""
     files_to_touch = [
         FULL_OUTPUT_FILE, FULL_OUTPUT_BASE64_FILE, ETERNITY_OUTPUT_FILE,
-        ETERNITY_OUTPUT_BASE64_FILE, ETERNITY_BASE_FILE, LOG_INFO_FILE,
-        SUB_ALL_FILE, SUB_ALL_BASE64_FILE
+        ETERNITY_OUTPUT_BASE64_FILE, ETERNITY_BASE_FILE, LOG_INFO_FILE
     ]
     for f in files_to_touch:
         open(f, 'w').close()
@@ -72,7 +117,6 @@ def process_and_save_results():
         ensure_empty_files()
         return
 
-    # Filter and score
     for node in nodes:
         speed = node.get('avg_speed', 0)
         delay = node.get('delay', 9999)
@@ -90,61 +134,62 @@ def process_and_save_results():
         print("No working nodes found with health_score > 0. Output files will be empty.")
         ensure_empty_files()
         return
-    
     print(f"Found {len(working_nodes)} working nodes.")
+
     working_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
-    processed_nodes = []
+    # 1. Resolve and tag working nodes (without index numbering yet)
+    raw_processed = []
     if os.path.exists(GEOIP_DB):
         with geoip2.database.Reader(GEOIP_DB) as reader:
             for node in working_nodes:
                 ip_address = get_ip_from_node(node)
                 country_code = 'XX'
+                country_name = 'Unknown'
                 if ip_address:
                     try:
-                        country_iso_code = reader.country(ip_address).country.iso_code
-                        if country_iso_code:
-                            country_code = country_iso_code
-                    except (geoip2.errors.AddressNotFoundError, ValueError):
+                        res_country = reader.country(ip_address)
+                        country_code = res_country.country.iso_code or 'XX'
+                        country_name = res_country.country.name or 'Unknown'
+                    except:
                         pass
+
+                if country_code in ['CLOUDFLARE', 'PRIVATE']:
+                    country_code = 'RELAY'
+                    country_name = 'Relay'
 
                 link = node.get('link')
                 if link:
-                    processed_nodes.append({
+                    raw_processed.append({
                         'link': link, 'ip': ip_address,
                         'tag': node.get('tag', 'N/A'),
                         'speed': node.get('avg_speed', 0),
                         'delay': node.get('delay', 9999),
                         'health_score': node.get('health_score', 0),
-                        'country': country_code
+                        'country': country_code,
+                        'country_name': country_name
                     })
     else:
         print("Warning: GeoIP DB not found. Skipping country lookup and filtering.")
         for node in working_nodes:
             link = node.get('link')
             if link:
-                processed_nodes.append({
+                raw_processed.append({
                     'link': link, 'ip': '', 'tag': node.get('tag', 'N/A'),
                     'speed': node.get('avg_speed', 0),
                     'delay': node.get('delay', 9999),
                     'health_score': node.get('health_score', 0),
-                    'country': 'XX'
+                    'country': 'XX',
+                    'country_name': 'Unknown'
                 })
 
-    initial_count = len(processed_nodes)
-    processed_nodes = [node for node in processed_nodes if node.get('country') not in BLOCKED_COUNTRIES]
-    removed_count = initial_count - len(processed_nodes)
-    if removed_count > 0:
-        print(f"Filtered out {removed_count} nodes from blocked countries ({', '.join(BLOCKED_COUNTRIES)}).")
+    # 2. Filter blocked countries
+    raw_processed = [node for node in raw_processed if node.get('country') not in BLOCKED_COUNTRIES]
 
+    # 3. Deduplicate
     print("Deduplicating proxies by configuration...")
-    def get_proxy_signature(link):
-        if '#' in link:
-            return link.split('#')[0]
-        return link
-
     seen_signatures = {}
-    for node in processed_nodes:
+    for node in raw_processed:
         signature = get_proxy_signature(node['link'])
 
         if signature not in seen_signatures:
@@ -153,24 +198,50 @@ def process_and_save_results():
             if node['health_score'] > seen_signatures[signature]['health_score']:
                 seen_signatures[signature] = node
 
-    dup_removed_count = len(processed_nodes) - len(seen_signatures)
-    processed_nodes = list(seen_signatures.values())
-    print(f"Removed {dup_removed_count} duplicate configurations, keeping highest health_score instances.")
+    unique_nodes = list(seen_signatures.values())
+    
+    # Sort them by speed to ensure sequential index matches speed ranking
+    unique_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
+    total_proxies = len(unique_nodes)
+    print(f"Deduplication complete. Remaining unique nodes: {total_proxies}")
 
-    if not processed_nodes:
-        print("No valid nodes left after filtering. Aborting.")
-        ensure_empty_files()
-        return
+    # 4. Apply beautiful sequential naming directly to link URI
+    processed_nodes = []
+    for index, node in enumerate(unique_nodes):
+        country_code = node['country']
+        country_name = node['country_name']
+        
+        name_emoji = EMOJI.get(country_code, EMOJI['NOWHERE'])
+        country_name_to_use = COUNTRY_NAME_MAPPING.get(country_name, country_name)
+        country_name_formatted = country_name_to_use.replace(' ', '-')
 
-    # --- Write Output Files ---
+        if total_proxies >= 9999:
+            pretty_name = f'{name_emoji} {country_name_formatted}-{index:05d}'
+        elif total_proxies >= 999:
+            pretty_name = f'{name_emoji} {country_name_formatted}-{index:04d}'
+        else:
+            pretty_name = f'{name_emoji} {country_name_formatted}-{index:03d}'
+
+        # Rewrite the URL fragment to use the pretty, sequential name
+        base_link = node['link'].split('#')[0]
+        node['link'] = f"{base_link}#{pretty_name}"
+        node['tag'] = pretty_name
+        processed_nodes.append(node)
+
+    # 5. Write Output Files
     full_links = [p['link'] for p in processed_nodes]
     full_links_str = '\n'.join(full_links)
-    
-    with open(FULL_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
-    with open(FULL_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(full_links_str.encode()).decode())
-    with open(ETERNITY_BASE_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
 
-    # Restoring splitted files logic
+    with open(FULL_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
+    print(f"✅ Saved full list of {len(full_links)} proxies to {FULL_OUTPUT_FILE}.")
+
+    with open(FULL_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(full_links_str.encode()).decode())
+    print(f"✅ Saved Base64 encoded full list to {FULL_OUTPUT_BASE64_FILE}.")
+    
+    with open(ETERNITY_BASE_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
+    print(f"✅ Saved Eternity Base list to {ETERNITY_BASE_FILE}.")
+
+    # --- Write Splitted Files ---
     os.makedirs(SPLITTED_OUTPUT_DIR, exist_ok=True)
     vmess_outputs, vless_outputs, trojan_outputs, ss_outputs = [], [], [], []
     for link in full_links:
@@ -183,10 +254,9 @@ def process_and_save_results():
     with open(os.path.join(SPLITTED_OUTPUT_DIR, "vless.txt"), 'w') as f: f.write("\n".join(vless_outputs))
     with open(os.path.join(SPLITTED_OUTPUT_DIR, "trojan.txt"), 'w') as f: f.write("\n".join(trojan_outputs))
     with open(os.path.join(SPLITTED_OUTPUT_DIR, "ss.txt"), 'w') as f: f.write("\n".join(ss_outputs))
-    
-    print("✅ Saved full lists and splitted categories.")
+    print("✅ Saved splitted categories.")
 
-    # Logging
+    # Write log file
     log_output_list = []
     for item in processed_nodes:
         speed_mb = item.get("speed", 0) / 1_048_576
@@ -196,9 +266,10 @@ def process_and_save_results():
         f.writelines(log_output_list)
     print(f"✅ Saved Speedtest Logs to {LOG_INFO_FILE}.")
 
-    # --- Geo-Balancing ---
+    # --- Geo-Balancing for Eternity ---
     print("\n--- Starting Geo-Balancing for 'Eternity' list ---")
     source_pool = processed_nodes[:TOP_POOL_SIZE]
+    print(f"Using a source pool of top {len(source_pool)} nodes for balancing.")
 
     nodes_by_country = {}
     for node in source_pool:
@@ -209,6 +280,7 @@ def process_and_save_results():
 
     eternity_nodes = []
     selected_links = set()
+    print(f"Selecting nodes based on country-specific limits...")
     for country in sorted(nodes_by_country.keys()):
         limit = COUNTRY_NODE_LIMITS.get(country, NODES_PER_COUNTRY)
         nodes_to_take = min(limit, len(nodes_by_country[country]))
@@ -219,8 +291,10 @@ def process_and_save_results():
                 eternity_nodes.append(node)
                 selected_links.add(node['link'])
 
+    print(f"Selected {len(eternity_nodes)} nodes after geographic distribution.")
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
         needed = ETERNITY_LIST_SIZE - len(eternity_nodes)
+        print(f"Filling remaining {needed} slots with top-health nodes...")
         for node in source_pool:
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE: break
             if node['link'] not in selected_links:
