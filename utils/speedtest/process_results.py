@@ -4,6 +4,7 @@ import geoip2.database
 import os
 import socket
 import re
+import math
 
 # --- Configuration ---
 META_FILE = 'meta.json'
@@ -40,7 +41,7 @@ EMOJI = {
     'KN': '🇰🇳', 'KP': '🇰🇵', 'KR': '🇰🇷', 'KW': '🇰🇼', 'KY': '🇰🇾', 'KZ': '🇰🇿', 'LA': '🇱🇦', 'LB': '🇱🇧',
     'LC': '🇱🇨', 'LI': '🇱🇮', 'LK': '🇱🇰', 'LR': '🇱🇷', 'LS': '🇱🇸', 'LT': '🇱🇹', 'LU': '🇱🇺', 'LV': '🇱🇻',
     'LY': '🇱🇾', 'MA': '🇲🇦', 'MC': '🇲🇨', 'MD': '🇲🇩', 'ME': '🇲🇪', 'MF': '🇲🇫', 'MG': '🇲🇬', 'MH': '🇲🇭',
-    'MK': '🇲🇰', 'ML': '🇲🇱', 'MM': '🇲🇲', 'MN': '🇲🇳', 'MO': '🇲🇴', 'MP': '🇲🇵', 'MQ': '🇲🇶', 'MR': '🇲🇷',
+    'MK': '🇲🇰', 'ML': '🇲🇱', 'MM': '🇲ّم', 'MN': '🇲🇳', 'MO': '🇲🇴', 'MP': '🇲🇵', 'MQ': '🇲🇶', 'MR': '🇲🇷',
     'MS': '🇲🇸', 'MT': '🇲🇹', 'MU': '🇲🇺', 'MV': '🇲🇻', 'MW': '🇲🇼', 'MX': '🇲🇽', 'MY': '🇲🇾', 'MZ': '🇲🇿',
     'NA': '🇳🇦', 'NC': '🇳🇨', 'NE': '🇳🇪', 'NF': '🇳🇫', 'NG': '🇳🇬', 'NI': '🇳🇮', 'NL': '🇳🇱', 'NO': '🇳🇴',
     'NP': '🇳🇵', 'NR': '🇳🇷', 'NU': '🇳🇺', 'NZ': '🇳🇿', 'OM': '🇴🇲', 'PA': '🇵🇦', 'PE': '🇵🇪', 'PF': '🇵🇫',
@@ -67,6 +68,8 @@ COUNTRY_NAME_MAPPING = {
 
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
+VLESS_TARGET_PERCENT = 0.55
+VLESS_TARGET_SIZE = math.ceil(ETERNITY_LIST_SIZE * VLESS_TARGET_PERCENT) # Target exactly 91 VLESS nodes
 TOP_POOL_SIZE = 1000
 NODES_PER_COUNTRY = 1
 COUNTRY_NODE_LIMITS = {
@@ -138,7 +141,7 @@ def process_and_save_results():
 
     working_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
-    # 1. Resolve and tag working nodes (without index numbering yet)
+    # 1. Resolve and tag working nodes
     raw_processed = []
     if os.path.exists(GEOIP_DB):
         with geoip2.database.Reader(GEOIP_DB) as reader:
@@ -266,11 +269,12 @@ def process_and_save_results():
         f.writelines(log_output_list)
     print(f"✅ Saved Speedtest Logs to {LOG_INFO_FILE}.")
 
-    # --- Geo-Balancing for Eternity ---
-    print("\n--- Starting Geo-Balancing for 'Eternity' list ---")
+    # --- Geo-Balancing & Protocol Prioritization for Eternity ---
+    print("\n--- Starting Geo-Balancing and VLESS Quota for 'Eternity' list ---")
     source_pool = processed_nodes[:TOP_POOL_SIZE]
     print(f"Using a source pool of top {len(source_pool)} nodes for balancing.")
 
+    # Sort each country's pool so that VLESS nodes are prioritized first, then speed.
     nodes_by_country = {}
     for node in source_pool:
         country_code = node['country']
@@ -278,9 +282,14 @@ def process_and_save_results():
             nodes_by_country[country_code] = []
         nodes_by_country[country_code].append(node)
 
+    for country in nodes_by_country:
+        nodes_by_country[country].sort(key=lambda x: (0 if x['link'].startswith('vless://') else 1, -x['health_score']))
+
     eternity_nodes = []
     selected_links = set()
-    print(f"Selecting nodes based on country-specific limits...")
+    current_vless_count = 0
+
+    print(f"Selecting nodes based on country-specific limits (VLESS prioritized)...")
     for country in sorted(nodes_by_country.keys()):
         limit = COUNTRY_NODE_LIMITS.get(country, NODES_PER_COUNTRY)
         nodes_to_take = min(limit, len(nodes_by_country[country]))
@@ -290,13 +299,31 @@ def process_and_save_results():
             if node['link'] not in selected_links:
                 eternity_nodes.append(node)
                 selected_links.add(node['link'])
+                if node['link'].startswith('vless://'):
+                    current_vless_count += 1
 
-    print(f"Selected {len(eternity_nodes)} nodes after geographic distribution.")
+    print(f"Selected {len(eternity_nodes)} nodes after geographic distribution. Current VLESS count: {current_vless_count}")
+
+    # Pass 1: If VLESS count is under 55% quota (91 nodes), fill strictly with VLESS nodes first
+    if current_vless_count < VLESS_TARGET_SIZE:
+        print(f"Aggressively filling VLESS nodes up to quota of {VLESS_TARGET_SIZE}...")
+        for node in processed_nodes:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+                break
+            if current_vless_count >= VLESS_TARGET_SIZE:
+                break
+            if node['link'].startswith('vless://') and node['link'] not in selected_links:
+                eternity_nodes.append(node)
+                selected_links.add(node['link'])
+                current_vless_count += 1
+
+    # Pass 2: Fill any remaining slots up to 165 total nodes with fastest overall nodes (any protocol)
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
         needed = ETERNITY_LIST_SIZE - len(eternity_nodes)
-        print(f"Filling remaining {needed} slots with top-health nodes...")
-        for node in source_pool:
-            if len(eternity_nodes) >= ETERNITY_LIST_SIZE: break
+        print(f"Filling remaining {needed} slots with top-health nodes of any protocol...")
+        for node in processed_nodes:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+                break
             if node['link'] not in selected_links:
                 eternity_nodes.append(node)
                 selected_links.add(node['link'])
@@ -307,7 +334,9 @@ def process_and_save_results():
     eternity_links_str = '\n'.join(eternity_links)
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(eternity_links_str)
     with open(ETERNITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(eternity_links_str.encode()).decode())
-    print(f"✅ Saved 'Eternity' list of {len(eternity_links)} proxies.")
+    
+    final_vless_count = sum(1 for n in eternity_nodes if n['link'].startswith('vless://'))
+    print(f"✅ Saved 'Eternity' list of {len(eternity_links)} proxies (contains {final_vless_count} highly-resilient VLESS nodes).")
 
 if __name__ == '__main__':
     process_and_save_results()
