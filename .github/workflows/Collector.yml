@@ -2,21 +2,52 @@ name: Collect
 
 on:
   workflow_dispatch:
-
   push:
     paths:
       - "./EternityBase"
       - "./sub/sub_merge_base64.txt"
       - "./sub/sub_merge_yaml.yml"
-
   schedule:
     - cron: "0 2 * * *"
     - cron: "30 12 * * *"
 
 jobs:
-  main:
-    name: Collect Proxies
+  prepare-matrix:
+    name: Prepare Collector Matrix
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - id: set-matrix
+        run: |
+          # Count active sources in sub_list.json (excluding ID 5, the airport)
+          TOTAL=$(jq '[.[] | select(.enabled == true and .id != 5)] | length' ./sub/sub_list.json)
+          echo "Total active sources: $TOTAL"
+          
+          # Spin up 10 workers for downloading subscriptions concurrently
+          WORKERS=10
+          CHUNK_SIZE=$(( (TOTAL + WORKERS - 1) / WORKERS ))
+          echo "Chunk size per worker: $CHUNK_SIZE"
+          
+          CHUNKS=$(for i in $(seq 0 $CHUNK_SIZE $(($TOTAL - 1)) ); do
+            START=$i
+            END=$(($i + $CHUNK_SIZE))
+            echo "{\"start\":${START},\"end\":${END}}"
+          done | paste -sd, -)
+          
+          echo "matrix={\"include\":[${CHUNKS}]}" >> $GITHUB_OUTPUT
+
+  collect-chunk:
+    name: Collect Sources (${{ matrix.start }} to ${{ matrix.end }})
+    needs: prepare-matrix
+    if: needs.prepare-matrix.outputs.matrix != '{"include":[]}'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+      fail-fast: false
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -35,23 +66,106 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-          cache: "pip"
-
-      - name: Set Timezone
-        run: sudo timedatectl set-timezone 'Asia/Tehran'
 
       - name: Install Requirements
-        run: |
-          pip install -r ./utils/requirements.txt
+        run: pip install -r ./utils/requirements.txt
 
-      - name: Running Collector
+      - name: Run Collector for Chunk
         run: |
           wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -zxvf subconverter.tar.gz -C ./
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
           node ./utils/localserver/index.js &
           sleep 2
-          python ./utils/list_merge.py
+          
+          cat <<'EOF' > chunk_collector.py
+          import sys
+          from get_subs import subs
+          from list_merge import sub_merge
+          
+          start_idx = int(sys.argv[1])
+          end_idx = int(sys.argv[2])
+          
+          # Download GeoIP
+          sub_merge.geoip_update('https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb')
+          
+          # Load and filter list
+          sub_list = sub_merge.read_list('./sub/sub_list.json')
+          filtered_list = list(filter(lambda x: x['id'] != 5, sub_list))
+          
+          chunk = filtered_list[start_idx:end_idx]
+          if chunk:
+              subs.get_subs_v3(chunk, output_path=f"chunk_{start_idx}", should_cleanup=False)
+          EOF
+          python chunk_collector.py ${{ matrix.start }} ${{ matrix.end }}
+
+      - name: Upload Chunk Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: collected-chunk-${{ matrix.start }}
+          path: |
+            sub/chunk_${{ matrix.start }}*
+            sub/list/*.txt
+          retention-days: 1
+
+  merge-collection:
+    name: Merge Collection
+    needs: collect-chunk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Requirements
+        run: |
+          pip install -r ./utils/requirements.txt
+          pip install pyyaml
+
+      - name: Download all collected chunks
+        uses: actions/download-artifact@v4
+        with:
+          path: downloaded_chunks/
+          pattern: collected-chunk-*
+          merge-multiple: true
+
+      - name: Merge and format lists
+        run: |
+          # Move the raw source lists back to where README updater expects them
+          mkdir -p ./sub/list/
+          mv downloaded_chunks/[0-9][0-9].txt ./sub/list/ 2>/dev/null || true
+          
+          # Merge Base64 files
+          shopt -s nullglob
+          cat downloaded_chunks/*_base64.txt > ./sub/sub_merge_base64.txt 2>/dev/null || true
+          
+          # Create raw decoded text file for the README updater
+          cat ./sub/sub_merge_base64.txt | base64 -d > ./sub/sub_merge.txt || true
+          
+          # Merge YAML files using Python
+          python -c "
+          import yaml, glob
+          all_proxies = []
+          for f in glob.glob('downloaded_chunks/*.yml'):
+              with open(f, 'r', encoding='utf-8') as file:
+                  data = yaml.safe_load(file)
+                  if data and 'proxies' in data:
+                      all_proxies.extend(data['proxies'])
+          with open('./sub/sub_merge_yaml.yml', 'w', encoding='utf-8') as out:
+              yaml.dump({'proxies': all_proxies}, out, allow_unicode=True, default_flow_style=False, sort_keys=False)
+          "
+          
+          # Run README update
+          cat <<'EOF' > update_readme.py
+          from list_merge import sub_merge
+          sub_list = sub_merge.read_list('./sub/sub_list.json')
+          sub_merge.readme_update('./README.md', sub_list)
+          EOF
+          python update_readme.py
 
       - name: Log VLESS Count After Collection
         run: |
@@ -65,21 +179,13 @@ jobs:
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git pull origin master
-          git add ./sub
-          git add ./utils/Country.mmdb
-          git add README.md
-          # The checkout command is removed as it's redundant. The push action below handles the branch.
+          git add ./sub/sub_merge_base64.txt ./sub/sub_merge_yaml.yml ./sub/sub_merge.txt ./README.md
           if ! git diff-index --quiet HEAD; then
-            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected"
+            git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected (Matrix)"
+            git push origin master
           else
             echo "No collection changes to commit."
           fi
-
-      - name: Push Collection Changes
-        uses: ad-m/github-push-action@master
-        with:
-          branch: master
-          github_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Trigger Tester Workflow
         if: success()
