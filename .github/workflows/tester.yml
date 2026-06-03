@@ -258,7 +258,6 @@ jobs:
                   with open('config.json', 'w') as f:
                       json.dump({"log": {"loglevel": "warning"}, "inbounds": inbounds, "outbounds": outbounds, "routing": {"rules": rules}}, f)
 
-                  # We allow stderr to print so any Xray JSON formatting errors are highly visible in GitHub Action logs
                   proc = subprocess.Popen(['./xray', '-c', 'config.json'], stdout=subprocess.DEVNULL)
                   time.sleep(3.0) # Ensure Xray has fully bound all ports before shooting requests
 
