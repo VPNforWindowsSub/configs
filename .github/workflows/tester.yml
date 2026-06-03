@@ -96,7 +96,6 @@ jobs:
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
 
           # Modern Xray-compliant Shadowsocks cipher methods (v26.x compatible)
-          # Deprecated ciphers like aes-256-cfb, rc4-md5, etc. are strictly filtered out to prevent boot crashes.
           ALLOWED_SS_METHODS = {
               "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305",
               "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305",
@@ -127,6 +126,18 @@ jobs:
               except: pass
               return False
 
+          def is_valid_reality_pbk(pbk):
+              if not pbk: return False
+              pbk = pbk.strip()
+              pbk_pad = pbk.replace('-', '+').replace('_', '/')
+              pbk_pad += '=' * (-len(pbk_pad) % 4)
+              try:
+                  decoded = base64.b64decode(pbk_pad)
+                  if len(decoded) == 32:
+                      return True
+              except: pass
+              return False
+
           def decode_base64(s):
               s = s.strip().split('#')[0]
               s += '=' * (-len(s) % 4)
@@ -149,6 +160,12 @@ jobs:
               except: port = 443
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
+
+              # Skip insecure TLS configurations
+              allow_insecure = params.get('allowInsecure', ['0'])[0].split('@')[0].strip().lower()
+              insecure = params.get('insecure', ['0'])[0].split('@')[0].strip().lower()
+              if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
+                  raise Exception("Skipping insecure TLS node")
 
               # Clean and validate type
               net_type = params.get('type', ['tcp'])[0].split('@')[0].strip().lower()
@@ -180,7 +197,7 @@ jobs:
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               elif sec == 'reality':
                   pbk = params.get('pbk', [''])[0].split('@')[0].strip()
-                  if not pbk: raise Exception("Reality pbk missing") # Prevent Xray from crashing on boot
+                  if not is_valid_reality_pbk(pbk): raise Exception("Invalid/Mangled REALITY pbk")
                   config['streamSettings']['security'] = 'reality'
                   config['streamSettings']['realitySettings'] = {
                       "serverName": params.get('sni', [server])[0].split('@')[0].strip(),
@@ -216,6 +233,12 @@ jobs:
               uuid = j.get('id', '')
               if not server: raise Exception("Missing server")
               if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VMess UUID")
+
+              # Skip insecure TLS configurations
+              allow_insecure = str(j.get('allowInsecure', '')).split('@')[0].strip().lower()
+              skip_cert = str(j.get('skip-cert-verify', '')).split('@')[0].strip().lower()
+              if j.get('allowInsecure') is True or j.get('skip-cert-verify') is True or allow_insecure in ['1', 'true'] or skip_cert in ['1', 'true']:
+                  raise Exception("Skipping insecure VMess node")
               
               try: port = int(j.get('port', 443))
               except: port = 443
@@ -307,6 +330,12 @@ jobs:
               password = password.split('@')[0].strip()
               if not password: raise Exception("Missing trojan password")
               
+              # Skip insecure TLS configurations
+              allow_insecure = params.get('allowInsecure', ['0'])[0].split('@')[0].strip().lower()
+              insecure = params.get('insecure', ['0'])[0].split('@')[0].strip().lower()
+              if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
+                  raise Exception("Skipping insecure Trojan node")
+
               # Clean and validate network type
               net = params.get('type', ['tcp'])[0].split('@')[0].strip().lower()
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
