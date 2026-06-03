@@ -137,11 +137,12 @@ jobs:
         run: |
           # Move the raw source lists back to where README updater expects them
           mkdir -p ./sub/list/
-          mv downloaded_chunks/sub/list/[0-9][0-9].txt ./sub/list/ 2>/dev/null || true
+          # Note: Github artifact uploader strips the 'sub/' prefix, so 'list' is directly in the downloaded root
+          mv downloaded_chunks/list/[0-9][0-9].txt ./sub/list/ 2>/dev/null || true
           
           # Merge Base64 files
           shopt -s nullglob
-          cat downloaded_chunks/sub/*_base64.txt > ./sub/sub_merge_base64.txt 2>/dev/null || true
+          cat downloaded_chunks/*_base64.txt > ./sub/sub_merge_base64.txt 2>/dev/null || true
           
           # Create raw decoded text file for the README updater
           cat ./sub/sub_merge_base64.txt | base64 -d > ./sub/sub_merge.txt || true
@@ -150,7 +151,7 @@ jobs:
           python -c "
           import yaml, glob
           all_proxies = []
-          for f in glob.glob('downloaded_chunks/sub/*.yml'):
+          for f in glob.glob('downloaded_chunks/*.yml'):
               with open(f, 'r', encoding='utf-8') as file:
                   data = yaml.safe_load(file)
                   if data and 'proxies' in data:
