@@ -95,6 +95,14 @@ jobs:
           cat <<'EOF' > xray_tester.py
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
 
+          # Modern Xray-compliant Shadowsocks cipher methods (v26.x compatible)
+          # Deprecated ciphers like aes-256-cfb, rc4-md5, etc. are strictly filtered out to prevent boot crashes.
+          ALLOWED_SS_METHODS = {
+              "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305",
+              "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305",
+              "xchacha20-poly1305", "xchacha20-ietf-poly1305", "none", "plain"
+          }
+
           def decode_base64(s):
               s = s.strip().split('#')[0]
               s += '=' * (-len(s) % 4)
@@ -196,6 +204,11 @@ jobs:
                       
               method, password = userinfo.split(':', 1)
               if not method or not password: raise Exception("Missing SS credentials")
+              
+              # Fast-fail unsupported/legacy Shadowsocks ciphers (such as aes-256-cfb, rc4-md5) to prevent boot crashes
+              if method.lower() not in ALLOWED_SS_METHODS:
+                  raise Exception(f"Shadowsocks method '{method}' is deprecated/unsupported by modern Xray-core.")
+
               server, port_str = server_port.split(':', 1)
               if not server: raise Exception("Missing server")
               try: port = int(port_str)
