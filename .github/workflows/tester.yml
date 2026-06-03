@@ -12,38 +12,50 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            sub/sub_merge_base64.txt
-          sparse-checkout-cone-mode: false
 
       - id: set-matrix
         name: Generate matrix bounds
         run: |
-          echo "Decoding base64 to count proxies..."
-          base64 -d ./sub/sub_merge_base64.txt > proxies.txt
-          TOTAL=$(wc -l < proxies.txt | xargs)
+          cat <<'EOF' > matrix_gen.py
+          import base64, math, sys, json
+          try:
+              with open('./sub/sub_merge_base64.txt', 'r') as f:
+                  b64 = f.read().strip()
+              if not b64:
+                  print("Base64 file is empty.")
+                  sys.exit(1)
+              
+              # Safely decode the massive base64 string
+              decoded = base64.b64decode(b64).decode('utf-8', errors='ignore')
+              lines = [l for l in decoded.splitlines() if l.strip()]
+              total = len(lines)
+              
+              if total == 0:
+                  print("Decoded file contains no valid proxy links.")
+                  sys.exit(1)
+                  
+              print(f"Total proxies found: {total}")
+              
+              workers = 20
+              chunk_size = math.ceil(total / workers)
+              chunks = []
+              
+              for i in range(0, total, chunk_size):
+                  chunks.append({"start": i, "end": min(i + chunk_size, total)})
+              
+              with open('matrix.json', 'w') as f:
+                  json.dump({"include": chunks}, f)
+          except Exception as e:
+              print(f"Error during matrix generation: {e}")
+              sys.exit(1)
+          EOF
           
-          if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
-            echo "No proxies found. Exiting."
+          if python matrix_gen.py; then
+            MATRIX_STR=$(cat matrix.json)
+            echo "matrix=$MATRIX_STR" >> $GITHUB_OUTPUT
+          else
             echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
-            exit 0
           fi
-          
-          echo "Total proxies found: $TOTAL"
-          
-          # Target 20 concurrent workers
-          WORKERS=20
-          CHUNK_SIZE=$(( (TOTAL + WORKERS - 1) / WORKERS ))
-          echo "Chunk size per worker: $CHUNK_SIZE"
-          
-          CHUNKS=$(for i in $(seq 0 $CHUNK_SIZE $(($TOTAL - 1)) ); do
-            START=$i
-            END=$(($i + $CHUNK_SIZE))
-            echo "{\"start\":${START},\"end\":${END}}"
-          done | paste -sd, -)
-          
-          echo "matrix={\"include\":[${CHUNKS}]}" >> $GITHUB_OUTPUT
 
   test-chunk:
     name: Test Nodes (${{ matrix.start }} to ${{ matrix.end }})
@@ -57,10 +69,6 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
-        with:
-          sparse-checkout: |
-            sub/sub_merge_base64.txt
-          sparse-checkout-cone-mode: false
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -80,12 +88,12 @@ jobs:
 
       - name: Prepare Chunk
         run: |
-          base64 -d ./sub/sub_merge_base64.txt > proxies.txt
+          python -c "import base64; open('proxies.txt', 'w', encoding='utf-8').write(base64.b64decode(open('./sub/sub_merge_base64.txt').read().strip()).decode('utf-8', errors='ignore'))"
 
       - name: Run Xray Tester
         run: |
           cat <<'EOF' > xray_tester.py
-          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys
+          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
 
           def decode_base64(s):
               s = s.strip().split('#')[0]
@@ -93,6 +101,11 @@ jobs:
               s = s.replace('-', '+').replace('_', '/')
               try: return base64.b64decode(s).decode('utf-8', errors='ignore')
               except: return ""
+
+          def get_free_port():
+              with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                  s.bind(('127.0.0.1', 0))
+                  return s.getsockname()[1]
 
           def parse_vless(link, index):
               parsed = urllib.parse.urlparse(link)
@@ -209,14 +222,11 @@ jobs:
                   config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True}
                   alpn = params.get('alpn', [''])[0]
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
-              
               net = config['streamSettings']['network']
-              if net == 'ws': 
-                  config['streamSettings']['wsSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "headers": {"Host": params.get('host', [server])[0]}}
+              if net == 'ws': config['streamSettings']['wsSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "headers": {"Host": params.get('host', [server])[0]}}
               elif net == 'httpupgrade':
                   config['streamSettings']['httpupgradeSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "host": params.get('host', [server])[0]}
-              elif net == 'grpc': 
-                  config['streamSettings']['grpcSettings'] = {"serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]), "multiMode": True}
+              elif net == 'grpc': config['streamSettings']['grpcSettings'] = {"serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]), "multiMode": True}
               return config, server, name
 
           def test_node(port):
@@ -266,27 +276,29 @@ jobs:
                   print(f"Testing batch {chunk_index}/{total_chunks}...", flush=True)
                   chunk = parsed_nodes[i:i+chunk_size]
                   inbounds, outbounds, rules = [], [{"protocol": "freedom", "tag": "direct"}], []
+                  node_ports = []
                   for j, node in enumerate(chunk):
-                      port = 30000 + j
-                      inbounds.append({"tag": f"in-{j}", "port": port, "protocol": "http", "listen": "127.0.0.1"})
+                      port = get_free_port()
+                      node_ports.append(port)
+                      inbounds.append({"tag": f"in-{j}", "port": port, "protocol": "http", "listen": "127.0.0.1", "settings": {"allowTransparent": False}})
                       outbounds.append(node['config'])
                       rules.append({"inboundTag": [f"in-{j}"], "outboundTag": node['tag']})
 
                   with open('config.json', 'w') as f:
                       json.dump({"log": {"loglevel": "warning"}, "inbounds": inbounds, "outbounds": outbounds, "routing": {"rules": rules}}, f)
 
-                  # Launch Xray and pipe stderr to check for crashes
-                  proc = subprocess.Popen(['./xray', '-c', 'config.json'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
-                  time.sleep(1.5) 
+                  # Launch Xray and capture both stdout/stderr to print crashes clearly
+                  proc = subprocess.Popen(['./xray', 'run', '-c', 'config.json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                  time.sleep(2.0) 
                   
                   # Check if Xray instantly crashed
                   if proc.poll() is not None:
-                      _, err = proc.communicate()
-                      print(f"⚠️ XRAY CRASHED ON BATCH {chunk_index}! Skipping batch. Error:\n{err.decode('utf-8', errors='ignore')}", flush=True)
+                      out, err = proc.communicate()
+                      print(f"⚠️ XRAY CRASHED ON BATCH {chunk_index}! Skipping batch. Error:\n{err.decode('utf-8', errors='ignore')}\n{out.decode('utf-8', errors='ignore')}", flush=True)
                       continue
 
                   with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
-                      futures = {executor.submit(test_node, 30000 + j): node for j, node in enumerate(chunk)}
+                      futures = {executor.submit(test_node, node_ports[j]): node for j, node in enumerate(chunk)}
                       for future in concurrent.futures.as_completed(futures):
                           node, (delay, speed) = futures[future], future.result()
                           results.append({"tag": node['name'], "delay": delay, "avg_speed": speed, "link": node['link'], "server": node['server']})
