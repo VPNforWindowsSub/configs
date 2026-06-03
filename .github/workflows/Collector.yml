@@ -135,30 +135,58 @@ jobs:
 
       - name: Merge and format lists
         run: |
-          # Move the raw source lists back to where README updater expects them
           mkdir -p ./sub/list/
-          # Note: Github artifact uploader strips the 'sub/' prefix, so 'list' is directly in the downloaded root
           mv downloaded_chunks/list/[0-9][0-9].txt ./sub/list/ 2>/dev/null || true
           
-          # Merge Base64 files
-          shopt -s nullglob
-          cat downloaded_chunks/*_base64.txt > ./sub/sub_merge_base64.txt 2>/dev/null || true
+          cat <<'EOF' > utils/global_merge.py
+          import glob
+          import base64
+          import yaml
+
+          # Hard cap to ensure we never hit GitHub's 100MB file limit
+          # 150,000 nodes is approximately ~12-18 MB in base64.
+          MAX_NODES = 150000
+
+          unique_links = set()
+          all_links = []
+
+          print("Starting global deduplication across all chunks...")
           
-          # Create raw decoded text file for the README updater
-          cat ./sub/sub_merge_base64.txt | base64 -d > ./sub/sub_merge.txt || true
-          
-          # Merge YAML files using Python
-          python -c "
-          import yaml, glob
-          all_proxies = []
-          for f in glob.glob('downloaded_chunks/*.yml'):
+          for f in glob.glob('downloaded_chunks/*_base64.txt'):
               with open(f, 'r', encoding='utf-8') as file:
-                  data = yaml.safe_load(file)
-                  if data and 'proxies' in data:
-                      all_proxies.extend(data['proxies'])
+                  b64_content = file.read().strip()
+                  if not b64_content: continue
+                  
+                  decoded = base64.b64decode(b64_content).decode('utf-8', errors='ignore')
+                  for link in decoded.splitlines():
+                      link = link.strip()
+                      if link and link not in unique_links:
+                          unique_links.add(link)
+                          all_links.append(link)
+
+          original_count = len(all_links)
+          all_links = all_links[:MAX_NODES] # Apply Hard Cap
+
+          print(f"Global deduplication complete.")
+          print(f"Total unique nodes: {original_count}")
+          if original_count > MAX_NODES:
+              print(f"⚠️ Limit reached! Capped to {MAX_NODES} to prevent GitHub 100MB limit crash.")
+
+          # 1. Write Plain Text
+          with open('./sub/sub_merge.txt', 'w', encoding='utf-8') as out:
+              out.write('\n'.join(all_links))
+
+          # 2. Write Base64
+          with open('./sub/sub_merge_base64.txt', 'w', encoding='utf-8') as out:
+              out.write(base64.b64encode('\n'.join(all_links).encode('utf-8')).decode('ascii'))
+
+          # 3. Write YAML
+          yaml_proxies = [{"type": link.split("://")[0]} for link in all_links]
           with open('./sub/sub_merge_yaml.yml', 'w', encoding='utf-8') as out:
-              yaml.dump({'proxies': all_proxies}, out, allow_unicode=True, default_flow_style=False, sort_keys=False)
-          "
+              yaml.dump({'proxies': yaml_proxies}, out, allow_unicode=True, default_flow_style=False, sort_keys=False)
+
+          EOF
+          python utils/global_merge.py
           
           # Run README update
           cat <<'EOF' > utils/update_readme.py
