@@ -103,6 +103,30 @@ jobs:
               "xchacha20-poly1305", "xchacha20-ietf-poly1305", "none", "plain"
           }
 
+          def is_valid_uuid_or_id(s):
+              if not s: return False
+              s = s.strip()
+              # 36-char Hyphenated UUID
+              if len(s) == 36:
+                  parts = s.split('-')
+                  if len(parts) == 5 and [len(p) for p in parts] == [8, 4, 4, 4, 12]:
+                      try:
+                          int(s.replace('-', ''), 16)
+                          return True
+                      except ValueError: pass
+              # 32-char Raw Hex UUID
+              if len(s) == 32:
+                  try:
+                      int(s, 16)
+                      return True
+                  except ValueError: pass
+              # Custom String ID (Must be <= 30 bytes)
+              try:
+                  if len(s.encode('utf-8')) <= 30:
+                      return True
+              except: pass
+              return False
+
           def decode_base64(s):
               s = s.strip().split('#')[0]
               s += '=' * (-len(s) % 4)
@@ -119,6 +143,8 @@ jobs:
               parsed = urllib.parse.urlparse(link)
               uuid, server = parsed.username, parsed.hostname
               if not uuid or not server: raise Exception("Invalid vless")
+              if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VLESS UUID")
+              
               try: port = int(parsed.port or 443)
               except: port = 443
               params = urllib.parse.parse_qs(parsed.query)
@@ -161,7 +187,10 @@ jobs:
               j = json.loads(decoded)
               name = j.get('ps', f"proxy-{index}")
               server = j.get('add', '')
+              uuid = j.get('id', '')
               if not server: raise Exception("Missing server")
+              if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VMess UUID")
+              
               try: port = int(j.get('port', 443))
               except: port = 443
               try: aid = int(j.get('aid', 0))
@@ -170,7 +199,7 @@ jobs:
               config = {
                   "tag": f"out-{index}", "protocol": "vmess",
                   "settings": {
-                      "vnext": [{"address": server, "port": port, "users": [{"id": j.get('id', ''), "alterId": aid, "security": j.get('scy', 'auto')}]}]
+                      "vnext": [{"address": server, "port": port, "users": [{"id": uuid, "alterId": aid, "security": j.get('scy', 'auto')}]}]
                   },
                   "streamSettings": {"network": j.get('net', 'tcp')}
               }
