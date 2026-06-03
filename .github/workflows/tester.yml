@@ -19,7 +19,7 @@ jobs:
       - name: Install Python Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install geoip2
+          pip install geoip2 requests
 
       - name: Download GeoLite2 Country Database
         run: |
@@ -28,273 +28,218 @@ jobs:
           PRIMARY_URL="https://git.io/GeoLite2-Country.mmdb"
           FALLBACK_URL="https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb"
           OUTPUT_FILE="utils/GeoLite2-Country.mmdb"
-          
+
           while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
             wget -O "$OUTPUT_FILE" "$PRIMARY_URL" && break
             RETRY_COUNT=$((RETRY_COUNT + 1))
             sleep 3
           done
-          
+
           if [ ! -s "$OUTPUT_FILE" ]; then
             wget -O "$OUTPUT_FILE" "$FALLBACK_URL" || exit 1
           fi
 
       - name: Prepare Proxy List from Local File
         run: |
-          echo "Preparing proxy list from local file: sub/sub_merge_base64.txt"
           echo "Decoding the list to raw proxy links..."
           base64 -d ./sub/sub_merge_base64.txt > proxies.txt
           echo "Total proxies prepared for testing: $(wc -l < proxies.txt)"
 
-      - name: Create Full Sing-Box Config and Tag Map
+      - name: Download Xray Core
         run: |
-          cat <<'EOF' > convert_to_singbox.py
+          echo "Downloading Xray-core v26.3.27..."
+          wget -O xray.zip https://github.com/XTLS/Xray-core/releases/download/v26.3.27/Xray-linux-64.zip
+          unzip xray.zip xray
+          chmod +x xray
+
+      - name: Run Xray Tester
+        run: |
+          cat <<'EOF' > xray_tester.py
           import json
           import urllib.parse
-          import sys
           import base64
+          import time
+          import subprocess
+          import concurrent.futures
+          import requests
+          import sys
 
-          INPUT_FILE = 'proxies.txt'
-          CONFIG_OUTPUT_FILE = 'singbox_config.json'
-          MAP_OUTPUT_FILE = 'tag_map.json'
+          def decode_base64(s):
+              s = s.strip().split('#')[0]
+              s += '=' * (-len(s) % 4)
+              s = s.replace('-', '+').replace('_', '/')
+              try:
+                  return base64.b64decode(s).decode('utf-8', errors='ignore')
+              except:
+                  return ""
 
           def parse_vless(link, index):
-              at_split = link.split('@')
-              if len(at_split) > 1:
-                  server_part = at_split[1].split('?')[0].split('#')[0]
-                  if ':' in server_part and ']:' not in server_part and server_part.count(':') > 1:
-                      last_colon_index = server_part.rfind(':')
-                      hostname = server_part[:last_colon_index]
-                      port = int(server_part[last_colon_index+1:])
-                      parsed_url = urllib.parse.urlparse(link)
-                  else:
-                      parsed_url = urllib.parse.urlparse(link)
-                      hostname = parsed_url.hostname
-                      port = parsed_url.port
-              else:
-                  raise ValueError("Invalid VLESS link structure")
-
-              params = urllib.parse.parse_qs(parsed_url.query)
-              
-              original_tag = urllib.parse.unquote(parsed_url.fragment) if parsed_url.fragment else f"proxy-{index}"
-              safe_tag = f"proxy-{index}"
+              parsed = urllib.parse.urlparse(link)
+              uuid, server = parsed.username, parsed.hostname
+              port = parsed.port or 443
+              params = urllib.parse.parse_qs(parsed.query)
+              name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
 
               config = {
-                  "type": "vless", "tag": safe_tag, "server": hostname,
-                  "server_port": port, "uuid": parsed_url.username
+                  "tag": f"out-{index}", "protocol": "vless",
+                  "settings": {
+                      "vnext": [{"address": server, "port": int(port), "users": [{"id": uuid, "encryption": "none"}]}]
+                  },
+                  "streamSettings": {"network": params.get('type', ['tcp'])[0]}
               }
-
-              if params.get('security', [''])[0] == 'tls':
-                  config["tls"] = {"enabled": True, "insecure": True, "server_name": params.get('sni', [hostname])[0]}
-
-              if params.get('type', [''])[0] == 'ws':
-                  ws_opts = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [hostname])[0]}}
-                  config["transport"] = {"type": "ws", **ws_opts}
               
-              return config, safe_tag, original_tag
+              flow = params.get('flow', [''])[0]
+              if flow:
+                  config['settings']['vnext'][0]['users'][0]['flow'] = flow
+
+              sec = params.get('security', ['none'])[0]
+              if sec == 'tls':
+                  config['streamSettings']['security'] = 'tls'
+                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True, "fingerprint": params.get('fp', ['chrome'])[0]}
+                  alpn = params.get('alpn', [''])[0]
+                  if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
+              elif sec == 'reality':
+                  config['streamSettings']['security'] = 'reality'
+                  config['streamSettings']['realitySettings'] = {"serverName": params.get('sni', [server])[0], "password": params.get('pbk', [''])[0], "shortId": params.get('sid', [''])[0], "spiderX": params.get('spx', ['/'])[0], "fingerprint": params.get('fp', ['chrome'])[0]}
+
+              net = config['streamSettings']['network']
+              if net == 'ws':
+                  config['streamSettings']['wsSettings'] = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [server])[0]}}
+              elif net == 'grpc':
+                  config['streamSettings']['grpcSettings'] = {"serviceName": params.get('serviceName', [''])[0], "multiMode": True}
+              return config, server, name
 
           def parse_vmess(link, index):
-              encoded_part = link.replace("vmess://", "")
-              encoded_part += '=' * (-len(encoded_part) % 4)
-              decoded_json = json.loads(base64.b64decode(encoded_part).decode())
-
-              original_tag = decoded_json.get('ps', f"proxy-{index}")
-              safe_tag = f"proxy-{index}"
-
+              decoded = decode_base64(link.replace("vmess://", ""))
+              if not decoded: raise Exception("Invalid vmess")
+              j = json.loads(decoded)
+              name = j.get('ps', f"proxy-{index}")
+              server = j.get('add', '')
               config = {
-                  "type": "vmess", "tag": safe_tag, "server": decoded_json.get('add'),
-                  "server_port": int(decoded_json.get('port')), "uuid": decoded_json.get('id'),
-                  "security": decoded_json.get('scy', 'auto'), "alter_id": decoded_json.get('aid', 0)
+                  "tag": f"out-{index}", "protocol": "vmess",
+                  "settings": {
+                      "vnext": [{"address": server, "port": int(j.get('port', 443)), "users": [{"id": j.get('id', ''), "alterId": int(j.get('aid', 0)), "security": j.get('scy', 'auto')}]}]
+                  },
+                  "streamSettings": {"network": j.get('net', 'tcp')}
               }
-
-              if decoded_json.get('tls', '') == 'tls':
-                  config["tls"] = {"enabled": True, "insecure": True, "server_name": decoded_json.get('sni', decoded_json.get('add'))}
-
-              if decoded_json.get('net', '') == 'ws':
-                  ws_opts = {"path": decoded_json.get('path', '/'), "headers": {"Host": decoded_json.get('host', decoded_json.get('add'))}}
-                  config["transport"] = {"type": "ws", **ws_opts}
-
-              return config, safe_tag, original_tag
+              if j.get('tls') == 'tls':
+                  config['streamSettings']['security'] = 'tls'
+                  config['streamSettings']['tlsSettings'] = {"serverName": j.get('sni', server), "allowInsecure": True}
+                  alpn = j.get('alpn', '')
+                  if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
+              if j.get('net') == 'ws':
+                  config['streamSettings']['wsSettings'] = {"path": j.get('path', '/'), "headers": {"Host": j.get('host', server)}}
+              elif j.get('net') == 'grpc':
+                  config['streamSettings']['grpcSettings'] = {"serviceName": j.get('path', ''), "multiMode": True}
+              return config, server, name
 
           def parse_ss(link, index):
-              parsed_url = urllib.parse.urlparse(link)
-              original_tag = urllib.parse.unquote(parsed_url.fragment) if parsed_url.fragment else f"proxy-{index}"
-              safe_tag = f"proxy-{index}"
-
-              if parsed_url.username and parsed_url.hostname:
-                  user_info_part, server_part = parsed_url.netloc.rsplit('@', 1)
-                  method, password = urllib.parse.unquote(user_info_part).split(':', 1)
-                  server, port = server_part.split(':', 1)
+              parsed = urllib.parse.urlparse(link)
+              name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
+              if parsed.username:
+                  user_pass = urllib.parse.unquote(parsed.username)
+                  if ':' not in user_pass: user_pass = decode_base64(user_pass)
+                  method, password = user_pass.split(':', 1)
+                  server, port = parsed.hostname, parsed.port
               else:
-                  encoded_part = parsed_url.netloc
-                  encoded_part += '=' * (-len(encoded_part) % 4)
-                  decoded_part = base64.urlsafe_b64decode(encoded_part).decode()
-                  
-                  user_info, server_info = decoded_part.rsplit('@', 1)
-                  method, password = user_info.split(':', 1)
-                  server, port = server_info.split(':', 1)
-
+                  user_pass, server_port = decode_base64(parsed.netloc).rsplit('@', 1)
+                  method, password = user_pass.split(':', 1)
+                  server, port = server_port.split(':', 1)
               config = {
-                  "type": "shadowsocks", "tag": safe_tag, "server": server,
-                  "server_port": int(port), "method": method, "password": password
+                  "tag": f"out-{index}", "protocol": "shadowsocks",
+                  "settings": {"servers": [{"address": server, "port": int(port), "method": method, "password": password}]}
               }
-              return config, safe_tag, original_tag
+              return config, server, name
 
           def parse_trojan(link, index):
-              parsed_url = urllib.parse.urlparse(link)
-              params = urllib.parse.parse_qs(parsed_url.query)
-
-              original_tag = urllib.parse.unquote(parsed_url.fragment) if parsed_url.fragment else f"proxy-{index}"
-              safe_tag = f"proxy-{index}"
-
+              parsed = urllib.parse.urlparse(link)
+              server = parsed.hostname
+              port = parsed.port or 443
+              params = urllib.parse.parse_qs(parsed.query)
+              name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
               config = {
-                  "type": "trojan", "tag": safe_tag, "server": parsed_url.hostname,
-                  "server_port": int(parsed_url.port), "password": parsed_url.username
+                  "tag": f"out-{index}", "protocol": "trojan",
+                  "settings": {"servers": [{"address": server, "port": int(port), "password": urllib.parse.unquote(parsed.username)}]},
+                  "streamSettings": {"network": params.get('type', ['tcp'])[0]}
               }
-              
-              config["tls"] = {"enabled": True, "insecure": True, "server_name": params.get('sni', [parsed_url.hostname])[0]}
-              
-              return config, safe_tag, original_tag
+              if params.get('security', ['tls'])[0] == 'tls':
+                  config['streamSettings']['security'] = 'tls'
+                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True}
+                  alpn = params.get('alpn', [''])[0]
+                  if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
+                  
+              net = config['streamSettings']['network']
+              if net == 'ws':
+                  config['streamSettings']['wsSettings'] = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [server])[0]}}
+              elif net == 'grpc':
+                  config['streamSettings']['grpcSettings'] = {"serviceName": params.get('serviceName', [''])[0], "multiMode": True}
+              return config, server, name
 
-          parsers = {
-              'vless://': parse_vless, 'vmess://': parse_vmess,
-              'ss://': parse_ss, 'trojan://': parse_trojan
-          }
+          def test_node(port):
+              proxies = {"http": f"http://127.0.0.1:{port}", "https": f"http://127.0.0.1:{port}"}
+              delay, speed = 0, 0
+              try:
+                  start = time.time()
+                  resp = requests.head("http://www.gstatic.com/generate_204", proxies=proxies, timeout=5)
+                  if resp.status_code == 204:
+                      delay = int((time.time() - start) * 1000)
+                      start = time.time()
+                      r = requests.get("https://speed.cloudflare.com/__down?bytes=5000000", proxies=proxies, timeout=10, stream=True)
+                      bytes_received = 0
+                      for chunk in r.iter_content(8192): bytes_received += len(chunk)
+                      duration = time.time() - start
+                      if duration > 0: speed = int(bytes_received / duration)
+              except Exception:
+                  pass
+              return delay, speed
 
-          outbounds = []; tag_map = {}; skipped_count = 0
+          parsers = {'vless://': parse_vless, 'vmess://': parse_vmess, 'ss://': parse_ss, 'trojan://': parse_trojan}
+
           try:
-              with open(INPUT_FILE, 'r', encoding='utf-8') as f:
-                  links = [line.strip() for line in f if line.strip()]
-              
-              print(f"Read {len(links)} total links. Processing...")
-              
+              with open('proxies.txt', 'r', encoding='utf-8') as f: links = [line.strip() for line in f if line.strip()]
+              parsed_nodes = []
               for i, link in enumerate(links):
-                  parser = None
                   for prefix, p_func in parsers.items():
                       if link.startswith(prefix):
-                          parser = p_func
+                          try:
+                              cfg, srv, name = p_func(link, i)
+                              parsed_nodes.append({"link": link, "config": cfg, "server": srv, "tag": cfg['tag'], "name": name})
+                          except Exception as e: pass
                           break
-                  
-                  if parser:
-                      try:
-                          proxy_config, safe_tag, original_tag = parser(link, i + 1)
-                          if proxy_config:
-                              outbounds.append(proxy_config)
-                              tag_map[safe_tag] = original_tag
-                      except Exception:
-                          skipped_count += 1
-                  else:
-                      skipped_count += 1
 
+              print(f"Parsed {len(parsed_nodes)} nodes. Starting test via Xray-core...")
+              results, chunk_size = [], 150
+              
+              for i in range(0, len(parsed_nodes), chunk_size):
+                  chunk = parsed_nodes[i:i+chunk_size]
+                  inbounds, outbounds, rules = [], [{"protocol": "freedom", "tag": "direct"}], []
+                  for j, node in enumerate(chunk):
+                      port = 30000 + j
+                      inbounds.append({"tag": f"in-{j}", "port": port, "protocol": "http", "listen": "127.0.0.1"})
+                      outbounds.append(node['config'])
+                      rules.append({"inboundTag": [f"in-{j}"], "outboundTag": node['tag']})
+
+                  with open('config.json', 'w') as f:
+                      json.dump({"log": {"loglevel": "error"}, "inbounds": inbounds, "outbounds": outbounds, "routing": {"rules": rules}}, f)
+
+                  proc = subprocess.Popen(['./xray', '-c', 'config.json'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                  time.sleep(2.0) # Ensure Xray has fully bound all ports before shooting requests
+
+                  with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
+                      futures = {executor.submit(test_node, 30000 + j): node for j, node in enumerate(chunk)}
+                      for future in concurrent.futures.as_completed(futures):
+                          node, (delay, speed) = futures[future], future.result()
+                          results.append({"tag": node['name'], "delay": delay, "avg_speed": speed, "link": node['link'], "server": node['server']})
+
+                  proc.terminate()
+                  proc.wait()
+
+              with open('meta.json', 'w') as f: json.dump(results, f, indent=2)
+              print("Testing complete. Results saved to meta.json")
           except FileNotFoundError:
-              print(f"Error: Input file '{INPUT_FILE}' not found.", file=sys.stderr)
-              sys.exit(1)
-
-          final_config = {
-              "log": {"level": "warn"},
-              "inbounds": [{"type": "tun", "tag": "tun-in"}],
-              "outbounds": outbounds
-          }
-
-          with open(CONFIG_OUTPUT_FILE, 'w') as f: json.dump(final_config, f, indent=2)
-          with open(MAP_OUTPUT_FILE, 'w', encoding='utf-8') as f: json.dump(tag_map, f, indent=2, ensure_ascii=False)
-
-          print(f"Successfully processed {len(outbounds)} nodes. Skipped {skipped_count} unsupported or invalid links.")
-          print(f"Created config '{CONFIG_OUTPUT_FILE}' and map '{MAP_OUTPUT_FILE}'.")
+              print("proxies.txt not found"); sys.exit(1)
           EOF
-          python convert_to_singbox.py
-
-      - name: Download and Prepare singtools
-        run: |
-          echo "Downloading singtools..."
-          wget -O singtools.tar.gz https://github.com/Kdwkakcs/singtools/releases/download/vv0.2.0/singtools_linux32.tar.gz
-          echo "Extracting singtools..."
-          tar -xzvf singtools.tar.gz
-          chmod +x ./singtools
-          echo "singtools is ready."
-          ./singtools -v
-
-      - name: Run Speed Test with singtools (Two Passes)
-        run: |
-          echo "=== FIRST PASS: Full speed test ==="
-          ./singtools test -i singbox_config.json -c utils/speedtest/config.json -o out_pass1.json -m meta_pass1.json -d -r -e warn -f ""
-          
-          echo "=== Extracting successful nodes for second pass ==="
-          python3 <<'EOF'
-          import json
-
-          with open('meta_pass1.json', 'r') as f:
-              pass1_meta = json.load(f)
-
-          successful_tags = [node['tag'] for node in pass1_meta if node.get('avg_speed', 0) > 0]
-          print(f"Found {len(successful_tags)} successful nodes from first pass")
-
-          with open('out_pass1.json', 'r') as f:
-              pass1_config = json.load(f)
-
-          pass2_config = {
-              "log": pass1_config.get("log", {"level": "warn"}),
-              "inbounds": pass1_config.get("inbounds", []),
-              "outbounds": [ob for ob in pass1_config.get("outbounds", []) if ob.get("tag") in successful_tags]
-          }
-
-          with open('singbox_pass2.json', 'w') as f:
-              json.dump(pass2_config, f, indent=2)
-
-          print(f"Created pass2 config with {len(pass2_config['outbounds'])} nodes")
-          EOF
-          
-          echo "=== SECOND PASS: Latency-only test ==="
-          cat > utils/speedtest/config_pass2.json <<'CONFIGEOF'
-          {
-            "speedtestMode": "pingonly",
-            "sortMethod": "ping",
-            "pingMethod": "http",
-            "concurrency": 64,
-            "timeout": 10,
-            "logLevel": "WARN",
-            "removeDup": false
-          }
-          CONFIGEOF
-          
-          ./singtools test -i singbox_pass2.json -c utils/speedtest/config_pass2.json -o out_pass2.json -m meta_pass2.json -e warn -f ""
-          
-          echo "=== Merging results ==="
-          python3 <<'EOF'
-          import json
-
-          with open('meta_pass1.json', 'r') as f:
-              pass1 = json.load(f)
-          with open('meta_pass2.json', 'r') as f:
-              pass2 = json.load(f)
-
-          pass2_delays = {node['tag']: node.get('delay', 0) for node in pass2}
-
-          merged = []
-          for node in pass1:
-              if node.get('avg_speed', 0) > 0:
-                  tag = node['tag']
-                  delay1 = node.get('delay', 0)
-                  delay2 = pass2_delays.get(tag, 0)
-                  
-                  if delay2 > 0:
-                      avg_delay = (delay1 + delay2) / 2
-                  else:
-                      avg_delay = delay1
-                  
-                  node['delay'] = avg_delay
-                  node['delay_pass1'] = delay1
-                  node['delay_pass2'] = delay2
-                  merged.append(node)
-
-          with open('meta.json', 'w') as f:
-              json.dump(merged, f, indent=2)
-
-          print(f"Merged results: {len(merged)} nodes with averaged latency")
-          EOF
-          
-          cp out_pass1.json out.json
-          echo "Two-pass testing complete!"
+          python xray_tester.py
 
       - name: Process Test Results
         run: |
@@ -306,9 +251,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git pull origin ${{ github.ref_name }}
-          git add Eternity Eternity.txt full.txt full_base64.txt
+          git add Eternity Eternity.txt EternityBase full.txt full_base64.txt LogInfo.txt sub/
           if ! git diff --staged --quiet; then
-            git commit -m "✔️ Updated proxy lists"
+            git commit -m "✔️ Updated proxy lists via Xray Core"
             git push
           else
             echo "No changes to commit."
