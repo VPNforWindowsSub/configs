@@ -269,8 +269,8 @@ jobs:
           import yaml
 
           # Hard cap to ensure we never hit GitHub's 100MB file limit
-          # 150,000 nodes is approximately ~12-18 MB in base64.
-          MAX_NODES = 150000
+          # 250,000 nodes is approximately ~42-58 MB in base64.
+          MAX_NODES = 250000
 
           unique_links = set()
           all_links = []
