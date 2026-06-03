@@ -129,12 +129,14 @@ jobs:
               sec = params.get('security', ['none'])[0]
               if sec == 'tls':
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True, "fingerprint": params.get('fp', ['chrome'])[0]}
+                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "fingerprint": params.get('fp', ['chrome'])[0]}
                   alpn = params.get('alpn', [''])[0]
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               elif sec == 'reality':
+                  pbk = params.get('pbk', [''])[0]
+                  if not pbk: raise Exception("Reality pbk missing") # Prevent Xray from crashing on boot
                   config['streamSettings']['security'] = 'reality'
-                  config['streamSettings']['realitySettings'] = {"serverName": params.get('sni', [server])[0], "password": params.get('pbk', [''])[0], "shortId": params.get('sid', [''])[0], "spiderX": urllib.parse.unquote(params.get('spx', ['/'])[0]), "fingerprint": params.get('fp', ['chrome'])[0]}
+                  config['streamSettings']['realitySettings'] = {"serverName": params.get('sni', [server])[0], "password": pbk, "shortId": params.get('sid', [''])[0], "spiderX": urllib.parse.unquote(params.get('spx', ['/'])[0]), "fingerprint": params.get('fp', ['chrome'])[0]}
 
               net = config['streamSettings']['network']
               if net == 'ws': 
@@ -166,7 +168,7 @@ jobs:
               }
               if j.get('tls') == 'tls':
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": j.get('sni', server), "allowInsecure": True}
+                  config['streamSettings']['tlsSettings'] = {"serverName": j.get('sni', server)}
                   alpn = j.get('alpn', '')
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               
@@ -193,6 +195,7 @@ jobs:
                   else: raise Exception("Invalid SS")
                       
               method, password = userinfo.split(':', 1)
+              if not method or not password: raise Exception("Missing SS credentials")
               server, port_str = server_port.split(':', 1)
               if not server: raise Exception("Missing server")
               try: port = int(port_str)
@@ -212,14 +215,18 @@ jobs:
               except: port = 443
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
+              
+              password = urllib.parse.unquote(parsed.username) if parsed.username else ""
+              if not password: raise Exception("Missing trojan password")
+              
               config = {
                   "tag": f"out-{index}", "protocol": "trojan",
-                  "settings": {"servers": [{"address": server, "port": port, "password": urllib.parse.unquote(parsed.username)}]},
+                  "settings": {"servers": [{"address": server, "port": port, "password": password}]},
                   "streamSettings": {"network": params.get('type', ['tcp'])[0]}
               }
               if params.get('security', ['tls'])[0] == 'tls':
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True}
+                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0]}
                   alpn = params.get('alpn', [''])[0]
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               net = config['streamSettings']['network']
