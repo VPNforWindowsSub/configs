@@ -184,9 +184,13 @@ jobs:
                   if resp.status_code == 204:
                       delay = int((time.time() - start) * 1000)
                       start = time.time()
-                      r = requests.get("https://speed.cloudflare.com/__down?bytes=5000000", proxies=proxies, timeout=10, stream=True)
-                      bytes_received = 0
-                      for chunk in r.iter_content(8192): bytes_received += len(chunk)
+                      # Hard timeout to prevent stream freeze
+                      with requests.get("https://speed.cloudflare.com/__down?bytes=5000000", proxies=proxies, timeout=5, stream=True) as r:
+                          bytes_received = 0
+                          for chunk in r.iter_content(8192):
+                              bytes_received += len(chunk)
+                              if time.time() - start > 8:  # 8-second hard cutoff for speedtest
+                                  break
                       duration = time.time() - start
                       if duration > 0: speed = int(bytes_received / duration)
               except Exception:
@@ -207,10 +211,15 @@ jobs:
                           except Exception as e: pass
                           break
 
-              print(f"Parsed {len(parsed_nodes)} nodes. Starting test via Xray-core...")
+              print(f"Parsed {len(parsed_nodes)} nodes. Starting test via Xray-core...", flush=True)
               results, chunk_size = [], 150
               
+              total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
+
               for i in range(0, len(parsed_nodes), chunk_size):
+                  chunk_index = (i // chunk_size) + 1
+                  print(f"Testing chunk {chunk_index}/{total_chunks} ({len(results)} nodes processed)...", flush=True)
+                  
                   chunk = parsed_nodes[i:i+chunk_size]
                   inbounds, outbounds, rules = [], [{"protocol": "freedom", "tag": "direct"}], []
                   for j, node in enumerate(chunk):
@@ -231,13 +240,13 @@ jobs:
                           node, (delay, speed) = futures[future], future.result()
                           results.append({"tag": node['name'], "delay": delay, "avg_speed": speed, "link": node['link'], "server": node['server']})
 
-                  proc.terminate()
+                  proc.kill() # Hard kill to prevent Xray from hanging on exit
                   proc.wait()
 
               with open('meta.json', 'w') as f: json.dump(results, f, indent=2)
-              print("Testing complete. Results saved to meta.json")
+              print("Testing complete. Results saved to meta.json", flush=True)
           except FileNotFoundError:
-              print("proxies.txt not found"); sys.exit(1)
+              print("proxies.txt not found", flush=True); sys.exit(1)
           EOF
           python xray_tester.py
 
