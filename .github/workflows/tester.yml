@@ -4,74 +4,95 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-and-sort-proxies:
-    name: Test and Sort Proxies
+  prepare-matrix:
+    name: Generate Chunks
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            sub/sub_merge_base64.txt
+          sparse-checkout-cone-mode: false
+
+      - id: set-matrix
+        name: Generate matrix bounds
+        run: |
+          echo "Decoding base64 to count proxies..."
+          base64 -d ./sub/sub_merge_base64.txt > proxies.txt
+          TOTAL=$(wc -l < proxies.txt | xargs)
+          
+          if [ -z "$TOTAL" ] || [ "$TOTAL" -eq 0 ]; then
+            echo "No proxies found. Exiting."
+            echo "matrix={\"include\":[]}" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "Total proxies found: $TOTAL"
+          
+          # Target 20 concurrent workers
+          WORKERS=20
+          CHUNK_SIZE=$(( (TOTAL + WORKERS - 1) / WORKERS ))
+          echo "Chunk size per worker: $CHUNK_SIZE"
+          
+          CHUNKS=$(for i in $(seq 0 $CHUNK_SIZE $(($TOTAL - 1)) ); do
+            START=$i
+            END=$(($i + $CHUNK_SIZE))
+            echo "{\"start\":${START},\"end\":${END}}"
+          done | paste -sd, -)
+          
+          echo "matrix={\"include\":[${CHUNKS}]}" >> $GITHUB_OUTPUT
+
+  test-chunk:
+    name: Test Nodes (${{ matrix.start }} to ${{ matrix.end }})
+    needs: prepare-matrix
+    if: needs.prepare-matrix.outputs.matrix != '{"include":[]}'
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    strategy:
+      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+      fail-fast: false
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            sub/sub_merge_base64.txt
+          sparse-checkout-cone-mode: false
 
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
-      - name: Install Python Dependencies
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install geoip2 requests
-
-      - name: Download GeoLite2 Country Database
-        run: |
-          MAX_RETRIES=2
-          RETRY_COUNT=0
-          PRIMARY_URL="https://git.io/GeoLite2-Country.mmdb"
-          FALLBACK_URL="https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb"
-          OUTPUT_FILE="utils/GeoLite2-Country.mmdb"
-
-          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-            wget -O "$OUTPUT_FILE" "$PRIMARY_URL" && break
-            RETRY_COUNT=$((RETRY_COUNT + 1))
-            sleep 3
-          done
-
-          if [ ! -s "$OUTPUT_FILE" ]; then
-            wget -O "$OUTPUT_FILE" "$FALLBACK_URL" || exit 1
-          fi
-
-      - name: Prepare Proxy List from Local File
-        run: |
-          echo "Decoding the list to raw proxy links..."
-          base64 -d ./sub/sub_merge_base64.txt > proxies.txt
-          echo "Total proxies prepared for testing: $(wc -l < proxies.txt)"
+          pip install requests
 
       - name: Download Xray Core
         run: |
-          echo "Downloading Xray-core v26.3.27..."
           wget -O xray.zip https://github.com/XTLS/Xray-core/releases/download/v26.3.27/Xray-linux-64.zip
           unzip xray.zip xray
           chmod +x xray
 
+      - name: Prepare Chunk
+        run: |
+          base64 -d ./sub/sub_merge_base64.txt > proxies.txt
+
       - name: Run Xray Tester
         run: |
           cat <<'EOF' > xray_tester.py
-          import json
-          import urllib.parse
-          import base64
-          import time
-          import subprocess
-          import concurrent.futures
-          import requests
-          import sys
+          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys
 
           def decode_base64(s):
               s = s.strip().split('#')[0]
               s += '=' * (-len(s) % 4)
               s = s.replace('-', '+').replace('_', '/')
-              try:
-                  return base64.b64decode(s).decode('utf-8', errors='ignore')
-              except:
-                  return ""
+              try: return base64.b64decode(s).decode('utf-8', errors='ignore')
+              except: return ""
 
           def parse_vless(link, index):
               parsed = urllib.parse.urlparse(link)
@@ -82,15 +103,11 @@ jobs:
 
               config = {
                   "tag": f"out-{index}", "protocol": "vless",
-                  "settings": {
-                      "vnext": [{"address": server, "port": int(port), "users": [{"id": uuid, "encryption": "none"}]}]
-                  },
+                  "settings": {"vnext": [{"address": server, "port": int(port), "users": [{"id": uuid, "encryption": "none"}]}]},
                   "streamSettings": {"network": params.get('type', ['tcp'])[0]}
               }
-              
               flow = params.get('flow', [''])[0]
-              if flow:
-                  config['settings']['vnext'][0]['users'][0]['flow'] = flow
+              if flow: config['settings']['vnext'][0]['users'][0]['flow'] = flow
 
               sec = params.get('security', ['none'])[0]
               if sec == 'tls':
@@ -103,10 +120,8 @@ jobs:
                   config['streamSettings']['realitySettings'] = {"serverName": params.get('sni', [server])[0], "password": params.get('pbk', [''])[0], "shortId": params.get('sid', [''])[0], "spiderX": params.get('spx', ['/'])[0], "fingerprint": params.get('fp', ['chrome'])[0]}
 
               net = config['streamSettings']['network']
-              if net == 'ws':
-                  config['streamSettings']['wsSettings'] = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [server])[0]}}
-              elif net == 'grpc':
-                  config['streamSettings']['grpcSettings'] = {"serviceName": params.get('serviceName', [''])[0], "multiMode": True}
+              if net == 'ws': config['streamSettings']['wsSettings'] = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [server])[0]}}
+              elif net == 'grpc': config['streamSettings']['grpcSettings'] = {"serviceName": params.get('serviceName', [''])[0], "multiMode": True}
               return config, server, name
 
           def parse_vmess(link, index):
@@ -117,9 +132,7 @@ jobs:
               server = j.get('add', '')
               config = {
                   "tag": f"out-{index}", "protocol": "vmess",
-                  "settings": {
-                      "vnext": [{"address": server, "port": int(j.get('port', 443)), "users": [{"id": j.get('id', ''), "alterId": int(j.get('aid', 0)), "security": j.get('scy', 'auto')}]}]
-                  },
+                  "settings": {"vnext": [{"address": server, "port": int(j.get('port', 443)), "users": [{"id": j.get('id', ''), "alterId": int(j.get('aid', 0)), "security": j.get('scy', 'auto')}]}]},
                   "streamSettings": {"network": j.get('net', 'tcp')}
               }
               if j.get('tls') == 'tls':
@@ -127,10 +140,8 @@ jobs:
                   config['streamSettings']['tlsSettings'] = {"serverName": j.get('sni', server), "allowInsecure": True}
                   alpn = j.get('alpn', '')
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
-              if j.get('net') == 'ws':
-                  config['streamSettings']['wsSettings'] = {"path": j.get('path', '/'), "headers": {"Host": j.get('host', server)}}
-              elif j.get('net') == 'grpc':
-                  config['streamSettings']['grpcSettings'] = {"serviceName": j.get('path', ''), "multiMode": True}
+              if j.get('net') == 'ws': config['streamSettings']['wsSettings'] = {"path": j.get('path', '/'), "headers": {"Host": j.get('host', server)}}
+              elif j.get('net') == 'grpc': config['streamSettings']['grpcSettings'] = {"serviceName": j.get('path', ''), "multiMode": True}
               return config, server, name
 
           def parse_ss(link, index):
@@ -167,12 +178,9 @@ jobs:
                   config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True}
                   alpn = params.get('alpn', [''])[0]
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
-                  
               net = config['streamSettings']['network']
-              if net == 'ws':
-                  config['streamSettings']['wsSettings'] = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [server])[0]}}
-              elif net == 'grpc':
-                  config['streamSettings']['grpcSettings'] = {"serviceName": params.get('serviceName', [''])[0], "multiMode": True}
+              if net == 'ws': config['streamSettings']['wsSettings'] = {"path": params.get('path', ['/'])[0], "headers": {"Host": params.get('host', [server])[0]}}
+              elif net == 'grpc': config['streamSettings']['grpcSettings'] = {"serviceName": params.get('serviceName', [''])[0], "multiMode": True}
               return config, server, name
 
           def test_node(port):
@@ -184,42 +192,42 @@ jobs:
                   if resp.status_code == 204:
                       delay = int((time.time() - start) * 1000)
                       start = time.time()
-                      # Hard timeout to prevent stream freeze
                       with requests.get("https://speed.cloudflare.com/__down?bytes=5000000", proxies=proxies, timeout=5, stream=True) as r:
                           bytes_received = 0
                           for chunk in r.iter_content(8192):
                               bytes_received += len(chunk)
-                              if time.time() - start > 8:  # 8-second hard cutoff for speedtest
-                                  break
+                              if time.time() - start > 8: break # 8s Hard timeout
                       duration = time.time() - start
                       if duration > 0: speed = int(bytes_received / duration)
-              except Exception:
-                  pass
+              except Exception: pass
               return delay, speed
 
           parsers = {'vless://': parse_vless, 'vmess://': parse_vmess, 'ss://': parse_ss, 'trojan://': parse_trojan}
 
           try:
-              with open('proxies.txt', 'r', encoding='utf-8') as f: links = [line.strip() for line in f if line.strip()]
+              start_idx = int(sys.argv[1])
+              end_idx = int(sys.argv[2])
+              with open('proxies.txt', 'r', encoding='utf-8') as f: 
+                  links = [line.strip() for line in f if line.strip()]
+              
+              links = links[start_idx:end_idx]
               parsed_nodes = []
               for i, link in enumerate(links):
                   for prefix, p_func in parsers.items():
                       if link.startswith(prefix):
                           try:
-                              cfg, srv, name = p_func(link, i)
+                              cfg, srv, name = p_func(link, start_idx + i)
                               parsed_nodes.append({"link": link, "config": cfg, "server": srv, "tag": cfg['tag'], "name": name})
-                          except Exception as e: pass
+                          except Exception: pass
                           break
 
-              print(f"Parsed {len(parsed_nodes)} nodes. Starting test via Xray-core...", flush=True)
+              print(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...", flush=True)
               results, chunk_size = [], 150
-              
               total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
 
               for i in range(0, len(parsed_nodes), chunk_size):
                   chunk_index = (i // chunk_size) + 1
-                  print(f"Testing chunk {chunk_index}/{total_chunks} ({len(results)} nodes processed)...", flush=True)
-                  
+                  print(f"Testing batch {chunk_index}/{total_chunks}...", flush=True)
                   chunk = parsed_nodes[i:i+chunk_size]
                   inbounds, outbounds, rules = [], [{"protocol": "freedom", "tag": "direct"}], []
                   for j, node in enumerate(chunk):
@@ -232,7 +240,7 @@ jobs:
                       json.dump({"log": {"loglevel": "error"}, "inbounds": inbounds, "outbounds": outbounds, "routing": {"rules": rules}}, f)
 
                   proc = subprocess.Popen(['./xray', '-c', 'config.json'], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
-                  time.sleep(2.0) # Ensure Xray has fully bound all ports before shooting requests
+                  time.sleep(2.0)
 
                   with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
                       futures = {executor.submit(test_node, 30000 + j): node for j, node in enumerate(chunk)}
@@ -240,15 +248,79 @@ jobs:
                           node, (delay, speed) = futures[future], future.result()
                           results.append({"tag": node['name'], "delay": delay, "avg_speed": speed, "link": node['link'], "server": node['server']})
 
-                  proc.kill() # Hard kill to prevent Xray from hanging on exit
+                  proc.kill()
                   proc.wait()
 
-              with open('meta.json', 'w') as f: json.dump(results, f, indent=2)
-              print("Testing complete. Results saved to meta.json", flush=True)
+              output_file = f"meta_chunk_{start_idx}.json"
+              with open(output_file, 'w') as f: json.dump(results, f, indent=2)
+              print(f"Testing complete. Results saved to {output_file}", flush=True)
           except FileNotFoundError:
               print("proxies.txt not found", flush=True); sys.exit(1)
           EOF
-          python xray_tester.py
+          python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
+
+      - name: Upload Chunk Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: chunk-result-${{ matrix.start }}
+          path: meta_chunk_${{ matrix.start }}.json
+          retention-days: 1
+
+  merge-and-publish:
+    name: Merge Results and Publish
+    needs: test-chunk
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install geoip2
+
+      - name: Download GeoLite2 Country Database
+        run: |
+          MAX_RETRIES=2
+          RETRY_COUNT=0
+          PRIMARY_URL="https://git.io/GeoLite2-Country.mmdb"
+          FALLBACK_URL="https://github.com/P3TERX/GeoLite.mmdb/raw/download/GeoLite2-Country.mmdb"
+          OUTPUT_FILE="utils/GeoLite2-Country.mmdb"
+
+          while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+            wget -O "$OUTPUT_FILE" "$PRIMARY_URL" && break
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            sleep 3
+          done
+
+          if [ ! -s "$OUTPUT_FILE" ]; then
+            wget -O "$OUTPUT_FILE" "$FALLBACK_URL" || exit 1
+          fi
+
+      - name: Download all processed chunks
+        uses: actions/download-artifact@v4
+        with:
+          path: processed_chunks/
+          pattern: chunk-result-*
+          merge-multiple: true
+
+      - name: Merge JSON files
+        run: |
+          python -c "
+          import json, glob, os
+          all_data = []
+          for f in glob.glob('processed_chunks/*.json'):
+              with open(f, 'r') as file:
+                  all_data.extend(json.load(file))
+          with open('meta.json', 'w') as out:
+              json.dump(all_data, out, indent=2)
+          print(f'Merged {len(all_data)} tested nodes from all workers.')
+          "
 
       - name: Process Test Results
         run: |
@@ -262,7 +334,7 @@ jobs:
           git pull origin ${{ github.ref_name }}
           git add Eternity Eternity.txt EternityBase full.txt full_base64.txt LogInfo.txt sub/
           if ! git diff --staged --quiet; then
-            git commit -m "✔️ Updated proxy lists via Xray Core"
+            git commit -m "✔️ Updated proxy lists via Xray Core Matrix"
             git push
           else
             echo "No changes to commit."
