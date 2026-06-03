@@ -97,22 +97,21 @@ jobs:
           def parse_vless(link, index):
               parsed = urllib.parse.urlparse(link)
               uuid, server = parsed.username, parsed.hostname
-              port = parsed.port or 443
+              if not uuid or not server: raise Exception("Invalid vless")
+              try: port = int(parsed.port or 443)
+              except: port = 443
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
 
               config = {
                   "tag": f"out-{index}", "protocol": "vless",
                   "settings": {
-                      "address": server,
-                      "port": int(port),
-                      "id": uuid,
-                      "encryption": params.get('encryption', ['none'])[0]
+                      "vnext": [{"address": server, "port": port, "users": [{"id": uuid, "encryption": params.get('encryption', ['none'])[0]}]}]
                   },
                   "streamSettings": {"network": params.get('type', ['tcp'])[0]}
               }
               flow = params.get('flow', [''])[0]
-              if flow: config['settings']['flow'] = flow
+              if flow: config['settings']['vnext'][0]['users'][0]['flow'] = flow
 
               sec = params.get('security', ['none'])[0]
               if sec == 'tls':
@@ -122,11 +121,13 @@ jobs:
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               elif sec == 'reality':
                   config['streamSettings']['security'] = 'reality'
-                  config['streamSettings']['realitySettings'] = {"serverName": params.get('sni', [server])[0], "password": params.get('pbk', [''])[0], "shortId": params.get('sid', [''])[0], "spiderX": params.get('spx', ['/'])[0], "fingerprint": params.get('fp', ['chrome'])[0]}
+                  config['streamSettings']['realitySettings'] = {"serverName": params.get('sni', [server])[0], "password": params.get('pbk', [''])[0], "shortId": params.get('sid', [''])[0], "spiderX": urllib.parse.unquote(params.get('spx', ['/'])[0]), "fingerprint": params.get('fp', ['chrome'])[0]}
 
               net = config['streamSettings']['network']
               if net == 'ws': 
                   config['streamSettings']['wsSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "headers": {"Host": params.get('host', [server])[0]}}
+              elif net == 'httpupgrade':
+                  config['streamSettings']['httpupgradeSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "host": params.get('host', [server])[0]}
               elif net == 'grpc': 
                   config['streamSettings']['grpcSettings'] = {"serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]), "multiMode": True}
               return config, server, name
@@ -137,13 +138,16 @@ jobs:
               j = json.loads(decoded)
               name = j.get('ps', f"proxy-{index}")
               server = j.get('add', '')
+              if not server: raise Exception("Missing server")
+              try: port = int(j.get('port', 443))
+              except: port = 443
+              try: aid = int(j.get('aid', 0))
+              except: aid = 0
+
               config = {
                   "tag": f"out-{index}", "protocol": "vmess",
                   "settings": {
-                      "address": server,
-                      "port": int(j.get('port', 443)),
-                      "id": j.get('id', ''),
-                      "security": j.get('scy', 'auto')
+                      "vnext": [{"address": server, "port": port, "users": [{"id": j.get('id', ''), "alterId": aid, "security": j.get('scy', 'auto')}]}]
                   },
                   "streamSettings": {"network": j.get('net', 'tcp')}
               }
@@ -156,6 +160,8 @@ jobs:
               net = j.get('net', 'tcp')
               if net == 'ws': 
                   config['streamSettings']['wsSettings'] = {"path": j.get('path', '/'), "headers": {"Host": j.get('host', server)}}
+              elif net == 'httpupgrade':
+                  config['streamSettings']['httpupgradeSettings'] = {"path": j.get('path', '/'), "host": j.get('host', server)}
               elif net == 'grpc': 
                   config['streamSettings']['grpcSettings'] = {"serviceName": j.get('path', ''), "multiMode": True}
               return config, server, name
@@ -174,22 +180,28 @@ jobs:
                   else: raise Exception("Invalid SS")
                       
               method, password = userinfo.split(':', 1)
-              server, port = server_port.split(':', 1)
+              server, port_str = server_port.split(':', 1)
+              if not server: raise Exception("Missing server")
+              try: port = int(port_str)
+              except: port = 443
+
               config = {
                   "tag": f"out-{index}", "protocol": "shadowsocks",
-                  "settings": {"address": server, "port": int(port), "method": method, "password": password}
+                  "settings": {"servers": [{"address": server, "port": port, "method": method, "password": password}]}
               }
               return config, server, name
 
           def parse_trojan(link, index):
               parsed = urllib.parse.urlparse(link)
               server = parsed.hostname
-              port = parsed.port or 443
+              if not server: raise Exception("Missing server")
+              try: port = int(parsed.port or 443)
+              except: port = 443
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
               config = {
                   "tag": f"out-{index}", "protocol": "trojan",
-                  "settings": {"address": server, "port": int(port), "password": urllib.parse.unquote(parsed.username)},
+                  "settings": {"servers": [{"address": server, "port": port, "password": urllib.parse.unquote(parsed.username)}]},
                   "streamSettings": {"network": params.get('type', ['tcp'])[0]}
               }
               if params.get('security', ['tls'])[0] == 'tls':
@@ -197,9 +209,14 @@ jobs:
                   config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0], "allowInsecure": True}
                   alpn = params.get('alpn', [''])[0]
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
+              
               net = config['streamSettings']['network']
-              if net == 'ws': config['streamSettings']['wsSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "headers": {"Host": params.get('host', [server])[0]}}
-              elif net == 'grpc': config['streamSettings']['grpcSettings'] = {"serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]), "multiMode": True}
+              if net == 'ws': 
+                  config['streamSettings']['wsSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "headers": {"Host": params.get('host', [server])[0]}}
+              elif net == 'httpupgrade':
+                  config['streamSettings']['httpupgradeSettings'] = {"path": urllib.parse.unquote(params.get('path', ['/'])[0]), "host": params.get('host', [server])[0]}
+              elif net == 'grpc': 
+                  config['streamSettings']['grpcSettings'] = {"serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]), "multiMode": True}
               return config, server, name
 
           def test_node(port):
@@ -258,8 +275,15 @@ jobs:
                   with open('config.json', 'w') as f:
                       json.dump({"log": {"loglevel": "warning"}, "inbounds": inbounds, "outbounds": outbounds, "routing": {"rules": rules}}, f)
 
-                  proc = subprocess.Popen(['./xray', '-c', 'config.json'], stdout=subprocess.DEVNULL)
-                  time.sleep(3.0) # Ensure Xray has fully bound all ports before shooting requests
+                  # Launch Xray and pipe stderr to check for crashes
+                  proc = subprocess.Popen(['./xray', '-c', 'config.json'], stdout=subprocess.DEVNULL, stderr=subprocess.PIPE)
+                  time.sleep(1.5) 
+                  
+                  # Check if Xray instantly crashed
+                  if proc.poll() is not None:
+                      _, err = proc.communicate()
+                      print(f"⚠️ XRAY CRASHED ON BATCH {chunk_index}! Skipping batch. Error:\n{err.decode('utf-8', errors='ignore')}", flush=True)
+                      continue
 
                   with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
                       futures = {executor.submit(test_node, 30000 + j): node for j, node in enumerate(chunk)}
