@@ -89,7 +89,7 @@ jobs:
         run: |
           python -c "import base64; open('proxies.txt', 'w', encoding='utf-8').write(base64.b64decode(open('./sub/sub_merge_base64.txt').read().strip()).decode('utf-8', errors='ignore'))"
 
-      - name: Write Xray Tester Script (Part 1)
+      - name: Create Xray Tester Script (Part 1)
         run: |
           cat <<'EOF' > xray_tester.py
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
@@ -194,6 +194,7 @@ jobs:
               
               flow = clean_str(params.get('flow', [''])[0]).lower()
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
+                  # Fix: Xray panics if Vision is enabled without TLS/REALITY wrapping it
                   if sec in ['tls', 'reality']:
                       config['settings']['vnext'][0]['users'][0]['flow'] = flow
               valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
@@ -277,6 +278,11 @@ jobs:
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
 
+          EOF
+
+      - name: Create Xray Tester Script (Part 2)
+        run: |
+          cat <<'EOF' >> xray_tester.py
           def parse_vmess(link, index):
               decoded = decode_base64(link.replace("vmess://", ""))
               if not decoded: raise Exception("Invalid vmess")
@@ -380,11 +386,7 @@ jobs:
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
-          EOF
 
-      - name: Write Xray Tester Script (Part 2)
-        run: |
-          cat <<'EOF' >> xray_tester.py
           def parse_ss(link, index):
               parsed = urllib.parse.urlparse(link)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
@@ -507,6 +509,11 @@ jobs:
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
 
+          EOF
+
+      - name: Create Xray Tester Script (Part 3)
+        run: |
+          cat <<'EOF' >> xray_tester.py
           def test_node(port):
               proxies = {"http": f"http://127.0.0.1:{port}", "https": f"http://127.0.0.1:{port}"}
               delay, speed = 0, 0
@@ -589,8 +596,9 @@ jobs:
               print("proxies.txt not found", flush=True); sys.exit(1)
           EOF
 
-      - name: Execute Xray Tester
-        run: python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
+      - name: Run Xray Tester
+        run: |
+          python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
 
       - name: Upload Chunk Artifact
         uses: actions/upload-artifact@v4
