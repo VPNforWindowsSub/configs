@@ -25,7 +25,6 @@ jobs:
                   print("Base64 file is empty.")
                   sys.exit(1)
               
-              # Safely decode the massive base64 string
               decoded = base64.b64decode(b64).decode('utf-8', errors='ignore')
               lines = [l for l in decoded.splitlines() if l.strip()]
               total = len(lines)
@@ -60,11 +59,11 @@ jobs:
   test-chunk:
     name: Test Nodes (${{ matrix.start }} to ${{ matrix.end }})
     needs: prepare-matrix
-    if: needs.prepare-matrix.outputs.matrix != '{"include":[]}'
+    if: ${{ needs.prepare-matrix.outputs.matrix != '{"include":[]}' }}
     runs-on: ubuntu-latest
     timeout-minutes: 120
     strategy:
-      matrix: ${{ fromJson(needs.prepare-matrix.outputs.matrix) }}
+      matrix: ${{ fromJSON(needs.prepare-matrix.outputs.matrix) }}
       fail-fast: false
     steps:
       - name: Checkout Repository
@@ -95,7 +94,6 @@ jobs:
           cat <<'EOF' > xray_tester.py
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
 
-          # Modern Xray-compliant Shadowsocks cipher methods (v26.x compatible)
           ALLOWED_SS_METHODS = {
               "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305",
               "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305",
@@ -119,7 +117,6 @@ jobs:
           def is_valid_uuid_or_id(s):
               if not s: return False
               s = s.strip()
-              # 36-char Hyphenated UUID
               if len(s) == 36:
                   parts = s.split('-')
                   if len(parts) == 5 and [len(p) for p in parts] == [8, 4, 4, 4, 12]:
@@ -127,13 +124,11 @@ jobs:
                           int(s.replace('-', ''), 16)
                           return True
                       except ValueError: pass
-              # 32-char Raw Hex UUID
               if len(s) == 32:
                   try:
                       int(s, 16)
                       return True
                   except ValueError: pass
-              # Custom String ID (Must be <= 30 bytes)
               try:
                   if len(s.encode('utf-8')) <= 30:
                       return True
@@ -175,13 +170,11 @@ jobs:
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
 
-              # Skip insecure TLS configurations
               allow_insecure = clean_str(params.get('allowInsecure', ['0'])[0]).lower()
               insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure TLS node")
 
-              # Clean, validate, and upgrade network type to fix Xray v26 crash
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net_type in ["http", "h2"]: net_type = "xhttp"
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
@@ -195,12 +188,10 @@ jobs:
                   "streamSettings": {"network": net_type}
               }
 
-              # Clean and validate flow
               flow = clean_str(params.get('flow', [''])[0]).lower()
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
                   config['settings']['vnext'][0]['users'][0]['flow'] = flow
 
-              # Clean, validate security and fix invalid TLS fingerprints
               sec = clean_str(params.get('security', ['none'])[0]).lower()
               valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
               
@@ -256,7 +247,6 @@ jobs:
                   if not host_val: host_val = server
                   if not path_val or path_val == '/': path_val = '/'
                   
-                  # Reject malformed hosts that crash Xray-core memory allocator
                   if '@' in host_val or ' ' in host_val or '{' in host_val:
                       raise Exception("Malformed XHTTP Host")
                   
@@ -275,8 +265,6 @@ jobs:
                       try:
                           parsed_extra = json.loads(urllib.parse.unquote(extra_str))
                           if isinstance(parsed_extra, dict):
-                              # Fix: Xray unmarshals extra back into SplitHTTPConfig. 
-                              # If "headers" is a string here, it crashes. Strip it safely.
                               if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
                                   del parsed_extra["headers"]
                               xhttp_settings["extra"] = parsed_extra
@@ -295,7 +283,6 @@ jobs:
               if not server: raise Exception("Missing server")
               if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VMess UUID")
 
-              # Skip insecure TLS configurations
               allow_insecure = clean_str(j.get('allowInsecure', '')).lower()
               skip_cert = clean_str(j.get('skip-cert-verify', '')).lower()
               if j.get('allowInsecure') is True or j.get('skip-cert-verify') is True or allow_insecure in ['1', 'true'] or skip_cert in ['1', 'true']:
@@ -306,12 +293,10 @@ jobs:
               try: aid = int(j.get('aid', 0))
               except: aid = 0
 
-              # Clean and validate security method
               scy = clean_str(j.get('scy', 'auto')).lower()
               if scy not in ["aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero"]:
                   scy = "auto"
 
-              # Clean, validate, and upgrade network type to fix Xray v26 crash
               net = clean_str(j.get('net', 'tcp')).lower()
               if net in ["http", "h2"]: net = "xhttp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
@@ -358,7 +343,6 @@ jobs:
                   if not host_val: host_val = server
                   if not path_val or path_val == '/': path_val = '/'
                   
-                  # Reject malformed hosts that crash Xray-core memory allocator
                   if '@' in host_val or ' ' in host_val or '{' in host_val:
                       raise Exception("Malformed XHTTP Host")
                   
@@ -407,10 +391,9 @@ jobs:
               method, password = userinfo.split(':', 1)
               if not method or not password: raise Exception("Missing SS credentials")
               
-              # Clean and validate SS method
               method = clean_str(method).lower()
               if method not in ALLOWED_SS_METHODS:
-                  raise Exception(f"Shadowsocks method '{method}' is deprecated/unsupported by modern Xray-core.")
+                  raise Exception(f"Shadowsocks method '{method}' is deprecated.")
 
               server, port_str = server_port.split(':', 1)
               if not server: raise Exception("Missing server")
@@ -436,13 +419,11 @@ jobs:
               password = clean_str(password)
               if not password: raise Exception("Missing trojan password")
               
-              # Skip insecure TLS configurations
               allow_insecure = clean_str(params.get('allowInsecure', ['0'])[0]).lower()
               insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure Trojan node")
 
-              # Clean, validate, and upgrade network type to fix Xray v26 crash
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net in ["http", "h2"]: net = "xhttp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
@@ -526,7 +507,7 @@ jobs:
                           bytes_received = 0
                           for chunk in r.iter_content(8192):
                               bytes_received += len(chunk)
-                              if time.time() - start > 8: break # 8s Hard timeout
+                              if time.time() - start > 8: break
                       duration = time.time() - start
                       if duration > 0: speed = int(bytes_received / duration)
               except Exception: pass
@@ -571,7 +552,6 @@ jobs:
                   with open('config.json', 'w') as f:
                       json.dump({"log": {"loglevel": "warning"}, "inbounds": inbounds, "outbounds": outbounds, "routing": {"rules": rules}}, f)
 
-                  # Launch Xray and capture both stdout/stderr to print crashes clearly
                   proc = subprocess.Popen(['./xray', 'run', '-c', 'config.json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                   time.sleep(2.0) 
                   
@@ -595,6 +575,7 @@ jobs:
           except FileNotFoundError:
               print("proxies.txt not found", flush=True); sys.exit(1)
           EOF
+          
           python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
 
       - name: Upload Chunk Artifact
@@ -649,7 +630,7 @@ jobs:
 
       - name: Merge JSON files
         run: |
-          python -c "
+          cat <<'EOF' > merge.py
           import json, glob, os
           all_data = []
           for f in glob.glob('processed_chunks/*.json'):
@@ -658,7 +639,8 @@ jobs:
           with open('meta.json', 'w') as out:
               json.dump(all_data, out, indent=2)
           print(f'Merged {len(all_data)} tested nodes from all workers.')
-          "
+          EOF
+          python merge.py
 
       - name: Process Test Results
         run: |
@@ -677,6 +659,7 @@ jobs:
           else
             echo "No changes to commit."
           fi
+          
       - name: Trigger Run
         if: success()
         env:
