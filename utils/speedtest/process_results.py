@@ -22,7 +22,7 @@ ETERNITY_OUTPUT_BASE64_FILE = 'Eternity'
 DIVERSITY_OUTPUT_FILE = 'Diversity.txt'
 DIVERSITY_OUTPUT_BASE64_FILE = 'Diversity'
 RESILIENCE_OUTPUT_FILE = 'Resilience.txt'
-RESILIENCE_OUTPUT_BASE64_FILE = 'Resilience_base64.txt'
+RESILIENCE_OUTPUT_BASE64_FILE = 'Resilience'
 LOG_INFO_FILE = 'LogInfo.txt'
 
 # Additional Outputs
