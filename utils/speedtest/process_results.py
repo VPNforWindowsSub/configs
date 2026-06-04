@@ -72,7 +72,7 @@ COUNTRY_NAME_MAPPING = {
     'United Arab Emirates': 'Emirates'
 }
 
-# Domains for Domain Fronting (Iran Resilience List)
+# --- Domain Fronting Configuration ---
 TRUSTED_DOMAINS = [
     "www.hcaptcha.com", "unpkg.com", "cdn.jsdelivr.net", "hcaptcha.com", "www.w3.org", "ietf.org",
     "www.icann.org", "registry.npmjs.org", "nodejs.org", "digitalocean.com", "www.digitalocean.com",
@@ -95,12 +95,21 @@ COUNTRY_NODE_LIMITS = {
     'CN': 2
 }
 
-MAX_SAME_UUID = 5
+# Maximum allowed nodes that share the exact same UUID/Password.
+MAX_SAME_UUID = 5 
 
 def is_ip_address(address):
     if not isinstance(address, str):
         return False
     return bool(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", address))
+
+def get_ip_from_node(node):
+    server_address = node.get('server', '')
+    if not server_address:
+        return ''
+    if is_ip_address(server_address):
+        return server_address
+    return '' # We will pre-resolve these concurrently instead
 
 def get_proxy_signature(link):
     if '#' in link:
@@ -108,21 +117,30 @@ def get_proxy_signature(link):
     return link
 
 def is_cloudflare_ip(ip):
+    """Checks if an IP falls into Cloudflare Anycast CDN ranges."""
     if not ip: return False
     try:
         octets = [int(o) for o in ip.split('.')]
         if len(octets) != 4: return False
+        
+        # 104.16.0.0/12 (104.16.0.0 - 104.31.255.255)
         if octets[0] == 104 and (16 <= octets[1] <= 31): return True
+        # 172.64.0.0/13 (172.64.0.0 - 172.71.255.255)
         if octets[0] == 172 and (64 <= octets[1] <= 71): return True
+        # 162.159.0.0/16
         if octets[0] == 162 and octets[1] == 159: return True
+        # 188.114.96.0/20 (188.114.96.0 - 188.114.111.255)
         if octets[0] == 188 and octets[1] == 114 and (96 <= octets[2] <= 111): return True
+        # 108.162.192.0/18
         if octets[0] == 108 and octets[1] == 162 and (192 <= octets[2] <= 255): return True
+        # 198.41.128.0/17
         if octets[0] == 198 and octets[1] == 41 and (128 <= octets[2] <= 255): return True
     except:
         pass
     return False
 
 def get_uuid(link):
+    """Safely extracts the UUID or Password from a proxy link to track spam."""
     try:
         if link.startswith('vless://') or link.startswith('trojan://'):
             return link.split('://')[1].split('@')[0]
@@ -154,7 +172,7 @@ def ensure_empty_files():
     ]
     for f in files_to_touch:
         open(f, 'w').close()
-
+    
     os.makedirs(SPLITTED_OUTPUT_DIR, exist_ok=True)
     for p in ['vmess.txt', 'vless.txt', 'trojan.txt', 'ss.txt']:
         open(os.path.join(SPLITTED_OUTPUT_DIR, p), 'w').close()
@@ -209,7 +227,6 @@ def create_resilience_clone(node):
             
             clone = node.copy()
             clone['link'] = f"{scheme}://{user}@{server}:{port}?{new_query}#{new_name}"
-            clone['tag'] = urllib.parse.unquote(name) + " [🇮🇷]"
             return clone
         except Exception:
             return None
@@ -244,7 +261,6 @@ def create_resilience_clone(node):
             
             clone = node.copy()
             clone['link'] = f"vmess://{new_b64}"
-            clone['tag'] = j['ps']
             return clone
         except Exception:
             return None
@@ -282,6 +298,7 @@ def process_and_save_results():
 
     working_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
+    # --- NEW CONCURRENT DNS RESOLVER ---
     unique_servers = list(set([node.get('server', '') for node in working_nodes if node.get('server')]))
     resolved_ips = {}
     print(f"Resolving {len(unique_servers)} unique domains concurrently...", flush=True)
@@ -300,6 +317,7 @@ def process_and_save_results():
             resolved_ips[server] = ip
     print("Concurrent DNS Resolution complete.", flush=True)
 
+    # 1. Resolve and tag working nodes using concurrent DNS results
     raw_processed = []
     if os.path.exists(GEOIP_DB):
         with geoip2.database.Reader(GEOIP_DB) as reader:
@@ -308,7 +326,8 @@ def process_and_save_results():
                 ip_address = resolved_ips.get(server, '')
                 country_code = 'XX'
                 country_name = 'Unknown'
-
+                
+                # Intercept Cloudflare Anycast IPs and force them to 'RELAY' directly
                 if is_cloudflare_ip(ip_address):
                     country_code = 'RELAY'
                     country_name = 'Relay'
@@ -320,7 +339,12 @@ def process_and_save_results():
                     except:
                         pass
 
-                if country_code in ['CLOUDFLARE', 'PRIVATE', 'XX']:
+                if country_code in ['CLOUDFLARE', 'PRIVATE']:
+                    country_code = 'RELAY'
+                    country_name = 'Relay'
+
+                # Graceful UI fallback: replace unmappable codes with 'RELAY'
+                if country_code == 'XX':
                     country_code = 'RELAY'
                     country_name = 'Relay'
 
@@ -349,6 +373,7 @@ def process_and_save_results():
                     'country_name': 'Relay'
                 })
 
+    # 3. Deduplicate
     print("Deduplicating proxies by configuration...")
     seen_signatures = {}
     for node in raw_processed:
@@ -363,7 +388,31 @@ def process_and_save_results():
     unique_nodes = list(seen_signatures.values())
     unique_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
-    print(f"Filtering out UUID spam (Max {MAX_SAME_UUID} instances per UUID)...")
+    # ==========================================
+    # --- WRITE RESILIENCE (IRAN DOMAIN FRONT) -
+    # ==========================================
+    print("\n--- Generating Domain-Fronted Resilience List (Max Cloudflare Candidates) ---")
+    resilience_candidates = [p for p in unique_nodes if p['country'] not in BLOCKED_COUNTRIES]
+    
+    resilience_nodes = []
+    for node in resilience_candidates:
+        cloned_node = create_resilience_clone(node)
+        if cloned_node:
+            resilience_nodes.append(cloned_node)
+
+    res_links = [p['link'] for p in resilience_nodes]
+    random.shuffle(res_links)
+    res_links_str = '\n'.join(res_links)
+
+    with open(RESILIENCE_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
+        f.write(res_links_str)
+    with open(RESILIENCE_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: 
+        f.write(base64.b64encode(res_links_str.encode()).decode())
+    print(f"✅ Saved 'Resilience' list of {len(res_links)} domain-fronted Cloudflare proxies.\n")
+
+
+    # --- 3.5 UUID Anti-Spam Filtering ---
+    print(f"Filtering out UUID spam (Max {MAX_SAME_UUID} instances per UUID) for standard lists...")
     uuid_counts = {}
     filtered_unique_nodes = []
     for node in unique_nodes:
@@ -371,7 +420,7 @@ def process_and_save_results():
         if not uuid:
             filtered_unique_nodes.append(node)
             continue
-
+            
         if uuid_counts.get(uuid, 0) < MAX_SAME_UUID:
             filtered_unique_nodes.append(node)
             uuid_counts[uuid] = uuid_counts.get(uuid, 0) + 1
@@ -381,13 +430,14 @@ def process_and_save_results():
     total_proxies = len(unique_nodes)
     print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
+    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
     processed_nodes = []
     random_numbers = [random.randint(100, 999) for _ in range(total_proxies)]
 
     for index, node in enumerate(unique_nodes):
         country_code = node['country']
         country_name = node['country_name']
-
+        
         name_emoji = EMOJI.get(country_code, EMOJI['NOWHERE'])
         country_name_to_use = COUNTRY_NAME_MAPPING.get(country_name, country_name)
         country_name_formatted = country_name_to_use.replace(' ', '-')
@@ -401,9 +451,9 @@ def process_and_save_results():
                 b64 += '=' * (-len(b64) % 4)
                 b64 = b64.replace('-', '+').replace('_', '/')
                 j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
-
-                j['ps'] = pretty_name
-
+                
+                j['ps'] = pretty_name # Inject the pretty name inside the payload
+                
                 new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':')).encode('utf-8')).decode('ascii')
                 node['link'] = f"vmess://{new_b64}"
             except Exception:
@@ -416,38 +466,19 @@ def process_and_save_results():
         node['tag'] = pretty_name
         processed_nodes.append(node)
 
-    conventional_nodes = [p for p in processed_nodes if p['country'] not in BLOCKED_COUNTRIES]
-
     # ==========================================
-    # --- WRITE RESILIENCE (IRAN DOMAIN FRONT) -
-    # ==========================================
-    print("\n--- Generating Domain-Fronted Resilience List (Iran Optimized) ---")
-    resilience_nodes = []
-    for node in conventional_nodes:
-        cloned_node = create_resilience_clone(node)
-        if cloned_node:
-            resilience_nodes.append(cloned_node)
-
-    res_links = [p['link'] for p in resilience_nodes]
-    random.shuffle(res_links)
-    res_links_str = '\n'.join(res_links)
-
-    with open(RESILIENCE_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
-        f.write(res_links_str)
-    with open(RESILIENCE_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: 
-        f.write(base64.b64encode(res_links_str.encode()).decode())
-    print(f"✅ Saved 'Resilience' list of {len(res_links)} domain-fronted Cloudflare proxies.")
-
-
-    # ==========================================
-    # --- WRITE EXCLUSIVE COUNTRY DIVERSITY FILE
+    # --- WRITE EXCLUSIVE COUNTRY DIVERSITY FILE ---
     # ==========================================
     print("\n--- Starting Diversity-First list generation ---")
     diversity_nodes_by_country = {}
     for node in processed_nodes:
         country = node['country']
+        # Do not include any obscure/unknown/relay countries (no RELAY or unmappable XX)
         if country in ['RELAY', 'XX']:
             continue
+            
+        # Target constraints: ping < 2000ms AND speed >= 50kb/s (50000 B/s)
+        # Note: This list completely ignores the BLOCKED_COUNTRIES filter!
         if node['delay'] < 2000 and node['speed'] >= 50000:
             if country not in diversity_nodes_by_country:
                 diversity_nodes_by_country[country] = []
@@ -455,24 +486,29 @@ def process_and_save_results():
 
     diversity_nodes = []
     for country, country_nodes in diversity_nodes_by_country.items():
+        # Sort each country's pool by health score (speed) first
         country_nodes.sort(key=lambda x: x['health_score'], reverse=True)
+        # Pick exactly 2 working configs from each country
         diversity_nodes.extend(country_nodes[:2])
 
     diversity_links = [p['link'] for p in diversity_nodes]
-    random.shuffle(diversity_links)
+    random.shuffle(diversity_links) # Completely scrambled
     diversity_links_str = '\n'.join(diversity_links)
 
-    with open(DIVERSITY_OUTPUT_FILE, 'w', encoding='utf-8') as f:
+    with open(DIVERSITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
         f.write(diversity_links_str)
-    with open(DIVERSITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f:
+    with open(DIVERSITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: 
         f.write(base64.b64encode(diversity_links_str.encode()).decode())
     print(f"✅ Saved 'Diversity' list of {len(diversity_links)} proxies.")
 
     # ==========================================
     # --- WRITE CONVENTIONAL OUTPUT FILES ---
     # ==========================================
+    # Note: These conventional files MUST still strictly filter out BLOCKED_COUNTRIES
+    conventional_nodes = [p for p in processed_nodes if p['country'] not in BLOCKED_COUNTRIES]
+
     full_links = [p['link'] for p in conventional_nodes]
-    random.shuffle(full_links)
+    random.shuffle(full_links) # Completely scramble full list
     full_links_str = '\n'.join(full_links)
 
     with open(FULL_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
@@ -481,6 +517,7 @@ def process_and_save_results():
     with open(FULL_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(full_links_str.encode()).decode())
     print(f"✅ Saved Base64 encoded full list to {FULL_OUTPUT_BASE64_FILE}.")
 
+    # --- Write Splitted Files ---
     os.makedirs(SPLITTED_OUTPUT_DIR, exist_ok=True)
     vmess_outputs, vless_outputs, trojan_outputs, ss_outputs = [], [], [], []
     for link in full_links:
@@ -495,6 +532,7 @@ def process_and_save_results():
     with open(os.path.join(SPLITTED_OUTPUT_DIR, "ss.txt"), 'w') as f: f.write("\n".join(ss_outputs))
     print("✅ Saved splitted categories.")
 
+    # Write log file (matching conventional nodes)
     log_output_list = []
     for item in conventional_nodes:
         speed_mb = item.get("speed", 0) / 1_048_576
@@ -504,12 +542,12 @@ def process_and_save_results():
         f.writelines(log_output_list)
     print(f"✅ Saved Speedtest Logs to {LOG_INFO_FILE}.")
 
-    # ==========================================
-    # --- ETERNITY (GEO-BALANCED) ---
-    # ==========================================
+    # --- Geo-Balancing & Protocol Prioritization for Eternity ---
     print("\n--- Starting Geo-Balancing and VLESS Quota for 'Eternity' list ---")
     source_pool = conventional_nodes[:TOP_POOL_SIZE]
-    
+    print(f"Using a source pool of top {len(source_pool)} nodes for balancing.")
+
+    # Sort each country's pool so that VLESS nodes are prioritized first, then speed.
     nodes_by_country = {}
     for node in source_pool:
         country_code = node['country']
@@ -524,6 +562,7 @@ def process_and_save_results():
     selected_links = set()
     current_vless_count = 0
 
+    print(f"Selecting nodes based on country-specific limits (VLESS prioritized)...")
     for country in sorted(nodes_by_country.keys()):
         limit = COUNTRY_NODE_LIMITS.get(country, NODES_PER_COUNTRY)
         nodes_to_take = min(limit, len(nodes_by_country[country]))
@@ -536,17 +575,25 @@ def process_and_save_results():
                 if node['link'].startswith('vless://'):
                     current_vless_count += 1
 
+    print(f"Selected {len(eternity_nodes)} nodes after geographic distribution. Current VLESS count: {current_vless_count}")
+
+    # Pass 1: If VLESS count is under 55% quota (91 nodes), fill strictly with VLESS nodes first
     if current_vless_count < VLESS_TARGET_SIZE:
+        print(f"Aggressively filling VLESS nodes up to quota of {VLESS_TARGET_SIZE}...")
         for node in conventional_nodes:
-            if len(eternity_nodes) >= ETERNITY_LIST_SIZE or current_vless_count >= VLESS_TARGET_SIZE:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+                break
+            if current_vless_count >= VLESS_TARGET_SIZE:
                 break
             if node['link'].startswith('vless://') and node['link'] not in selected_links:
                 eternity_nodes.append(node)
                 selected_links.add(node['link'])
                 current_vless_count += 1
 
+    # Pass 2: Fill any remaining slots up to 165 total nodes with fastest overall nodes (any protocol)
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
         needed = ETERNITY_LIST_SIZE - len(eternity_nodes)
+        print(f"Filling remaining {needed} slots with top-health nodes of any protocol...")
         for node in conventional_nodes:
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
@@ -554,15 +601,16 @@ def process_and_save_results():
                 eternity_nodes.append(node)
                 selected_links.add(node['link'])
 
+    # Shuffling the final Eternity output lists completely before saving to avoid speed-based order signatures
     eternity_links = [p['link'] for p in eternity_nodes]
-    random.shuffle(eternity_links)
+    random.shuffle(eternity_links) # Scramble Eternity list
     eternity_links_str = '\n'.join(eternity_links)
 
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(eternity_links_str)
     with open(ETERNITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(eternity_links_str.encode()).decode())
-
+    
     final_vless_count = sum(1 for n in eternity_nodes if n['link'].startswith('vless://'))
-    print(f"✅ Saved 'Eternity' list of {len(eternity_links)} proxies (contains {final_vless_count} VLESS nodes).")
+    print(f"✅ Saved 'Eternity' list of {len(eternity_links)} proxies (contains {final_vless_count} highly-resilient VLESS nodes).")
 
 if __name__ == '__main__':
     process_and_save_results()
