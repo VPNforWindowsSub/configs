@@ -109,7 +109,7 @@ def get_ip_from_node(node):
         return ''
     if is_ip_address(server_address):
         return server_address
-    return '' # We will pre-resolve these concurrently instead
+    return ''
 
 def get_proxy_signature(link):
     if '#' in link:
@@ -123,17 +123,11 @@ def is_cloudflare_ip(ip):
         octets = [int(o) for o in ip.split('.')]
         if len(octets) != 4: return False
         
-        # 104.16.0.0/12 (104.16.0.0 - 104.31.255.255)
         if octets[0] == 104 and (16 <= octets[1] <= 31): return True
-        # 172.64.0.0/13 (172.64.0.0 - 172.71.255.255)
         if octets[0] == 172 and (64 <= octets[1] <= 71): return True
-        # 162.159.0.0/16
         if octets[0] == 162 and octets[1] == 159: return True
-        # 188.114.96.0/20 (188.114.96.0 - 188.114.111.255)
         if octets[0] == 188 and octets[1] == 114 and (96 <= octets[2] <= 111): return True
-        # 108.162.192.0/18
         if octets[0] == 108 and octets[1] == 162 and (192 <= octets[2] <= 255): return True
-        # 198.41.128.0/17
         if octets[0] == 198 and octets[1] == 41 and (128 <= octets[2] <= 255): return True
     except:
         pass
@@ -203,7 +197,11 @@ def create_resilience_clone(node):
             if port not in CF_PORTS:
                 return None
                 
-            query, name = query_name.split('#', 1)
+            if '#' in query_name:
+                query, name = query_name.split('#', 1)
+            else:
+                query, name = query_name, "Proxy"
+                
             params = dict(urllib.parse.parse_qsl(query, keep_blank_values=True))
             
             net = params.get('type', 'tcp')
@@ -212,21 +210,21 @@ def create_resilience_clone(node):
             if sec != 'tls': return None
             if net not in ['ws', 'grpc', 'httpupgrade']: return None
             
-            # Ensure SNI/Host accurately retain the original backend destination
             if 'sni' not in params or not params['sni']:
                 params['sni'] = server
             if net in ['ws', 'httpupgrade']:
                 if 'host' not in params or not params['host']:
                     params['host'] = server
                     
-            # Swap the physical routing address
             server = trusted_domain
-            
             new_query = urllib.parse.urlencode(params)
-            new_name = urllib.parse.quote(urllib.parse.unquote(name) + " [🇮🇷]")
+            
+            # Fix: Use raw unquoted UTF-8 string so clients read the emojis correctly
+            new_name = urllib.parse.unquote(name) + " [🇮🇷]"
             
             clone = node.copy()
             clone['link'] = f"{scheme}://{user}@{server}:{port}?{new_query}#{new_name}"
+            clone['tag'] = new_name
             return clone
         except Exception:
             return None
@@ -257,10 +255,12 @@ def create_resilience_clone(node):
             j['add'] = trusted_domain
             j['ps'] = str(j.get('ps', 'Proxy')) + " [🇮🇷]"
             
-            new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':')).encode('utf-8')).decode('ascii')
+            # Fix: ensure_ascii=False prevents emojis from turning into \uXXXX
+            new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':'), ensure_ascii=False).encode('utf-8')).decode('ascii')
             
             clone = node.copy()
             clone['link'] = f"vmess://{new_b64}"
+            clone['tag'] = j['ps']
             return clone
         except Exception:
             return None
@@ -407,51 +407,9 @@ def process_and_save_results():
     unique_nodes = list(seen_signatures.values())
     unique_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
-    # ==========================================
-    # --- WRITE RESILIENCE (IRAN DOMAIN FRONT) -
-    # ==========================================
-    print("\n--- Generating Domain-Fronted Resilience List (Max Cloudflare Candidates) ---")
-    resilience_candidates = [p for p in unique_nodes if p['country'] not in BLOCKED_COUNTRIES]
-    
-    resilience_nodes = []
-    for node in resilience_candidates:
-        cloned_node = create_resilience_clone(node)
-        if cloned_node:
-            resilience_nodes.append(cloned_node)
-
-    res_links = [p['link'] for p in resilience_nodes]
-    random.shuffle(res_links)
-    res_links_str = '\n'.join(res_links)
-
-    with open(RESILIENCE_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
-        f.write(res_links_str)
-    with open(RESILIENCE_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: 
-        f.write(base64.b64encode(res_links_str.encode()).decode())
-    print(f"✅ Saved 'Resilience' list of {len(res_links)} domain-fronted Cloudflare proxies.\n")
-
-
-    # --- 3.5 UUID Anti-Spam Filtering ---
-    print(f"Filtering out UUID spam (Max {MAX_SAME_UUID} instances per UUID) for standard lists...")
-    uuid_counts = {}
-    filtered_unique_nodes = []
-    for node in unique_nodes:
-        uuid = get_uuid(node['link'])
-        if not uuid:
-            filtered_unique_nodes.append(node)
-            continue
-            
-        if uuid_counts.get(uuid, 0) < MAX_SAME_UUID:
-            filtered_unique_nodes.append(node)
-            uuid_counts[uuid] = uuid_counts.get(uuid, 0) + 1
-
-    spam_removed = len(unique_nodes) - len(filtered_unique_nodes)
-    unique_nodes = filtered_unique_nodes
-    total_proxies = len(unique_nodes)
-    print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
-
-    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
-    processed_nodes = []
-    random_numbers = [random.randint(100, 999) for _ in range(total_proxies)]
+    # 4. Apply beautiful sequential naming directly to link URI
+    all_processed_nodes = []
+    random_numbers = [random.randint(100, 999) for _ in range(len(unique_nodes))]
 
     for index, node in enumerate(unique_nodes):
         country_code = node['country']
@@ -483,14 +441,55 @@ def process_and_save_results():
             node['link'] = f"{base_link}#{pretty_name}"
 
         node['tag'] = pretty_name
-        processed_nodes.append(node)
+        all_processed_nodes.append(node)
+
+    # ==========================================
+    # --- WRITE RESILIENCE (IRAN DOMAIN FRONT) -
+    # ==========================================
+    print("\n--- Generating Domain-Fronted Resilience List (Max Cloudflare Candidates) ---")
+    resilience_candidates = [p for p in all_processed_nodes if p['country'] not in BLOCKED_COUNTRIES]
+    
+    resilience_nodes = []
+    for node in resilience_candidates:
+        cloned_node = create_resilience_clone(node)
+        if cloned_node:
+            resilience_nodes.append(cloned_node)
+
+    res_links = [p['link'] for p in resilience_nodes]
+    random.shuffle(res_links)
+    res_links_str = '\n'.join(res_links)
+
+    with open(RESILIENCE_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
+        f.write(res_links_str)
+    with open(RESILIENCE_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: 
+        f.write(base64.b64encode(res_links_str.encode()).decode())
+    print(f"✅ Saved 'Resilience' list of {len(res_links)} domain-fronted Cloudflare proxies.\n")
+
+    # --- 3.5 UUID Anti-Spam Filtering (STANDARD LISTS) ---
+    print(f"Filtering out UUID spam (Max {MAX_SAME_UUID} instances per UUID) for standard lists...")
+    uuid_counts = {}
+    filtered_unique_nodes = []
+    for node in all_processed_nodes:
+        uuid = get_uuid(node['link'])
+        if not uuid:
+            filtered_unique_nodes.append(node)
+            continue
+            
+        if uuid_counts.get(uuid, 0) < MAX_SAME_UUID:
+            filtered_unique_nodes.append(node)
+            uuid_counts[uuid] = uuid_counts.get(uuid, 0) + 1
+
+    spam_removed = len(all_processed_nodes) - len(filtered_unique_nodes)
+    unique_nodes = filtered_unique_nodes
+    total_proxies = len(unique_nodes)
+    print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
     # ==========================================
     # --- WRITE EXCLUSIVE COUNTRY DIVERSITY FILE ---
     # ==========================================
     print("\n--- Starting Diversity-First list generation ---")
     diversity_nodes_by_country = {}
-    for node in processed_nodes:
+    for node in unique_nodes:
         country = node['country']
         # Do not include any obscure/unknown/relay countries (no RELAY or unmappable XX)
         if country in ['RELAY', 'XX']:
@@ -524,7 +523,7 @@ def process_and_save_results():
     # --- WRITE CONVENTIONAL OUTPUT FILES ---
     # ==========================================
     # Note: These conventional files MUST still strictly filter out BLOCKED_COUNTRIES
-    conventional_nodes = [p for p in processed_nodes if p['country'] not in BLOCKED_COUNTRIES]
+    conventional_nodes = [p for p in unique_nodes if p['country'] not in BLOCKED_COUNTRIES]
 
     full_links = [p['link'] for p in conventional_nodes]
     random.shuffle(full_links) # Completely scramble full list
