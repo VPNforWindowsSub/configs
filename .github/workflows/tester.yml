@@ -262,13 +262,17 @@ jobs:
                   xhttp_settings = {
                       "path": path_val,
                       "host": host_val,
-                      "mode": mode_val
+                      "mode": mode_val,
+                      "headers": {"Host": host_val}
                   }
                   
                   extra_str = params.get('extra', [''])[0]
                   if extra_str:
                       try:
-                          xhttp_settings["extra"] = json.loads(urllib.parse.unquote(extra_str))
+                          parsed_extra = json.loads(urllib.parse.unquote(extra_str))
+                          if isinstance(parsed_extra, dict):
+                              # Force all keys and values to strings to prevent Go type-assertion crashes
+                              xhttp_settings["extra"] = {str(k): str(v) for k, v in parsed_extra.items()}
                       except: pass
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
@@ -353,16 +357,24 @@ jobs:
                   xhttp_settings = {
                       "path": path_val,
                       "host": host_val,
-                      "mode": mode_val
+                      "mode": mode_val,
+                      "headers": {"Host": host_val}
                   }
                   
                   extra_val = j.get('extra')
                   if extra_val:
-                      if isinstance(extra_val, str):
-                          try: xhttp_settings["extra"] = json.loads(urllib.parse.unquote(extra_val))
-                          except: pass
-                      elif isinstance(extra_val, dict):
-                          xhttp_settings["extra"] = extra_val
+                      try:
+                          if isinstance(extra_val, str):
+                              parsed_extra = json.loads(urllib.parse.unquote(extra_val))
+                          elif isinstance(extra_val, dict):
+                              parsed_extra = extra_val
+                          else:
+                              parsed_extra = {}
+                              
+                          if isinstance(parsed_extra, dict):
+                              # Force all keys and values to strings
+                              xhttp_settings["extra"] = {str(k): str(v) for k, v in parsed_extra.items()}
+                      except: pass
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
