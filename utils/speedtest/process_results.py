@@ -456,8 +456,55 @@ def process_and_save_results():
         if cloned_node:
             resilience_nodes.append(cloned_node)
 
+    # --- IRAN PRIORITIZATION LOGIC ---
+    def calculate_iran_score(node):
+        score = node.get('health_score', 0)
+        link = node.get('link', '')
+        sni, port, path = "", 443, ""
+        
+        try:
+            if link.startswith('vless://') or link.startswith('trojan://'):
+                parsed = urllib.parse.urlparse(link)
+                port = parsed.port if parsed.port else 443
+                query = dict(urllib.parse.parse_qsl(parsed.query))
+                sni = query.get('sni', '').lower()
+                path = query.get('path', '').lower()
+            elif link.startswith('vmess://'):
+                b64 = link.split('://')[1].split('#')[0]
+                b64 += '=' * (-len(b64) % 4)
+                j = json.loads(base64.b64decode(b64.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore'))
+                port = int(j.get('port', 443))
+                sni = str(j.get('sni', '')).lower()
+                path = str(j.get('path', '')).lower()
+        except:
+            pass
+            
+        # 1. Penalize default subdomains, abused free TLDs, and known burned proxy farms
+        burned_signatures = [
+            'workers.dev', 'trycloudflare.com', 'pages.dev', 'eu.org', '.cc', 
+            'multiplydose', 'calmloud', 'ignitelimit', 'gossipglove', 'calmlunch', 'creationlong'
+        ]
+        if any(b in sni for b in burned_signatures) or '/assignment' in path:
+            score -= 2000
+            
+        # 2. Huge boost for non-443 ports (GFW heavily throttles/DPIs 443)
+        if port != 443 and port in CF_PORTS:
+            score += 1000
+            
+        # 3. Boost for Iranian custom domains (.ir) used as SNIs
+        if '.ir' in sni or sni.endswith('.ir.'):
+            score += 500
+            
+        return score
+
+    # Sort nodes by the custom Iran score
+    resilience_nodes.sort(key=calculate_iran_score, reverse=True)
+    
+    # Cap the list at exactly 1000 configs
+    resilience_nodes = resilience_nodes[:1000]
+
     res_links = [p['link'] for p in resilience_nodes]
-    random.shuffle(res_links)
+    random.shuffle(res_links) # Scramble so the app doesn't bunch all the 8443 ports together
     res_links_str = '\n'.join(res_links)
 
     with open(RESILIENCE_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
