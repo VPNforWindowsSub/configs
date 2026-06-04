@@ -6,6 +6,8 @@ import socket
 import re
 import math
 import urllib.parse
+import concurrent.futures
+import random
 
 # --- Configuration ---
 META_FILE = 'meta.json'
@@ -79,7 +81,6 @@ COUNTRY_NODE_LIMITS = {
 }
 
 # Maximum allowed nodes that share the exact same UUID/Password.
-# Forces high server diversity and prevents Cloudflare-IP spam from a single host.
 MAX_SAME_UUID = 5 
 
 def is_ip_address(address):
@@ -93,10 +94,7 @@ def get_ip_from_node(node):
         return ''
     if is_ip_address(server_address):
         return server_address
-    try:
-        return socket.gethostbyname(server_address)
-    except socket.gaierror:
-        return ''
+    return '' # We will pre-resolve these concurrently instead
 
 def get_proxy_signature(link):
     if '#' in link:
@@ -170,12 +168,33 @@ def process_and_save_results():
 
     working_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
-    # 1. Resolve and tag working nodes
+    # --- NEW CONCURRENT DNS RESOLVER ---
+    # We resolve all domains in parallel using 100 threads to bypass GitHub UDP limits.
+    unique_servers = list(set([node.get('server', '') for node in working_nodes if node.get('server')]))
+    resolved_ips = {}
+    print(f"Resolving {len(unique_servers)} unique domains concurrently...", flush=True)
+
+    def resolve_domain(server):
+        if is_ip_address(server):
+            return server, server
+        try:
+            return server, socket.gethostbyname(server)
+        except:
+            return server, ''
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
+        results = executor.map(resolve_domain, unique_servers)
+        for server, ip in results:
+            resolved_ips[server] = ip
+    print("Concurrent DNS Resolution complete.", flush=True)
+
+    # 1. Resolve and tag working nodes using concurrent DNS results
     raw_processed = []
     if os.path.exists(GEOIP_DB):
         with geoip2.database.Reader(GEOIP_DB) as reader:
             for node in working_nodes:
-                ip_address = get_ip_from_node(node)
+                server = node.get('server', '')
+                ip_address = resolved_ips.get(server, '')
                 country_code = 'XX'
                 country_name = 'Unknown'
                 if ip_address:
@@ -202,7 +221,7 @@ def process_and_save_results():
                         'country_name': country_name
                     })
     else:
-        print("Warning: GeoIP DB not found. Skipping country lookup and filtering.")
+        print("Warning: GeoIP DB not found. Skipping country lookup.")
         for node in working_nodes:
             link = node.get('link')
             if link:
@@ -240,7 +259,6 @@ def process_and_save_results():
     for node in unique_nodes:
         uuid = get_uuid(node['link'])
         if not uuid:
-            # If we can't extract it for some weird edge case, allow it through
             filtered_unique_nodes.append(node)
             continue
             
@@ -251,10 +269,13 @@ def process_and_save_results():
     spam_removed = len(unique_nodes) - len(filtered_unique_nodes)
     unique_nodes = filtered_unique_nodes
     total_proxies = len(unique_nodes)
-    print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique, highly-diverse nodes: {total_proxies}")
+    print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
-    # 4. Apply beautiful sequential naming directly to link URI
+    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
     processed_nodes = []
+    # Generate unique scattered numbers to mimic the original organic look (e.g. Germany-384, USA-921)
+    random_numbers = random.sample(range(100, 10000), total_proxies)
+
     for index, node in enumerate(unique_nodes):
         country_code = node['country']
         country_name = node['country_name']
@@ -263,21 +284,18 @@ def process_and_save_results():
         country_name_to_use = COUNTRY_NAME_MAPPING.get(country_name, country_name)
         country_name_formatted = country_name_to_use.replace(' ', '-')
 
-        if total_proxies >= 9999:
-            pretty_name = f'{name_emoji} {country_name_formatted}-{index:05d}'
-        elif total_proxies >= 999:
-            pretty_name = f'{name_emoji} {country_name_formatted}-{index:04d}'
-        else:
-            pretty_name = f'{name_emoji} {country_name_formatted}-{index:03d}'
+        # Re-apply the randomized organic suffix
+        pretty_name = f'{name_emoji} {country_name_formatted}-{random_numbers[index]}'
 
-        # Rewrite the URL fragment to use the pretty, sequential name
+        # Rewrite the URL fragment to use the pretty name
         base_link = node['link'].split('#')[0]
         node['link'] = f"{base_link}#{pretty_name}"
         node['tag'] = pretty_name
         processed_nodes.append(node)
 
-    # 5. Write Output Files
+    # 5. Write Output Files (Completely randomized to protect against speed-sorting fingerprinting)
     full_links = [p['link'] for p in processed_nodes]
+    random.shuffle(full_links) # Completely scramble full list
     full_links_str = '\n'.join(full_links)
 
     with open(FULL_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
@@ -373,10 +391,11 @@ def process_and_save_results():
                 eternity_nodes.append(node)
                 selected_links.add(node['link'])
 
-    eternity_nodes.sort(key=lambda x: x['health_score'], reverse=True)
-
+    # Shuffling the final Eternity output lists completely before saving to avoid speed-based order signatures
     eternity_links = [p['link'] for p in eternity_nodes]
+    random.shuffle(eternity_links) # Scramble Eternity list
     eternity_links_str = '\n'.join(eternity_links)
+
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write(eternity_links_str)
     with open(ETERNITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(eternity_links_str.encode()).decode())
     
