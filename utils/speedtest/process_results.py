@@ -148,7 +148,7 @@ TRUSTED_DOMAINS = [
     "988lifeline.org", "pluralsight.com", "avaaz.org", "ncsl.org", "usgbc.org", "amnh.org", 
     "commonsensemedia.org", "rsf.org", "psychiatry.org", "doaj.org", "leo.org", "altmetric.com", 
     "uwa.edu.au", "stonybrook.edu", "ada.gov", "gatesfoundation.org", "mind.org.uk", 
-    "plannedparenthood.org", "taylorandfrancis.com", "quran.com", "peta.org", "delfi.ee", "nolo.com"
+    "plannedparenthood.org", "taylorandfrancis.com", "quran.com", "peta.org", "delfi.ee", "nolo.com",
     "themoscowtimes.com", "informationweek.com", "geekwire.com", "meduza.io", "petapixel.com", 
     "businessinsider.de", "designboom.com", "deseret.com", "sme.sk", "computerweekly.com", 
     "parsec.app", "wego.com", "plarium.com", "open-meteo.com", "newspapers.com", "commbank.com.au", 
