@@ -89,7 +89,7 @@ jobs:
         run: |
           python -c "import base64; open('proxies.txt', 'w', encoding='utf-8').write(base64.b64decode(open('./sub/sub_merge_base64.txt').read().strip()).decode('utf-8', errors='ignore'))"
 
-      - name: Run Xray Tester
+      - name: Write Xray Tester Script (Part 1)
         run: |
           cat <<'EOF' > xray_tester.py
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
@@ -176,14 +176,11 @@ jobs:
               insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure TLS node")
-                  
-              enc = clean_str(params.get('encryption', ['none'])[0]).lower()
-              if enc != 'none': raise Exception(f"Invalid VLESS encryption: {enc}")
 
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net_type in ["http", "h2"]: net_type = "xhttp"
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
-                  raise Exception(f"Invalid VLESS network type: {net_type}")
+                  net_type = "tcp"
 
               config = {
                   "tag": f"out-{index}", "protocol": "vless",
@@ -194,11 +191,9 @@ jobs:
               }
 
               sec = clean_str(params.get('security', ['none'])[0]).lower()
-              if sec not in ["none", "tls", "reality"]: raise Exception(f"Invalid VLESS security: {sec}")
               
               flow = clean_str(params.get('flow', [''])[0]).lower()
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
-                  # Fix: Xray panics if Vision is enabled without TLS/REALITY wrapping it
                   if sec in ['tls', 'reality']:
                       config['settings']['vnext'][0]['users'][0]['flow'] = flow
               valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
@@ -305,16 +300,12 @@ jobs:
 
               scy = clean_str(j.get('scy', 'auto')).lower()
               if scy not in ["aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero"]:
-                  raise Exception(f"Invalid VMess security: {scy}")
+                  scy = "auto"
 
               net = clean_str(j.get('net', 'tcp')).lower()
               if net in ["http", "h2"]: net = "xhttp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
-                  raise Exception(f"Invalid VMess network: {net}")
-                  
-              tls = clean_str(j.get('tls', '')).lower()
-              if tls not in ["", "none", "tls", "reality"]:
-                  raise Exception(f"Invalid VMess TLS: {tls}")
+                  net = "tcp"
 
               config = {
                   "tag": f"out-{index}", "protocol": "vmess",
@@ -389,7 +380,11 @@ jobs:
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
+          EOF
 
+      - name: Write Xray Tester Script (Part 2)
+        run: |
+          cat <<'EOF' >> xray_tester.py
           def parse_ss(link, index):
               parsed = urllib.parse.urlparse(link)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
@@ -444,18 +439,14 @@ jobs:
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net in ["http", "h2"]: net = "xhttp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
-                  raise Exception(f"Invalid Trojan network type: {net}")
-                  
-              sec = clean_str(params.get('security', ['tls'])[0]).lower()
-              if sec not in ["none", "tls", "reality"]:
-                  raise Exception(f"Invalid Trojan security: {sec}")
+                  net = "tcp"
 
               config = {
                   "tag": f"out-{index}", "protocol": "trojan",
                   "settings": {"servers": [{"address": server, "port": port, "password": password}]},
                   "streamSettings": {"network": net}
               }
-              if sec == 'tls':
+              if clean_str(params.get('security', ['tls'])[0]).lower() == 'tls':
                   valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
                   fp_val = clean_str(params.get('fp', ['chrome'])[0]).lower()
                   if fp_val not in valid_fps: fp_val = "chrome"
@@ -597,8 +588,9 @@ jobs:
           except FileNotFoundError:
               print("proxies.txt not found", flush=True); sys.exit(1)
           EOF
-          
-          python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
+
+      - name: Execute Xray Tester
+        run: python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
 
       - name: Upload Chunk Artifact
         uses: actions/upload-artifact@v4
