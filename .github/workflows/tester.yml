@@ -251,11 +251,27 @@ jobs:
                       "multiMode": True
                   }
               elif net_type == 'xhttp':
-                  config['streamSettings']['xhttpSettings'] = {
-                      "path": clean_path(params.get('path', ['/'])[0]),
-                      "host": clean_str(params.get('host', [server])[0]),
-                      "mode": "auto"
+                  host_val = clean_str(params.get('host', [server])[0])
+                  path_val = clean_path(params.get('path', ['/'])[0])
+                  if not host_val: host_val = server
+                  if not path_val or path_val == '/': path_val = '/'
+                  
+                  mode_val = clean_str(params.get('mode', ['auto'])[0])
+                  if not mode_val: mode_val = "auto"
+
+                  xhttp_settings = {
+                      "path": path_val,
+                      "host": host_val,
+                      "mode": mode_val
                   }
+                  
+                  extra_str = params.get('extra', [''])[0]
+                  if extra_str:
+                      try:
+                          xhttp_settings["extra"] = json.loads(urllib.parse.unquote(extra_str))
+                      except: pass
+
+                  config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
 
           def parse_vmess(link, index):
@@ -326,11 +342,29 @@ jobs:
                       "multiMode": True
                   }
               elif net == 'xhttp':
-                  config['streamSettings']['xhttpSettings'] = {
-                      "path": clean_path(j.get('path', '/')),
-                      "host": clean_str(j.get('host', server)),
-                      "mode": "auto"
+                  host_val = clean_str(j.get('host', server))
+                  path_val = clean_path(j.get('path', '/'))
+                  if not host_val: host_val = server
+                  if not path_val or path_val == '/': path_val = '/'
+                  
+                  mode_val = clean_str(j.get('mode', 'auto'))
+                  if not mode_val: mode_val = "auto"
+
+                  xhttp_settings = {
+                      "path": path_val,
+                      "host": host_val,
+                      "mode": mode_val
                   }
+                  
+                  extra_val = j.get('extra')
+                  if extra_val:
+                      if isinstance(extra_val, str):
+                          try: xhttp_settings["extra"] = json.loads(urllib.parse.unquote(extra_val))
+                          except: pass
+                      elif isinstance(extra_val, dict):
+                          xhttp_settings["extra"] = extra_val
+
+                  config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
 
           def parse_ss(link, index):
@@ -424,11 +458,27 @@ jobs:
                       "multiMode": True
                   }
               elif net == 'xhttp':
-                  config['streamSettings']['xhttpSettings'] = {
-                      "path": clean_path(params.get('path', ['/'])[0]),
-                      "host": clean_str(params.get('host', [server])[0]),
-                      "mode": "auto"
+                  host_val = clean_str(params.get('host', [server])[0])
+                  path_val = clean_path(params.get('path', ['/'])[0])
+                  if not host_val: host_val = server
+                  if not path_val or path_val == '/': path_val = '/'
+                  
+                  mode_val = clean_str(params.get('mode', ['auto'])[0])
+                  if not mode_val: mode_val = "auto"
+
+                  xhttp_settings = {
+                      "path": path_val,
+                      "host": host_val,
+                      "mode": mode_val
                   }
+                  
+                  extra_str = params.get('extra', [''])[0]
+                  if extra_str:
+                      try:
+                          xhttp_settings["extra"] = json.loads(urllib.parse.unquote(extra_str))
+                      except: pass
+
+                  config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
 
           def test_node(port):
