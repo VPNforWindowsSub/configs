@@ -541,7 +541,7 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git pull origin ${{ github.ref_name }}
-          git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience_base64.txt full.txt full_base64.txt LogInfo.txt sub/
+          git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience full.txt full_base64.txt LogInfo.txt sub/
           if ! git diff --staged --quiet; then
             git commit -m "✔️ Updated proxy lists"
             git push
