@@ -348,14 +348,33 @@ def process_and_save_results():
                     country_code = 'RELAY'
                     country_name = 'Relay'
 
+                # --- DYNAMIC GEOGRAPHIC RUNNER BIAS COMPENSATION ---
+                sim_delay = node.get('delay', 9999)
+                sim_speed = node.get('avg_speed', 0)
+                
+                # Apply penalty ONLY to US/CA nodes tested natively from US GitHub runners
+                if country_code in ['US', 'CA']:
+                    # Sliding scale penalty: Pushes unnaturally low pings (<120ms) closer to 100ms+
+                    # 10ms -> ~98ms | 40ms -> ~104ms | 61ms -> ~108ms | 100ms -> ~116ms | 120ms -> 120ms
+                    if sim_delay < 120:
+                        sim_delay = sim_delay + ((120 - sim_delay) * 0.8)
+                    
+                    # Apply a minor 10% speed reduction to account for physical ocean cable distance
+                    sim_speed = int(sim_speed * 0.9)
+                
+                # Recalculate health score using the newly balanced, globally accurate metrics
+                speed_mb = sim_speed / 1_000_000
+                latency_score = max(0, 100 - (sim_delay / 10)) if 0 < sim_delay < 5000 else 0
+                new_health = (speed_mb * 7) + (latency_score * 0.3)
+
                 link = node.get('link')
                 if link:
                     raw_processed.append({
                         'link': link, 'ip': ip_address,
                         'tag': node.get('tag', 'N/A'),
-                        'speed': node.get('avg_speed', 0),
-                        'delay': node.get('delay', 9999),
-                        'health_score': node.get('health_score', 0),
+                        'speed': sim_speed,
+                        'delay': int(sim_delay),
+                        'health_score': new_health,
                         'country': country_code,
                         'country_name': country_name
                     })
