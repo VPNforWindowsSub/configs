@@ -269,9 +269,6 @@ def process_and_save_results():
                     'country_name': 'Relay'
                 })
 
-    # Note: We NO LONGER filter out BLOCKED_COUNTRIES globally here!
-    # This allows the new country Diversity file to extract nodes from IR, IL, and BH successfully.
-
     # 3. Deduplicate
     print("Deduplicating proxies by configuration...")
     seen_signatures = {}
