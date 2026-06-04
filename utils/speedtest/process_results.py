@@ -557,21 +557,19 @@ def process_and_save_results():
         except:
             pass
             
-        # 1. Penalize default subdomains, abused free TLDs, and known burned proxy farms
         burned_signatures = [
             'workers.dev', 'trycloudflare.com', 'pages.dev', 'eu.org', '.cc', 
             'multiplydose', 'calmloud', 'ignitelimit', 'gossipglove', 'calmlunch', 'creationlong'
         ]
+        
         if any(b in sni for b in burned_signatures) or '/assignment' in path:
-            score -= 2000
+            score -= 20
             
-        # 2. Huge boost for non-443 ports (GFW heavily throttles/DPIs 443)
         if port != 443 and port in CF_PORTS:
-            score += 1000
+            score += 15
             
-        # 3. Boost for Iranian custom domains (.ir) used as SNIs
         if '.ir' in sni or sni.endswith('.ir.'):
-            score += 500
+            score += 25
             
         return score
 
@@ -712,7 +710,6 @@ def process_and_save_results():
     # --- Geo-Balancing & Protocol Prioritization for Eternity ---
     print("\n--- Starting Geo-Balancing and VLESS Quota for 'Eternity' list ---")
     
-    # We remove the arbitrary Top 1000 cutoff so distant countries (like TR) aren't excluded by US runner bias.
     # Group the ENTIRE filtered working pool by country first.
     nodes_by_country = {}
     for node in conventional_nodes:
