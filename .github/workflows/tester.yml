@@ -575,7 +575,6 @@ jobs:
                   proc = subprocess.Popen(['./xray', 'run', '-c', 'config.json'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                   time.sleep(2.0) 
                   
-                  # Check if Xray instantly crashed
                   if proc.poll() is not None:
                       out, err = proc.communicate()
                       print(f"⚠️ XRAY CRASHED ON BATCH {chunk_index}! Skipping batch. Error:\n{err.decode('utf-8', errors='ignore')}\n{out.decode('utf-8', errors='ignore')}", flush=True)
