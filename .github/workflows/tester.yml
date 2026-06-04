@@ -602,5 +602,4 @@ jobs:
           GH_TOKEN: ${{ secrets.VPB_PAT }}
         run: |
           echo "Triggering run_bot.yml"
-          # Change --ref master to --ref main if your VPB default branch is main
-          gh workflow run run_bot.yml --repo VPNforWindowsSub/VPB --ref master
+          gh workflow run run_bot.yml --repo VPNforWindowsSub/VPB --ref main
