@@ -271,10 +271,8 @@ def process_and_save_results():
     total_proxies = len(unique_nodes)
     print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
-    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
     processed_nodes = []
-    # Generate unique scattered numbers to mimic the original organic look (e.g. Germany-384, USA-921)
-    random_numbers = random.sample(range(100, 10000), total_proxies)
+    random_numbers = [random.randint(100, 999) for _ in range(total_proxies)]
 
     for index, node in enumerate(unique_nodes):
         country_code = node['country']
@@ -284,12 +282,30 @@ def process_and_save_results():
         country_name_to_use = COUNTRY_NAME_MAPPING.get(country_name, country_name)
         country_name_formatted = country_name_to_use.replace(' ', '-')
 
-        # Re-apply the randomized organic suffix
         pretty_name = f'{name_emoji} {country_name_formatted}-{random_numbers[index]}'
 
-        # Rewrite the URL fragment to use the pretty name
-        base_link = node['link'].split('#')[0]
-        node['link'] = f"{base_link}#{pretty_name}"
+        link = node['link']
+        if link.startswith("vmess://"):
+            try:
+                # VMess protocol does not natively support '#' fragments.
+                # The name must be embedded directly inside the Base64 JSON payload's "ps" key.
+                b64 = link.replace("vmess://", "").split('#')[0]
+                b64 += '=' * (-len(b64) % 4)
+                b64 = b64.replace('-', '+').replace('_', '/')
+                j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
+                
+                j['ps'] = pretty_name # Inject the pretty name inside the payload
+                
+                new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':')).encode('utf-8')).decode('ascii')
+                node['link'] = f"vmess://{new_b64}"
+            except Exception:
+                base_link = link.split('#')[0]
+                node['link'] = f"{base_link}#{pretty_name}"
+        else:
+            # VLESS, Trojan, and Shadowsocks natively support '#' fragments
+            base_link = link.split('#')[0]
+            node['link'] = f"{base_link}#{pretty_name}"
+
         node['tag'] = pretty_name
         processed_nodes.append(node)
 
