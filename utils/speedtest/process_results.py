@@ -197,6 +197,40 @@ def get_ip_from_node(node):
     return ''
 
 def get_proxy_signature(link):
+    """Creates a bulletproof signature based strictly on Server, Port, and UUID/Password"""
+    try:
+        if link.startswith('vless://') or link.startswith('trojan://'):
+            parsed = urllib.parse.urlparse(link)
+            uuid = parsed.username or "unknown"
+            server = parsed.hostname or "unknown"
+            port = parsed.port or 443
+            return f"{server}:{port}:{uuid}"
+        
+        elif link.startswith('ss://'):
+            parsed = urllib.parse.urlparse(link)
+            if '@' in parsed.netloc:
+                userinfo, server_port = parsed.netloc.rsplit('@', 1)
+            else:
+                decoded = base64.b64decode(parsed.netloc + '=' * (-len(parsed.netloc) % 4)).decode('utf-8', errors='ignore')
+                if '@' in decoded:
+                    userinfo, server_port = decoded.rsplit('@', 1)
+                else:
+                    return link
+            server, port_str = server_port.split(':', 1)
+            return f"{server}:{port_str}:{userinfo}"
+
+        elif link.startswith('vmess://'):
+            b64 = link.replace("vmess://", "").split('#')[0]
+            b64 += '=' * (-len(b64) % 4)
+            b64 = b64.replace('-', '+').replace('_', '/')
+            j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
+            server = j.get('add', 'unknown')
+            port = j.get('port', '443')
+            uuid = j.get('id', 'unknown')
+            return f"{server}:{port}:{uuid}"
+    except:
+        pass
+    
     if '#' in link:
         return link.split('#')[0]
     return link
