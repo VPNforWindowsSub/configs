@@ -263,7 +263,7 @@ jobs:
                       "path": path_val,
                       "host": host_val,
                       "mode": mode_val,
-                      "headers": {"Host": host_val}
+                      "headers": {"User-Agent": "Mozilla/5.0"}
                   }
                   
                   extra_str = params.get('extra', [''])[0]
@@ -358,7 +358,7 @@ jobs:
                       "path": path_val,
                       "host": host_val,
                       "mode": mode_val,
-                      "headers": {"Host": host_val}
+                      "headers": {"User-Agent": "Mozilla/5.0"}
                   }
                   
                   extra_val = j.get('extra')
@@ -482,7 +482,7 @@ jobs:
                       "path": path_val,
                       "host": host_val,
                       "mode": mode_val,
-                      "headers": {"Host": host_val}
+                      "headers": {"User-Agent": "Mozilla/5.0"}
                   }
                   
                   extra_str = params.get('extra', [''])[0]
