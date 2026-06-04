@@ -176,11 +176,14 @@ jobs:
               insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure TLS node")
+                  
+              enc = clean_str(params.get('encryption', ['none'])[0]).lower()
+              if enc != 'none': raise Exception(f"Invalid VLESS encryption: {enc}")
 
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net_type in ["http", "h2"]: net_type = "xhttp"
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
-                  net_type = "tcp"
+                  raise Exception(f"Invalid VLESS network type: {net_type}")
 
               config = {
                   "tag": f"out-{index}", "protocol": "vless",
@@ -191,6 +194,7 @@ jobs:
               }
 
               sec = clean_str(params.get('security', ['none'])[0]).lower()
+              if sec not in ["none", "tls", "reality"]: raise Exception(f"Invalid VLESS security: {sec}")
               
               flow = clean_str(params.get('flow', [''])[0]).lower()
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
@@ -301,12 +305,16 @@ jobs:
 
               scy = clean_str(j.get('scy', 'auto')).lower()
               if scy not in ["aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero"]:
-                  scy = "auto"
+                  raise Exception(f"Invalid VMess security: {scy}")
 
               net = clean_str(j.get('net', 'tcp')).lower()
               if net in ["http", "h2"]: net = "xhttp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
-                  net = "tcp"
+                  raise Exception(f"Invalid VMess network: {net}")
+                  
+              tls = clean_str(j.get('tls', '')).lower()
+              if tls not in ["", "none", "tls", "reality"]:
+                  raise Exception(f"Invalid VMess TLS: {tls}")
 
               config = {
                   "tag": f"out-{index}", "protocol": "vmess",
@@ -436,14 +444,18 @@ jobs:
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net in ["http", "h2"]: net = "xhttp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
-                  net = "tcp"
+                  raise Exception(f"Invalid Trojan network type: {net}")
+                  
+              sec = clean_str(params.get('security', ['tls'])[0]).lower()
+              if sec not in ["none", "tls", "reality"]:
+                  raise Exception(f"Invalid Trojan security: {sec}")
 
               config = {
                   "tag": f"out-{index}", "protocol": "trojan",
                   "settings": {"servers": [{"address": server, "port": port, "password": password}]},
                   "streamSettings": {"network": net}
               }
-              if clean_str(params.get('security', ['tls'])[0]).lower() == 'tls':
+              if sec == 'tls':
                   valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
                   fp_val = clean_str(params.get('fp', ['chrome'])[0]).lower()
                   if fp_val not in valid_fps: fp_val = "chrome"
