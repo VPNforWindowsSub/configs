@@ -304,7 +304,7 @@ def process_and_save_results():
     total_proxies = len(unique_nodes)
     print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
-    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
+    # 4. Apply sequential naming directly to link URI (using randomized suffix indices)
     processed_nodes = []
     random_numbers = [random.randint(100, 999) for _ in range(total_proxies)]
 
