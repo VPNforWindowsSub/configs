@@ -104,8 +104,8 @@ jobs:
 
           def clean_str(s):
               if not s: return ""
-              s = str(s).split('@')[0].strip()
-              for _ in range(4): # Deep unquote to fix recursive scraper junk
+              s = str(s).strip()
+              for _ in range(4): 
                   unq = urllib.parse.unquote(s)
                   if unq == s: break
                   s = unq
@@ -256,6 +256,10 @@ jobs:
                   if not host_val: host_val = server
                   if not path_val or path_val == '/': path_val = '/'
                   
+                  # Reject malformed hosts that crash Xray-core memory allocator
+                  if '@' in host_val or ' ' in host_val or '{' in host_val:
+                      raise Exception("Malformed XHTTP Host")
+                  
                   mode_val = clean_str(params.get('mode', ['auto'])[0])
                   if not mode_val: mode_val = "auto"
 
@@ -271,6 +275,10 @@ jobs:
                       try:
                           parsed_extra = json.loads(urllib.parse.unquote(extra_str))
                           if isinstance(parsed_extra, dict):
+                              # Fix: Xray unmarshals extra back into SplitHTTPConfig. 
+                              # If "headers" is a string here, it crashes. Strip it safely.
+                              if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
+                                  del parsed_extra["headers"]
                               xhttp_settings["extra"] = parsed_extra
                       except: pass
 
@@ -350,6 +358,10 @@ jobs:
                   if not host_val: host_val = server
                   if not path_val or path_val == '/': path_val = '/'
                   
+                  # Reject malformed hosts that crash Xray-core memory allocator
+                  if '@' in host_val or ' ' in host_val or '{' in host_val:
+                      raise Exception("Malformed XHTTP Host")
+                  
                   mode_val = clean_str(j.get('mode', 'auto'))
                   if not mode_val: mode_val = "auto"
 
@@ -371,6 +383,8 @@ jobs:
                               parsed_extra = {}
                               
                           if isinstance(parsed_extra, dict):
+                              if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
+                                  del parsed_extra["headers"]
                               xhttp_settings["extra"] = parsed_extra
                       except: pass
 
@@ -473,6 +487,9 @@ jobs:
                   if not host_val: host_val = server
                   if not path_val or path_val == '/': path_val = '/'
                   
+                  if '@' in host_val or ' ' in host_val or '{' in host_val:
+                      raise Exception("Malformed XHTTP Host")
+                  
                   mode_val = clean_str(params.get('mode', ['auto'])[0])
                   if not mode_val: mode_val = "auto"
 
@@ -488,7 +505,9 @@ jobs:
                       try:
                           parsed_extra = json.loads(urllib.parse.unquote(extra_str))
                           if isinstance(parsed_extra, dict):
-                              xhttp_settings["extra"] = {str(k): str(v) for k, v in parsed_extra.items()}
+                              if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
+                                  del parsed_extra["headers"]
+                              xhttp_settings["extra"] = parsed_extra
                       except: pass
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
