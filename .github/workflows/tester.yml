@@ -660,7 +660,7 @@ jobs:
             echo "No changes to commit."
           fi
       - name: Trigger Run
-        if: false  # Changed from success() to false to temporarily disable
+        if: success()
         env:
           GH_TOKEN: ${{ secrets.VPB_PAT }}
         run: |
