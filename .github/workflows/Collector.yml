@@ -67,6 +67,45 @@ jobs:
           import sys, os, re, json, base64, urllib.parse, yaml, requests
           from requests.adapters import HTTPAdapter
 
+          def get_proxy_signature(link):
+              """Creates a bulletproof signature based strictly on Server, Port, and UUID/Password"""
+              try:
+                  if link.startswith('vless://') or link.startswith('trojan://'):
+                      parsed = urllib.parse.urlparse(link)
+                      uuid = parsed.username or "unknown"
+                      server = parsed.hostname or "unknown"
+                      port = parsed.port or 443
+                      return f"{server}:{port}:{uuid}"
+                  
+                  elif link.startswith('ss://'):
+                      parsed = urllib.parse.urlparse(link)
+                      if '@' in parsed.netloc:
+                          userinfo, server_port = parsed.netloc.rsplit('@', 1)
+                      else:
+                          decoded = base64.b64decode(parsed.netloc + '=' * (-len(parsed.netloc) % 4)).decode('utf-8', errors='ignore')
+                          if '@' in decoded:
+                              userinfo, server_port = decoded.rsplit('@', 1)
+                          else:
+                              return link
+                      server, port_str = server_port.split(':', 1)
+                      return f"{server}:{port_str}:{userinfo}"
+
+                  elif link.startswith('vmess://'):
+                      b64 = link.replace("vmess://", "").split('#')[0]
+                      b64 += '=' * (-len(b64) % 4)
+                      b64 = b64.replace('-', '+').replace('_', '/')
+                      j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
+                      server = j.get('add', 'unknown')
+                      port = j.get('port', '443')
+                      uuid = j.get('id', 'unknown')
+                      return f"{server}:{port}:{uuid}"
+              except:
+                  pass
+              
+              if '#' in link:
+                  return link.split('#')[0]
+              return link
+
           def dict_to_uri(p):
               try:
                   ptype = p.get('type', '').lower()
@@ -142,7 +181,6 @@ jobs:
               ids = url_container['id']
               repo_links = []
               
-              # Replicate old list_merge.py logic: handle strings, lists, and pipe separators
               raw_urls = url_container.get("url", [])
               if isinstance(raw_urls, str):
                   raw_urls = [u.strip() for u in raw_urls.split('|') if u.strip()]
@@ -157,7 +195,6 @@ jobs:
                       text = resp.text
                       extracted = []
                       
-                      # 1. Native YAML/JSON Clash Parsing
                       try:
                           data = yaml.safe_load(text)
                           if isinstance(data, dict) and 'proxies' in data:
@@ -168,11 +205,9 @@ jobs:
                       except Exception:
                           pass
 
-                      # 2. Direct Regex (Plain Text)
                       matches = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', text)
                       for m in matches: extracted.append(f"{m.group(1)}://{m.group(2)}")
                           
-                      # 3. Base64 Decode Regex
                       try:
                           b64_text = text.strip()
                           b64_text += '=' * (-len(b64_text) % 4)
@@ -183,7 +218,6 @@ jobs:
                       except Exception:
                           pass
                           
-                      # 4. Fallback Subconverter
                       if not extracted:
                           print(f"No direct links found, falling back to subconverter...", flush=True)
                           try:
@@ -205,13 +239,21 @@ jobs:
               with open(f'./sub/list/{ids:02d}.txt', 'w', encoding='utf-8') as f: f.write("\n".join(repo_links))
               for link in repo_links: all_clash_proxies.append({"link": link})
           
-          unique_links = list(set([p['link'] for p in all_clash_proxies]))
+          # Bulletproof Deduplication per chunk
+          unique_links = []
+          seen_sigs = set()
+          for p in all_clash_proxies:
+              sig = get_proxy_signature(p['link'])
+              if sig not in seen_sigs:
+                  seen_sigs.add(sig)
+                  unique_links.append(p['link'])
+
           os.makedirs('./sub/', exist_ok=True)
           with open(f'./sub/{output_path}.yml', 'w', encoding='utf-8') as f:
               yaml.dump({'proxies': [{"type": p.split("://")[0]} for p in unique_links]}, f, default_flow_style=False, sort_keys=False)
           with open(f'./sub/{output_path}_base64.txt', 'w', encoding='utf-8') as f:
               f.write(base64.b64encode("\n".join(unique_links).encode('utf-8')).decode('ascii'))
-          print(f"Successfully wrote {len(unique_links)} nodes.", flush=True)
+          print(f"Successfully wrote {len(unique_links)} unique nodes.", flush=True)
           EOF
           python utils/chunk_collector.py ${{ matrix.start }} ${{ matrix.end }}
 
@@ -257,11 +299,52 @@ jobs:
           import base64
           import yaml
           import random
+          import urllib.parse
+          import json
+
+          def get_proxy_signature(link):
+              """Creates a bulletproof signature based strictly on Server, Port, and UUID/Password"""
+              try:
+                  if link.startswith('vless://') or link.startswith('trojan://'):
+                      parsed = urllib.parse.urlparse(link)
+                      uuid = parsed.username or "unknown"
+                      server = parsed.hostname or "unknown"
+                      port = parsed.port or 443
+                      return f"{server}:{port}:{uuid}"
+                  
+                  elif link.startswith('ss://'):
+                      parsed = urllib.parse.urlparse(link)
+                      if '@' in parsed.netloc:
+                          userinfo, server_port = parsed.netloc.rsplit('@', 1)
+                      else:
+                          decoded = base64.b64decode(parsed.netloc + '=' * (-len(parsed.netloc) % 4)).decode('utf-8', errors='ignore')
+                          if '@' in decoded:
+                              userinfo, server_port = decoded.rsplit('@', 1)
+                          else:
+                              return link
+                      server, port_str = server_port.split(':', 1)
+                      return f"{server}:{port_str}:{userinfo}"
+
+                  elif link.startswith('vmess://'):
+                      b64 = link.replace("vmess://", "").split('#')[0]
+                      b64 += '=' * (-len(b64) % 4)
+                      b64 = b64.replace('-', '+').replace('_', '/')
+                      j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
+                      server = j.get('add', 'unknown')
+                      port = j.get('port', '443')
+                      uuid = j.get('id', 'unknown')
+                      return f"{server}:{port}:{uuid}"
+              except:
+                  pass
+              
+              if '#' in link:
+                  return link.split('#')[0]
+              return link
 
           # Hard cap to ensure we never hit GitHub's 100MB file limit
           MAX_NODES = 250000
 
-          unique_links = set()
+          unique_signatures = set()
           all_links = []
 
           print("Starting global deduplication across all chunks...")
@@ -274,8 +357,11 @@ jobs:
                   decoded = base64.b64decode(b64_content).decode('utf-8', errors='ignore')
                   for link in decoded.splitlines():
                       link = link.strip()
-                      if link and link not in unique_links:
-                          unique_links.add(link)
+                      if not link: continue
+                      
+                      sig = get_proxy_signature(link)
+                      if sig not in unique_signatures:
+                          unique_signatures.add(sig)
                           all_links.append(link)
 
           original_count = len(all_links)
