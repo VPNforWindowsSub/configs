@@ -164,11 +164,18 @@ CF_PORTS = [443, 2053, 2083, 2087, 2096, 8443]
 ETERNITY_LIST_SIZE = 165
 VLESS_TARGET_PERCENT = 0.55
 VLESS_TARGET_SIZE = math.ceil(ETERNITY_LIST_SIZE * VLESS_TARGET_PERCENT)
-TOP_POOL_SIZE = 1000
 NODES_PER_COUNTRY = 1
 COUNTRY_NODE_LIMITS = {
     'TR': 4,
-    'CN': 2
+    'CN': 2,
+    'DE': 10,
+    'NL': 10
+}
+
+# Hard maximum caps to prevent Runner Bias domination
+COUNTRY_MAX_LIMITS = {
+    'US': 25,
+    'CA': 10
 }
 
 # Maximum allowed nodes that share the exact same UUID/Password.
@@ -702,53 +709,68 @@ def process_and_save_results():
 
     # --- Geo-Balancing & Protocol Prioritization for Eternity ---
     print("\n--- Starting Geo-Balancing and VLESS Quota for 'Eternity' list ---")
-    source_pool = conventional_nodes[:TOP_POOL_SIZE]
-    print(f"Using a source pool of top {len(source_pool)} nodes for balancing.")
-
-    # Sort each country's pool so that VLESS nodes are prioritized first, then speed.
+    
+    # We remove the arbitrary Top 1000 cutoff so distant countries (like TR) aren't excluded by US runner bias.
+    # Group the ENTIRE filtered working pool by country first.
     nodes_by_country = {}
-    for node in source_pool:
-        country_code = node['country']
-        if country_code not in nodes_by_country:
-            nodes_by_country[country_code] = []
-        nodes_by_country[country_code].append(node)
+    for node in conventional_nodes:
+        # Require a strict baseline of health (Speed > 50,000 bytes/s) to be considered for country quotas.
+        if node['speed'] > 50000:
+            country_code = node['country']
+            if country_code not in nodes_by_country:
+                nodes_by_country[country_code] = []
+            nodes_by_country[country_code].append(node)
 
     for country in nodes_by_country:
-        nodes_by_country[country].sort(key=lambda x: (0 if x['link'].startswith('vless://') else 1, -x['health_score']))
+        nodes_by_country[country].sort(key=lambda x: (0 if x['link'].startswith('vless://') else 1, -x['speed']))
 
     eternity_nodes = []
     selected_links = set()
     current_vless_count = 0
+    current_country_counts = {}
+
+    def add_to_eternity(n):
+        """Helper to add a node while enforcing hard caps on over-represented countries."""
+        nonlocal current_vless_count
+        c_code = n['country']
+        
+        # Enforce hard maximum caps for US and CA
+        max_allowed = COUNTRY_MAX_LIMITS.get(c_code, 999)
+        if current_country_counts.get(c_code, 0) >= max_allowed:
+            return False
+            
+        eternity_nodes.append(n)
+        selected_links.add(n['link'])
+        current_country_counts[c_code] = current_country_counts.get(c_code, 0) + 1
+        if n['link'].startswith('vless://'):
+            current_vless_count += 1
+        return True
 
     print(f"Selecting nodes based on country-specific limits (VLESS prioritized)...")
     for country in sorted(nodes_by_country.keys()):
         limit = COUNTRY_NODE_LIMITS.get(country, NODES_PER_COUNTRY)
         nodes_to_take = min(limit, len(nodes_by_country[country]))
 
-        for i in range(nodes_to_take):
-            node = nodes_by_country[country][i]
+        added_for_country = 0
+        for node in nodes_by_country[country]:
+            if added_for_country >= nodes_to_take:
+                break
             if node['link'] not in selected_links:
-                eternity_nodes.append(node)
-                selected_links.add(node['link'])
-                if node['link'].startswith('vless://'):
-                    current_vless_count += 1
+                if add_to_eternity(node):
+                    added_for_country += 1
 
     print(f"Selected {len(eternity_nodes)} nodes after geographic distribution. Current VLESS count: {current_vless_count}")
 
-    # Pass 1: If VLESS count is under 55% quota (91 nodes), fill strictly with VLESS nodes first
+    # Pass 1: Aggressive VLESS filling up to quota (respecting US/CA caps)
     if current_vless_count < VLESS_TARGET_SIZE:
         print(f"Aggressively filling VLESS nodes up to quota of {VLESS_TARGET_SIZE}...")
         for node in conventional_nodes:
-            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
-                break
-            if current_vless_count >= VLESS_TARGET_SIZE:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE or current_vless_count >= VLESS_TARGET_SIZE:
                 break
             if node['link'].startswith('vless://') and node['link'] not in selected_links:
-                eternity_nodes.append(node)
-                selected_links.add(node['link'])
-                current_vless_count += 1
+                add_to_eternity(node)
 
-    # Pass 2: Fill any remaining slots up to 165 total nodes with fastest overall nodes (any protocol)
+    # Pass 2: Fill any remaining slots with globally fastest nodes of any protocol (respecting US/CA caps)
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
         needed = ETERNITY_LIST_SIZE - len(eternity_nodes)
         print(f"Filling remaining {needed} slots with top-health nodes of any protocol...")
@@ -756,8 +778,7 @@ def process_and_save_results():
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
             if node['link'] not in selected_links:
-                eternity_nodes.append(node)
-                selected_links.add(node['link'])
+                add_to_eternity(node)
 
     # Shuffling the final Eternity output lists completely before saving to avoid speed-based order signatures
     eternity_links = [p['link'] for p in eternity_nodes]
