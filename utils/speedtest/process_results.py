@@ -20,6 +20,8 @@ FULL_OUTPUT_BASE64_FILE = 'full_base64.txt'
 ETERNITY_OUTPUT_FILE = 'Eternity.txt'
 ETERNITY_OUTPUT_BASE64_FILE = 'Eternity'
 ETERNITY_BASE_FILE = 'EternityBase'
+DIVERSITY_OUTPUT_FILE = 'Diversity.txt'
+DIVERSITY_OUTPUT_BASE64_FILE = 'Diversity'
 LOG_INFO_FILE = 'LogInfo.txt'
 
 # Additional Outputs
@@ -151,7 +153,8 @@ def get_uuid(link):
 def ensure_empty_files():
     files_to_touch = [
         FULL_OUTPUT_FILE, FULL_OUTPUT_BASE64_FILE, ETERNITY_OUTPUT_FILE,
-        ETERNITY_OUTPUT_BASE64_FILE, ETERNITY_BASE_FILE, LOG_INFO_FILE
+        ETERNITY_OUTPUT_BASE64_FILE, ETERNITY_BASE_FILE, LOG_INFO_FILE,
+        DIVERSITY_OUTPUT_FILE, DIVERSITY_OUTPUT_BASE64_FILE
     ]
     for f in files_to_touch:
         open(f, 'w').close()
@@ -192,7 +195,6 @@ def process_and_save_results():
     working_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
     # --- NEW CONCURRENT DNS RESOLVER ---
-    # We resolve all domains in parallel using 100 threads to bypass GitHub UDP limits.
     unique_servers = list(set([node.get('server', '') for node in working_nodes if node.get('server')]))
     resolved_ips = {}
     print(f"Resolving {len(unique_servers)} unique domains concurrently...", flush=True)
@@ -267,8 +269,8 @@ def process_and_save_results():
                     'country_name': 'Relay'
                 })
 
-    # 2. Filter blocked countries
-    raw_processed = [node for node in raw_processed if node.get('country') not in BLOCKED_COUNTRIES]
+    # Note: We NO LONGER filter out BLOCKED_COUNTRIES globally here!
+    # This allows the new country Diversity file to extract nodes from IR, IL, and BH successfully.
 
     # 3. Deduplicate
     print("Deduplicating proxies by configuration...")
@@ -304,7 +306,7 @@ def process_and_save_results():
     total_proxies = len(unique_nodes)
     print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
-    # 4. Apply sequential naming directly to link URI (using randomized suffix indices)
+    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
     processed_nodes = []
     random_numbers = [random.randint(100, 999) for _ in range(total_proxies)]
 
@@ -321,8 +323,6 @@ def process_and_save_results():
         link = node['link']
         if link.startswith("vmess://"):
             try:
-                # VMess protocol does not natively support '#' fragments.
-                # The name must be embedded directly inside the Base64 JSON payload's "ps" key.
                 b64 = link.replace("vmess://", "").split('#')[0]
                 b64 += '=' * (-len(b64) % 4)
                 b64 = b64.replace('-', '+').replace('_', '/')
@@ -336,15 +336,54 @@ def process_and_save_results():
                 base_link = link.split('#')[0]
                 node['link'] = f"{base_link}#{pretty_name}"
         else:
-            # VLESS, Trojan, and Shadowsocks natively support '#' fragments
             base_link = link.split('#')[0]
             node['link'] = f"{base_link}#{pretty_name}"
 
         node['tag'] = pretty_name
         processed_nodes.append(node)
 
-    # 5. Write Output Files (Completely randomized to protect against speed-sorting fingerprinting)
-    full_links = [p['link'] for p in processed_nodes]
+    # ==========================================
+    # --- WRITE EXCLUSIVE COUNTRY DIVERSITY FILE ---
+    # ==========================================
+    print("\n--- Starting Diversity-First list generation ---")
+    diversity_nodes_by_country = {}
+    for node in processed_nodes:
+        country = node['country']
+        # Do not include any obscure/unknown/relay countries (no RELAY or unmappable XX)
+        if country in ['RELAY', 'XX']:
+            continue
+            
+        # Target constraints: ping < 2000ms AND speed >= 50kb/s (50000 B/s)
+        # Note: This list completely ignores the BLOCKED_COUNTRIES filter!
+        if node['delay'] < 2000 and node['speed'] >= 50000:
+            if country not in diversity_nodes_by_country:
+                diversity_nodes_by_country[country] = []
+            diversity_nodes_by_country[country].append(node)
+
+    diversity_nodes = []
+    for country, country_nodes in diversity_nodes_by_country.items():
+        # Sort each country's pool by health score (speed) first
+        country_nodes.sort(key=lambda x: x['health_score'], reverse=True)
+        # Pick exactly 2 working configs from each country
+        diversity_nodes.extend(country_nodes[:2])
+
+    diversity_links = [p['link'] for p in diversity_nodes]
+    random.shuffle(diversity_links) # Completely scrambled
+    diversity_links_str = '\n'.join(diversity_links)
+
+    with open(DIVERSITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: 
+        f.write(diversity_links_str)
+    with open(DIVERSITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: 
+        f.write(base64.b64encode(diversity_links_str.encode()).decode())
+    print(f"✅ Saved 'Diversity' list of {len(diversity_links)} proxies.")
+
+    # ==========================================
+    # --- WRITE CONVENTIONAL OUTPUT FILES ---
+    # ==========================================
+    # Note: These conventional files MUST still strictly filter out BLOCKED_COUNTRIES
+    conventional_nodes = [p for p in processed_nodes if p['country'] not in BLOCKED_COUNTRIES]
+
+    full_links = [p['link'] for p in conventional_nodes]
     random.shuffle(full_links) # Completely scramble full list
     full_links_str = '\n'.join(full_links)
 
@@ -372,9 +411,9 @@ def process_and_save_results():
     with open(os.path.join(SPLITTED_OUTPUT_DIR, "ss.txt"), 'w') as f: f.write("\n".join(ss_outputs))
     print("✅ Saved splitted categories.")
 
-    # Write log file
+    # Write log file (matching conventional nodes)
     log_output_list = []
-    for item in processed_nodes:
+    for item in conventional_nodes:
         speed_mb = item.get("speed", 0) / 1_048_576
         info = f"name: {item['tag']} | type: unknown | avg_speed: {speed_mb:.3f} MB | delay: {item['delay']} ms\n"
         log_output_list.append(info)
@@ -384,7 +423,7 @@ def process_and_save_results():
 
     # --- Geo-Balancing & Protocol Prioritization for Eternity ---
     print("\n--- Starting Geo-Balancing and VLESS Quota for 'Eternity' list ---")
-    source_pool = processed_nodes[:TOP_POOL_SIZE]
+    source_pool = conventional_nodes[:TOP_POOL_SIZE]
     print(f"Using a source pool of top {len(source_pool)} nodes for balancing.")
 
     # Sort each country's pool so that VLESS nodes are prioritized first, then speed.
@@ -420,7 +459,7 @@ def process_and_save_results():
     # Pass 1: If VLESS count is under 55% quota (91 nodes), fill strictly with VLESS nodes first
     if current_vless_count < VLESS_TARGET_SIZE:
         print(f"Aggressively filling VLESS nodes up to quota of {VLESS_TARGET_SIZE}...")
-        for node in processed_nodes:
+        for node in conventional_nodes:
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
             if current_vless_count >= VLESS_TARGET_SIZE:
@@ -434,7 +473,7 @@ def process_and_save_results():
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
         needed = ETERNITY_LIST_SIZE - len(eternity_nodes)
         print(f"Filling remaining {needed} slots with top-health nodes of any protocol...")
-        for node in processed_nodes:
+        for node in conventional_nodes:
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
             if node['link'] not in selected_links:
