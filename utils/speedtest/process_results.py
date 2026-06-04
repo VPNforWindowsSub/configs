@@ -288,7 +288,7 @@ def create_resilience_clone(node, theme_name):
             
             if 'sni' not in params or not params['sni']:
                 params['sni'] = server
-            if net in ['ws', 'httpupgrade']:
+            if net in ['ws', 'httpupgrade', 'xhttp']:
                 if 'host' not in params or not params['host']:
                     params['host'] = server
                     
@@ -323,7 +323,7 @@ def create_resilience_clone(node, theme_name):
             original_add = str(j.get('add', ''))
             if 'sni' not in j or not j['sni']:
                 j['sni'] = original_add
-            if net in ['ws', 'httpupgrade']:
+            if net in ['ws', 'httpupgrade', 'xhttp']:
                 if 'host' not in j or not j['host']:
                     j['host'] = original_add
                     
