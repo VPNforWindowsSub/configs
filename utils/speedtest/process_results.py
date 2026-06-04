@@ -420,6 +420,7 @@ def process_and_save_results():
         country_name_formatted = country_name_to_use.replace(' ', '-')
 
         pretty_name = f'{name_emoji} {country_name_formatted}-{random_numbers[index]}'
+        quoted_pretty_name = urllib.parse.quote(pretty_name)
 
         link = node['link']
         if link.startswith("vmess://"):
@@ -429,16 +430,16 @@ def process_and_save_results():
                 b64 = b64.replace('-', '+').replace('_', '/')
                 j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
                 
-                j['ps'] = pretty_name # Inject the pretty name inside the payload
+                j['ps'] = pretty_name 
                 
-                new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':')).encode('utf-8')).decode('ascii')
+                new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':'), ensure_ascii=False).encode('utf-8')).decode('ascii')
                 node['link'] = f"vmess://{new_b64}"
             except Exception:
                 base_link = link.split('#')[0]
-                node['link'] = f"{base_link}#{pretty_name}"
+                node['link'] = f"{base_link}#{quoted_pretty_name}"
         else:
             base_link = link.split('#')[0]
-            node['link'] = f"{base_link}#{pretty_name}"
+            node['link'] = f"{base_link}#{quoted_pretty_name}"
 
         node['tag'] = pretty_name
         all_processed_nodes.append(node)
