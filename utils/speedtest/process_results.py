@@ -19,7 +19,6 @@ FULL_OUTPUT_FILE = 'full.txt'
 FULL_OUTPUT_BASE64_FILE = 'full_base64.txt'
 ETERNITY_OUTPUT_FILE = 'Eternity.txt'
 ETERNITY_OUTPUT_BASE64_FILE = 'Eternity'
-ETERNITY_BASE_FILE = 'EternityBase'
 DIVERSITY_OUTPUT_FILE = 'Diversity.txt'
 DIVERSITY_OUTPUT_BASE64_FILE = 'Diversity'
 LOG_INFO_FILE = 'LogInfo.txt'
@@ -153,7 +152,7 @@ def get_uuid(link):
 def ensure_empty_files():
     files_to_touch = [
         FULL_OUTPUT_FILE, FULL_OUTPUT_BASE64_FILE, ETERNITY_OUTPUT_FILE,
-        ETERNITY_OUTPUT_BASE64_FILE, ETERNITY_BASE_FILE, LOG_INFO_FILE,
+        ETERNITY_OUTPUT_BASE64_FILE, LOG_INFO_FILE,
         DIVERSITY_OUTPUT_FILE, DIVERSITY_OUTPUT_BASE64_FILE
     ]
     for f in files_to_touch:
@@ -389,9 +388,6 @@ def process_and_save_results():
 
     with open(FULL_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode(full_links_str.encode()).decode())
     print(f"✅ Saved Base64 encoded full list to {FULL_OUTPUT_BASE64_FILE}.")
-    
-    with open(ETERNITY_BASE_FILE, 'w', encoding='utf-8') as f: f.write(full_links_str)
-    print(f"✅ Saved Eternity Base list to {ETERNITY_BASE_FILE}.")
 
     # --- Write Splitted Files ---
     os.makedirs(SPLITTED_OUTPUT_DIR, exist_ok=True)
