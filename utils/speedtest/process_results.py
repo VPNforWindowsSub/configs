@@ -12,7 +12,7 @@ import random
 # --- Configuration ---
 META_FILE = 'meta.json'
 GEOIP_DB = 'utils/GeoLite2-Country.mmdb'
-BLOCKED_COUNTRIES = ['IR', 'IL', 'BH']
+BLOCKED_COUNTRIES = ['IR', 'IL', 'BH', 'RU']
 
 # Output files
 FULL_OUTPUT_FILE = 'full.txt'
@@ -100,6 +100,29 @@ def get_proxy_signature(link):
     if '#' in link:
         return link.split('#')[0]
     return link
+
+def is_cloudflare_ip(ip):
+    """Checks if an IP falls into Cloudflare Anycast CDN ranges."""
+    if not ip: return False
+    try:
+        octets = [int(o) for o in ip.split('.')]
+        if len(octets) != 4: return False
+        
+        # 104.16.0.0/12 (104.16.0.0 - 104.31.255.255)
+        if octets[0] == 104 and (16 <= octets[1] <= 31): return True
+        # 172.64.0.0/13 (172.64.0.0 - 172.71.255.255)
+        if octets[0] == 172 and (64 <= octets[1] <= 71): return True
+        # 162.159.0.0/16
+        if octets[0] == 162 and octets[1] == 159: return True
+        # 188.114.96.0/20 (188.114.96.0 - 188.114.111.255)
+        if octets[0] == 188 and octets[1] == 114 and (96 <= octets[2] <= 111): return True
+        # 108.162.192.0/18
+        if octets[0] == 108 and octets[1] == 162 and (192 <= octets[2] <= 255): return True
+        # 198.41.128.0/17
+        if octets[0] == 198 and octets[1] == 41 and (128 <= octets[2] <= 255): return True
+    except:
+        pass
+    return False
 
 def get_uuid(link):
     """Safely extracts the UUID or Password from a proxy link to track spam."""
@@ -197,7 +220,12 @@ def process_and_save_results():
                 ip_address = resolved_ips.get(server, '')
                 country_code = 'XX'
                 country_name = 'Unknown'
-                if ip_address:
+                
+                # Intercept Cloudflare Anycast IPs and force them to 'RELAY' directly
+                if is_cloudflare_ip(ip_address):
+                    country_code = 'RELAY'
+                    country_name = 'Relay'
+                elif ip_address:
                     try:
                         res_country = reader.country(ip_address)
                         country_code = res_country.country.iso_code or 'XX'
@@ -206,6 +234,11 @@ def process_and_save_results():
                         pass
 
                 if country_code in ['CLOUDFLARE', 'PRIVATE']:
+                    country_code = 'RELAY'
+                    country_name = 'Relay'
+
+                # Graceful UI fallback: replace unmappable codes with 'RELAY'
+                if country_code == 'XX':
                     country_code = 'RELAY'
                     country_name = 'Relay'
 
@@ -230,8 +263,8 @@ def process_and_save_results():
                     'speed': node.get('avg_speed', 0),
                     'delay': node.get('delay', 9999),
                     'health_score': node.get('health_score', 0),
-                    'country': 'XX',
-                    'country_name': 'Unknown'
+                    'country': 'RELAY',
+                    'country_name': 'Relay'
                 })
 
     # 2. Filter blocked countries
@@ -271,6 +304,7 @@ def process_and_save_results():
     total_proxies = len(unique_nodes)
     print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique nodes: {total_proxies}")
 
+    # 4. Apply beautiful sequential naming directly to link URI (using randomized suffix indices)
     processed_nodes = []
     random_numbers = [random.randint(100, 999) for _ in range(total_proxies)]
 
