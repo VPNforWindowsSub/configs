@@ -271,8 +271,7 @@ jobs:
                       try:
                           parsed_extra = json.loads(urllib.parse.unquote(extra_str))
                           if isinstance(parsed_extra, dict):
-                              # Force all keys and values to strings to prevent Go type-assertion crashes
-                              xhttp_settings["extra"] = {str(k): str(v) for k, v in parsed_extra.items()}
+                              xhttp_settings["extra"] = parsed_extra
                       except: pass
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
@@ -372,8 +371,7 @@ jobs:
                               parsed_extra = {}
                               
                           if isinstance(parsed_extra, dict):
-                              # Force all keys and values to strings
-                              xhttp_settings["extra"] = {str(k): str(v) for k, v in parsed_extra.items()}
+                              xhttp_settings["extra"] = parsed_extra
                       except: pass
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
