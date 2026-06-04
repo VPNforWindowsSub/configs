@@ -51,16 +51,6 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "18.x"
-
-      - name: Install Node.js dependencies
-        uses: bahmutov/npm-install@v1
-        with:
-          working-directory: ./utils/localserver
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
@@ -74,7 +64,6 @@ jobs:
           wget -O subconverter.tar.gz https://github.com/asdlokj1qpi233/subconverter/releases/latest/download/subconverter_linux64.tar.gz
           tar -zxvf subconverter.tar.gz -C ./
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
-          node ./utils/localserver/index.js &
           sleep 2
           
           cat <<'EOF' > utils/chunk_collector.py
