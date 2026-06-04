@@ -102,6 +102,20 @@ jobs:
               "xchacha20-poly1305", "xchacha20-ietf-poly1305", "none", "plain"
           }
 
+          def clean_str(s):
+              if not s: return ""
+              s = str(s).split('@')[0].strip()
+              for _ in range(4): # Deep unquote to fix recursive scraper junk
+                  unq = urllib.parse.unquote(s)
+                  if unq == s: break
+                  s = unq
+              return s
+
+          def clean_path(s):
+              s = clean_str(s)
+              if not s.startswith('/'): s = '/' + s
+              return s
+
           def is_valid_uuid_or_id(s):
               if not s: return False
               s = s.strip()
@@ -162,13 +176,13 @@ jobs:
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
 
               # Skip insecure TLS configurations
-              allow_insecure = params.get('allowInsecure', ['0'])[0].split('@')[0].strip().lower()
-              insecure = params.get('insecure', ['0'])[0].split('@')[0].strip().lower()
+              allow_insecure = clean_str(params.get('allowInsecure', ['0'])[0]).lower()
+              insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure TLS node")
 
               # Clean and validate type
-              net_type = params.get('type', ['tcp'])[0].split('@')[0].strip().lower()
+              net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
                   net_type = "tcp"
 
@@ -181,45 +195,45 @@ jobs:
               }
 
               # Clean and validate flow
-              flow = params.get('flow', [''])[0].split('@')[0].strip().lower()
+              flow = clean_str(params.get('flow', [''])[0]).lower()
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
                   config['settings']['vnext'][0]['users'][0]['flow'] = flow
 
               # Clean and validate security
-              sec = params.get('security', ['none'])[0].split('@')[0].strip().lower()
+              sec = clean_str(params.get('security', ['none'])[0]).lower()
               if sec == 'tls':
                   config['streamSettings']['security'] = 'tls'
                   config['streamSettings']['tlsSettings'] = {
-                      "serverName": params.get('sni', [server])[0].split('@')[0].strip(),
-                      "fingerprint": params.get('fp', ['chrome'])[0].split('@')[0].strip()
+                      "serverName": clean_str(params.get('sni', [server])[0]),
+                      "fingerprint": clean_str(params.get('fp', ['chrome'])[0])
                   }
-                  alpn = params.get('alpn', [''])[0].split('@')[0].strip()
+                  alpn = clean_str(params.get('alpn', [''])[0])
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               elif sec == 'reality':
-                  pbk = params.get('pbk', [''])[0].split('@')[0].strip()
+                  pbk = clean_str(params.get('pbk', [''])[0])
                   if not is_valid_reality_pbk(pbk): raise Exception("Invalid/Mangled REALITY pbk")
                   config['streamSettings']['security'] = 'reality'
                   config['streamSettings']['realitySettings'] = {
-                      "serverName": params.get('sni', [server])[0].split('@')[0].strip(),
+                      "serverName": clean_str(params.get('sni', [server])[0]),
                       "password": pbk,
-                      "shortId": params.get('sid', [''])[0].split('@')[0].strip(),
-                      "spiderX": urllib.parse.unquote(params.get('spx', ['/'])[0]).split('@')[0].strip(),
-                      "fingerprint": params.get('fp', ['chrome'])[0].split('@')[0].strip()
+                      "shortId": clean_str(params.get('sid', [''])[0]),
+                      "spiderX": clean_path(params.get('spx', ['/'])[0]),
+                      "fingerprint": clean_str(params.get('fp', ['chrome'])[0])
                   }
 
               if net_type == 'ws': 
                   config['streamSettings']['wsSettings'] = {
-                      "path": urllib.parse.unquote(params.get('path', ['/'])[0]).split('@')[0].strip(),
-                      "headers": {"Host": params.get('host', [server])[0].split('@')[0].strip()}
+                      "path": clean_path(params.get('path', ['/'])[0]),
+                      "headers": {"Host": clean_str(params.get('host', [server])[0])}
                   }
               elif net_type == 'httpupgrade':
                   config['streamSettings']['httpupgradeSettings'] = {
-                      "path": urllib.parse.unquote(params.get('path', ['/'])[0]).split('@')[0].strip(),
-                      "host": params.get('host', [server])[0].split('@')[0].strip()
+                      "path": clean_path(params.get('path', ['/'])[0]),
+                      "host": clean_str(params.get('host', [server])[0])
                   }
               elif net_type == 'grpc': 
                   config['streamSettings']['grpcSettings'] = {
-                      "serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]).split('@')[0].strip(),
+                      "serviceName": clean_str(params.get('serviceName', [''])[0]),
                       "multiMode": True
                   }
               return config, server, name
@@ -235,8 +249,8 @@ jobs:
               if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VMess UUID")
 
               # Skip insecure TLS configurations
-              allow_insecure = str(j.get('allowInsecure', '')).split('@')[0].strip().lower()
-              skip_cert = str(j.get('skip-cert-verify', '')).split('@')[0].strip().lower()
+              allow_insecure = clean_str(j.get('allowInsecure', '')).lower()
+              skip_cert = clean_str(j.get('skip-cert-verify', '')).lower()
               if j.get('allowInsecure') is True or j.get('skip-cert-verify') is True or allow_insecure in ['1', 'true'] or skip_cert in ['1', 'true']:
                   raise Exception("Skipping insecure VMess node")
               
@@ -246,12 +260,12 @@ jobs:
               except: aid = 0
 
               # Clean and validate security method
-              scy = str(j.get('scy', 'auto')).split('@')[0].strip().lower()
+              scy = clean_str(j.get('scy', 'auto')).lower()
               if scy not in ["aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero"]:
                   scy = "auto"
 
               # Clean and validate network type
-              net = str(j.get('net', 'tcp')).split('@')[0].strip().lower()
+              net = clean_str(j.get('net', 'tcp')).lower()
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
                   net = "tcp"
 
@@ -264,23 +278,23 @@ jobs:
               }
               if j.get('tls') == 'tls':
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": str(j.get('sni', server)).split('@')[0].strip()}
-                  alpn = str(j.get('alpn', '')).split('@')[0].strip()
+                  config['streamSettings']['tlsSettings'] = {"serverName": clean_str(j.get('sni', server))}
+                  alpn = clean_str(j.get('alpn', ''))
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               
               if net == 'ws': 
                   config['streamSettings']['wsSettings'] = {
-                      "path": str(j.get('path', '/')).split('@')[0].strip(),
-                      "headers": {"Host": str(j.get('host', server)).split('@')[0].strip()}
+                      "path": clean_path(j.get('path', '/')),
+                      "headers": {"Host": clean_str(j.get('host', server))}
                   }
               elif net == 'httpupgrade':
                   config['streamSettings']['httpupgradeSettings'] = {
-                      "path": str(j.get('path', '/')).split('@')[0].strip(),
-                      "host": str(j.get('host', server)).split('@')[0].strip()
+                      "path": clean_path(j.get('path', '/')),
+                      "host": clean_str(j.get('host', server))
                   }
               elif net == 'grpc': 
                   config['streamSettings']['grpcSettings'] = {
-                      "serviceName": str(j.get('path', '')).split('@')[0].strip(),
+                      "serviceName": clean_str(j.get('path', '')),
                       "multiMode": True
                   }
               return config, server, name
@@ -302,18 +316,18 @@ jobs:
               if not method or not password: raise Exception("Missing SS credentials")
               
               # Clean and validate SS method
-              method = method.split('@')[0].strip().lower()
+              method = clean_str(method).lower()
               if method not in ALLOWED_SS_METHODS:
                   raise Exception(f"Shadowsocks method '{method}' is deprecated/unsupported by modern Xray-core.")
 
               server, port_str = server_port.split(':', 1)
               if not server: raise Exception("Missing server")
-              try: port = int(port_str.split('@')[0].strip())
+              try: port = int(clean_str(port_str))
               except: port = 443
 
               config = {
                   "tag": f"out-{index}", "protocol": "shadowsocks",
-                  "settings": {"servers": [{"address": server, "port": port, "method": method, "password": password.split('@')[0].strip()}]}
+                  "settings": {"servers": [{"address": server, "port": port, "method": method, "password": clean_str(password)}]}
               }
               return config, server, name
 
@@ -327,17 +341,17 @@ jobs:
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
               
               password = urllib.parse.unquote(parsed.username) if parsed.username else ""
-              password = password.split('@')[0].strip()
+              password = clean_str(password)
               if not password: raise Exception("Missing trojan password")
               
               # Skip insecure TLS configurations
-              allow_insecure = params.get('allowInsecure', ['0'])[0].split('@')[0].strip().lower()
-              insecure = params.get('insecure', ['0'])[0].split('@')[0].strip().lower()
+              allow_insecure = clean_str(params.get('allowInsecure', ['0'])[0]).lower()
+              insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure Trojan node")
 
               # Clean and validate network type
-              net = params.get('type', ['tcp'])[0].split('@')[0].strip().lower()
+              net = clean_str(params.get('type', ['tcp'])[0]).lower()
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
                   net = "tcp"
 
@@ -346,25 +360,25 @@ jobs:
                   "settings": {"servers": [{"address": server, "port": port, "password": password}]},
                   "streamSettings": {"network": net}
               }
-              if params.get('security', ['tls'])[0].split('@')[0].strip().lower() == 'tls':
+              if clean_str(params.get('security', ['tls'])[0]).lower() == 'tls':
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": params.get('sni', [server])[0].split('@')[0].strip()}
-                  alpn = params.get('alpn', [''])[0].split('@')[0].strip()
+                  config['streamSettings']['tlsSettings'] = {"serverName": clean_str(params.get('sni', [server])[0])}
+                  alpn = clean_str(params.get('alpn', [''])[0])
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               
               if net == 'ws': 
                   config['streamSettings']['wsSettings'] = {
-                      "path": urllib.parse.unquote(params.get('path', ['/'])[0]).split('@')[0].strip(),
-                      "headers": {"Host": params.get('host', [server])[0].split('@')[0].strip()}
+                      "path": clean_path(params.get('path', ['/'])[0]),
+                      "headers": {"Host": clean_str(params.get('host', [server])[0])}
                   }
               elif net == 'httpupgrade':
                   config['streamSettings']['httpupgradeSettings'] = {
-                      "path": urllib.parse.unquote(params.get('path', ['/'])[0]).split('@')[0].strip(),
-                      "host": params.get('host', [server])[0].split('@')[0].strip()
+                      "path": clean_path(params.get('path', ['/'])[0]),
+                      "host": clean_str(params.get('host', [server])[0])
                   }
               elif net == 'grpc': 
                   config['streamSettings']['grpcSettings'] = {
-                      "serviceName": urllib.parse.unquote(params.get('serviceName', [''])[0]).split('@')[0].strip(),
+                      "serviceName": clean_str(params.get('serviceName', [''])[0]),
                       "multiMode": True
                   }
               return config, server, name
