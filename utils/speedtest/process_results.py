@@ -5,6 +5,7 @@ import os
 import socket
 import re
 import math
+import urllib.parse
 
 # --- Configuration ---
 META_FILE = 'meta.json'
@@ -77,6 +78,10 @@ COUNTRY_NODE_LIMITS = {
     'CN': 2
 }
 
+# Maximum allowed nodes that share the exact same UUID/Password.
+# Forces high server diversity and prevents Cloudflare-IP spam from a single host.
+MAX_SAME_UUID = 5 
+
 def is_ip_address(address):
     if not isinstance(address, str):
         return False
@@ -97,6 +102,30 @@ def get_proxy_signature(link):
     if '#' in link:
         return link.split('#')[0]
     return link
+
+def get_uuid(link):
+    """Safely extracts the UUID or Password from a proxy link to track spam."""
+    try:
+        if link.startswith('vless://') or link.startswith('trojan://'):
+            return link.split('://')[1].split('@')[0]
+        elif link.startswith('vmess://'):
+            b64 = link.split('://')[1].split('#')[0]
+            b64 += '=' * (-len(b64) % 4)
+            b64 = b64.replace('-', '+').replace('_', '/')
+            j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
+            return str(j.get('id', ''))
+        elif link.startswith('ss://'):
+            parsed = urllib.parse.urlparse(link)
+            if parsed.username:
+                up = urllib.parse.unquote(parsed.username)
+                if ':' not in up:
+                    up = base64.b64decode(up + '=' * (-len(up) % 4)).decode('utf-8', errors='ignore')
+                return up.split(':', 1)[1]
+            else:
+                decoded = base64.b64decode(parsed.netloc + '=' * (-len(parsed.netloc) % 4)).decode('utf-8', errors='ignore')
+                return decoded.split('@')[0].split(':', 1)[1]
+    except:
+        return None
 
 def ensure_empty_files():
     files_to_touch = [
@@ -202,11 +231,27 @@ def process_and_save_results():
                 seen_signatures[signature] = node
 
     unique_nodes = list(seen_signatures.values())
-    
-    # Sort them by speed to ensure sequential index matches speed ranking
     unique_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
+
+    # --- 3.5 UUID Anti-Spam Filtering ---
+    print(f"Filtering out UUID spam (Max {MAX_SAME_UUID} instances per UUID)...")
+    uuid_counts = {}
+    filtered_unique_nodes = []
+    for node in unique_nodes:
+        uuid = get_uuid(node['link'])
+        if not uuid:
+            # If we can't extract it for some weird edge case, allow it through
+            filtered_unique_nodes.append(node)
+            continue
+            
+        if uuid_counts.get(uuid, 0) < MAX_SAME_UUID:
+            filtered_unique_nodes.append(node)
+            uuid_counts[uuid] = uuid_counts.get(uuid, 0) + 1
+
+    spam_removed = len(unique_nodes) - len(filtered_unique_nodes)
+    unique_nodes = filtered_unique_nodes
     total_proxies = len(unique_nodes)
-    print(f"Deduplication complete. Remaining unique nodes: {total_proxies}")
+    print(f"UUID filtering complete. Removed {spam_removed} cloned nodes. Remaining unique, highly-diverse nodes: {total_proxies}")
 
     # 4. Apply beautiful sequential naming directly to link URI
     processed_nodes = []
