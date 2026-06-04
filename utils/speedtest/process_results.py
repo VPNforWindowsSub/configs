@@ -172,10 +172,12 @@ COUNTRY_NODE_LIMITS = {
     'NL': 10
 }
 
-# Hard maximum caps to prevent Runner Bias domination
+# Hard maximum caps to prevent Runner Bias domination and unwanted countries
 COUNTRY_MAX_LIMITS = {
-    'US': 25,
-    'CA': 10
+    'US': 30,
+    'CA': 10,
+    'CN': 2,
+    'TR': 4
 }
 
 # Maximum allowed nodes that share the exact same UUID/Password.
