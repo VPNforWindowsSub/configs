@@ -167,6 +167,8 @@ jobs:
               
               try: port = int(parsed.port or 443)
               except: port = 443
+              if not (1 <= port <= 65535): raise Exception("Invalid port bounds")
+              
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
 
@@ -188,11 +190,13 @@ jobs:
                   "streamSettings": {"network": net_type}
               }
 
+              sec = clean_str(params.get('security', ['none'])[0]).lower()
+              
               flow = clean_str(params.get('flow', [''])[0]).lower()
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
-                  config['settings']['vnext'][0]['users'][0]['flow'] = flow
-
-              sec = clean_str(params.get('security', ['none'])[0]).lower()
+                  # Fix: Xray panics if Vision is enabled without TLS/REALITY wrapping it
+                  if sec in ['tls', 'reality']:
+                      config['settings']['vnext'][0]['users'][0]['flow'] = flow
               valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
               
               if sec == 'tls':
@@ -268,7 +272,8 @@ jobs:
                               if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
                                   del parsed_extra["headers"]
                               xhttp_settings["extra"] = parsed_extra
-                      except: pass
+                      except: 
+                          raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
@@ -290,6 +295,7 @@ jobs:
               
               try: port = int(j.get('port', 443))
               except: port = 443
+              if not (1 <= port <= 65535): raise Exception("Invalid port bounds")
               try: aid = int(j.get('aid', 0))
               except: aid = 0
 
@@ -370,7 +376,8 @@ jobs:
                               if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
                                   del parsed_extra["headers"]
                               xhttp_settings["extra"] = parsed_extra
-                      except: pass
+                      except: 
+                          raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
@@ -399,6 +406,7 @@ jobs:
               if not server: raise Exception("Missing server")
               try: port = int(clean_str(port_str))
               except: port = 443
+              if not (1 <= port <= 65535): raise Exception("Invalid port bounds")
 
               config = {
                   "tag": f"out-{index}", "protocol": "shadowsocks",
@@ -412,6 +420,7 @@ jobs:
               if not server: raise Exception("Missing server")
               try: port = int(parsed.port or 443)
               except: port = 443
+              if not (1 <= port <= 65535): raise Exception("Invalid port bounds")
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
               
@@ -489,7 +498,8 @@ jobs:
                               if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
                                   del parsed_extra["headers"]
                               xhttp_settings["extra"] = parsed_extra
-                      except: pass
+                      except: 
+                          raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
