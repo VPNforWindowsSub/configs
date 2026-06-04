@@ -483,7 +483,7 @@ def process_and_save_results():
 
     # 4. Apply beautiful sequential naming directly to link URI
     all_processed_nodes = []
-    random_numbers = [random.randint(100, 999) for _ in range(len(unique_nodes))]
+    random_numbers = [random.randint(1000, 9999) for _ in range(len(unique_nodes))]
 
     for index, node in enumerate(unique_nodes):
         country_code = node['country']
