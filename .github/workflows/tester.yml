@@ -89,7 +89,7 @@ jobs:
         run: |
           python -c "import base64; open('proxies.txt', 'w', encoding='utf-8').write(base64.b64decode(open('./sub/sub_merge_base64.txt').read().strip()).decode('utf-8', errors='ignore'))"
 
-      - name: Run Xray Tester
+      - name: Write Xray Tester (Part 1)
         run: |
           cat <<'EOF' > xray_tester.py
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket
@@ -280,6 +280,11 @@ jobs:
 
                   config['streamSettings']['xhttpSettings'] = xhttp_settings
               return config, server, name
+          EOF
+
+      - name: Write Xray Tester (Part 2)
+        run: |
+          cat <<'EOF' >> xray_tester.py
 
           def parse_vmess(link, index):
               decoded = decode_base64(link.replace("vmess://", ""))
@@ -554,7 +559,7 @@ jobs:
                           break
 
               print(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...", flush=True)
-              results, chunk_size = 150, 150
+              results, chunk_size = [], 150
               total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
 
               for i in range(0, len(parsed_nodes), chunk_size):
@@ -596,8 +601,9 @@ jobs:
           except FileNotFoundError:
               print("proxies.txt not found", flush=True); sys.exit(1)
           EOF
-          
-          python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
+
+      - name: Run Xray Tester
+        run: python xray_tester.py ${{ matrix.start }} ${{ matrix.end }}
 
       - name: Upload Chunk Artifact
         uses: actions/upload-artifact@v4
