@@ -141,9 +141,6 @@ jobs:
           end_idx = int(sys.argv[2])
           output_path = f"chunk_{start_idx}"
           
-          # Download GeoIP
-          sub_merge.geoip_update('https://raw.githubusercontent.com/Loyalsoldier/geoip/release/Country.mmdb')
-          
           # Load and filter list
           sub_list = sub_merge.read_list('./sub/sub_list.json')
           chunk = list(filter(lambda x: x['id'] != 5, sub_list))[start_idx:end_idx]
