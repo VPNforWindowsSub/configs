@@ -142,7 +142,14 @@ jobs:
               ids = url_container['id']
               repo_links = []
               
-              for each_url in url_container.get("url", []):
+              # Replicate old list_merge.py logic: handle strings, lists, and pipe separators
+              raw_urls = url_container.get("url", [])
+              if isinstance(raw_urls, str):
+                  raw_urls = [u.strip() for u in raw_urls.split('|') if u.strip()]
+              elif not isinstance(raw_urls, list):
+                  raw_urls = []
+              
+              for each_url in raw_urls:
                   print(f"===> Processing URL: {each_url}", flush=True)
                   try:
                       resp = session.get(each_url, timeout=15)
