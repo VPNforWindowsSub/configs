@@ -221,12 +221,16 @@ jobs:
                   
                   fp_val = clean_str(params.get('fp', ['chrome'])[0]).lower()
                   if fp_val not in valid_fps: fp_val = "chrome"
+                  
+                  sid = clean_str(params.get('sid', [''])[0])
+                  if sid and (len(sid) > 16 or len(sid) % 2 != 0 or not all(c in '0123456789abcdefABCDEF' for c in sid)):
+                      raise Exception(f"Invalid/Mangled REALITY shortId: {sid}")
                       
                   config['streamSettings']['security'] = 'reality'
                   config['streamSettings']['realitySettings'] = {
                       "serverName": clean_str(params.get('sni', [server])[0]),
                       "password": pbk,
-                      "shortId": clean_str(params.get('sid', [''])[0]),
+                      "shortId": sid,
                       "spiderX": clean_path(params.get('spx', ['/'])[0]),
                       "fingerprint": fp_val
                   }
