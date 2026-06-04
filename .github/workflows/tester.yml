@@ -181,9 +181,10 @@ jobs:
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure TLS node")
 
-              # Clean and validate type
+              # Clean, validate, and upgrade network type to fix Xray v26 crash
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
-              if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
+              if net_type in ["http", "h2"]: net_type = "xhttp"
+              if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   net_type = "tcp"
 
               config = {
@@ -199,26 +200,35 @@ jobs:
               if flow in ["xtls-rprx-vision", "xtls-rprx-vision-udp443"]:
                   config['settings']['vnext'][0]['users'][0]['flow'] = flow
 
-              # Clean and validate security
+              # Clean, validate security and fix invalid TLS fingerprints
               sec = clean_str(params.get('security', ['none'])[0]).lower()
+              valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
+              
               if sec == 'tls':
+                  fp_val = clean_str(params.get('fp', ['chrome'])[0]).lower()
+                  if fp_val not in valid_fps: fp_val = "chrome"
+                      
                   config['streamSettings']['security'] = 'tls'
                   config['streamSettings']['tlsSettings'] = {
                       "serverName": clean_str(params.get('sni', [server])[0]),
-                      "fingerprint": clean_str(params.get('fp', ['chrome'])[0])
+                      "fingerprint": fp_val
                   }
                   alpn = clean_str(params.get('alpn', [''])[0])
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               elif sec == 'reality':
                   pbk = clean_str(params.get('pbk', [''])[0])
                   if not is_valid_reality_pbk(pbk): raise Exception("Invalid/Mangled REALITY pbk")
+                  
+                  fp_val = clean_str(params.get('fp', ['chrome'])[0]).lower()
+                  if fp_val not in valid_fps: fp_val = "chrome"
+                      
                   config['streamSettings']['security'] = 'reality'
                   config['streamSettings']['realitySettings'] = {
                       "serverName": clean_str(params.get('sni', [server])[0]),
                       "password": pbk,
                       "shortId": clean_str(params.get('sid', [''])[0]),
                       "spiderX": clean_path(params.get('spx', ['/'])[0]),
-                      "fingerprint": clean_str(params.get('fp', ['chrome'])[0])
+                      "fingerprint": fp_val
                   }
 
               if net_type == 'ws': 
@@ -231,10 +241,16 @@ jobs:
                       "path": clean_path(params.get('path', ['/'])[0]),
                       "host": clean_str(params.get('host', [server])[0])
                   }
-              elif net_type == 'grpc': 
+              elif net_type == 'grpc':
                   config['streamSettings']['grpcSettings'] = {
                       "serviceName": clean_str(params.get('serviceName', [''])[0]),
                       "multiMode": True
+                  }
+              elif net_type == 'xhttp':
+                  config['streamSettings']['xhttpSettings'] = {
+                      "path": clean_path(params.get('path', ['/'])[0]),
+                      "host": clean_str(params.get('host', [server])[0]),
+                      "mode": "auto"
                   }
               return config, server, name
 
@@ -264,9 +280,10 @@ jobs:
               if scy not in ["aes-128-gcm", "chacha20-poly1305", "auto", "none", "zero"]:
                   scy = "auto"
 
-              # Clean and validate network type
+              # Clean, validate, and upgrade network type to fix Xray v26 crash
               net = clean_str(j.get('net', 'tcp')).lower()
-              if net not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
+              if net in ["http", "h2"]: net = "xhttp"
+              if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   net = "tcp"
 
               config = {
@@ -277,8 +294,15 @@ jobs:
                   "streamSettings": {"network": net}
               }
               if j.get('tls') == 'tls':
+                  valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
+                  fp_val = clean_str(j.get('fp', 'chrome')).lower()
+                  if fp_val not in valid_fps: fp_val = "chrome"
+                      
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": clean_str(j.get('sni', server))}
+                  config['streamSettings']['tlsSettings'] = {
+                      "serverName": clean_str(j.get('sni', server)),
+                      "fingerprint": fp_val
+                  }
                   alpn = clean_str(j.get('alpn', ''))
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
               
@@ -292,10 +316,16 @@ jobs:
                       "path": clean_path(j.get('path', '/')),
                       "host": clean_str(j.get('host', server))
                   }
-              elif net == 'grpc': 
+              elif net == 'grpc':
                   config['streamSettings']['grpcSettings'] = {
                       "serviceName": clean_str(j.get('path', '')),
                       "multiMode": True
+                  }
+              elif net == 'xhttp':
+                  config['streamSettings']['xhttpSettings'] = {
+                      "path": clean_path(j.get('path', '/')),
+                      "host": clean_str(j.get('host', server)),
+                      "mode": "auto"
                   }
               return config, server, name
 
@@ -350,9 +380,10 @@ jobs:
               if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
                   raise Exception("Skipping insecure Trojan node")
 
-              # Clean and validate network type
+              # Clean, validate, and upgrade network type to fix Xray v26 crash
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
-              if net not in ["tcp", "ws", "grpc", "httpupgrade", "h2", "quic"]:
+              if net in ["http", "h2"]: net = "xhttp"
+              if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   net = "tcp"
 
               config = {
@@ -361,11 +392,18 @@ jobs:
                   "streamSettings": {"network": net}
               }
               if clean_str(params.get('security', ['tls'])[0]).lower() == 'tls':
+                  valid_fps = {"chrome", "firefox", "safari", "ios", "android", "edge", "360", "qq", "random", "randomized", ""}
+                  fp_val = clean_str(params.get('fp', ['chrome'])[0]).lower()
+                  if fp_val not in valid_fps: fp_val = "chrome"
+                      
                   config['streamSettings']['security'] = 'tls'
-                  config['streamSettings']['tlsSettings'] = {"serverName": clean_str(params.get('sni', [server])[0])}
+                  config['streamSettings']['tlsSettings'] = {
+                      "serverName": clean_str(params.get('sni', [server])[0]),
+                      "fingerprint": fp_val
+                  }
                   alpn = clean_str(params.get('alpn', [''])[0])
                   if alpn: config['streamSettings']['tlsSettings']['alpn'] = alpn.split(',')
-              
+            
               if net == 'ws': 
                   config['streamSettings']['wsSettings'] = {
                       "path": clean_path(params.get('path', ['/'])[0]),
@@ -376,10 +414,16 @@ jobs:
                       "path": clean_path(params.get('path', ['/'])[0]),
                       "host": clean_str(params.get('host', [server])[0])
                   }
-              elif net == 'grpc': 
+              elif net == 'grpc':
                   config['streamSettings']['grpcSettings'] = {
                       "serviceName": clean_str(params.get('serviceName', [''])[0]),
                       "multiMode": True
+                  }
+              elif net == 'xhttp':
+                  config['streamSettings']['xhttpSettings'] = {
+                      "path": clean_path(params.get('path', ['/'])[0]),
+                      "host": clean_str(params.get('host', [server])[0]),
+                      "mode": "auto"
                   }
               return config, server, name
 
