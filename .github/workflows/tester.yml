@@ -661,7 +661,7 @@ jobs:
                       clog(msg)
                       continue
 
-                  with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
+                  with concurrent.futures.ThreadPoolExecutor(max_workers=45) as executor:
                       futures = {executor.submit(test_node, node_ports[j]): node for j, node in enumerate(chunk)}
                       for future in concurrent.futures.as_completed(futures):
                           node, (delay, speed) = futures[future], future.result()
