@@ -91,7 +91,7 @@ jobs:
       - name: Write Xray Tester (Part 1)
         run: |
           cat <<'EOF' > xray_tester.py
-          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket, re
+          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket, re, html
 
           try:
               start_idx = int(sys.argv[1])
@@ -158,7 +158,7 @@ jobs:
               pbk_pad = pbk.replace('-', '+').replace('_', '/')
               pbk_pad += '=' * (-len(pbk_pad) % 4)
               try:
-                  decoded = base64.b64decode(pbk_pad)
+                  decoded = base64.urlsafe_b64decode(pbk_pad)
                   if len(decoded) == 32:
                       return True
               except: pass
@@ -167,6 +167,7 @@ jobs:
           def decode_base64(s):
               s = s.strip().split('#')[0]
               s = re.sub(r'<[^>]+>', '', s)
+              s = re.sub(r'\s+', '', s)
               s = urllib.parse.unquote(s)
               s += '=' * (-len(s) % 4)
               s = s.replace('-', '+').replace('_', '/')
@@ -191,17 +192,9 @@ jobs:
               params = urllib.parse.parse_qs(parsed.query)
               name = urllib.parse.unquote(parsed.fragment) if parsed.fragment else f"proxy-{index}"
 
-              allow_insecure = clean_str(params.get('allowInsecure', ['0'])[0]).lower()
-              insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
-              if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
-                  raise Exception("Skipping insecure TLS node")
-
-              enc = clean_str(params.get('encryption', ['none'])[0]).lower()
-              if enc != 'none': raise Exception(f"Invalid VLESS encryption: {enc}")
-
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
+              if not net_type or net_type == "raw": net_type = "tcp"
               if net_type in ["http", "h2", "splithttp"]: net_type = "xhttp"
-              if net_type == "raw": net_type = "tcp"
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   raise Exception(f"Invalid VLESS network type: {net_type}")
 
@@ -314,19 +307,22 @@ jobs:
           cat <<'EOF' >> xray_tester.py
 
           def parse_vmess(link, index):
-              decoded = decode_base64(link.replace("vmess://", ""))
+              decoded = decode_base64(link.replace("vmess://", "", 1))
               if not decoded: raise Exception("Invalid vmess base64")
-              j = json.loads(decoded)
+              
+              idx = decoded.rfind('}')
+              if idx != -1: decoded = decoded[:idx+1]
+              
+              try:
+                  j = json.loads(decoded)
+              except ValueError:
+                  raise Exception("Malformed VMess JSON (Glued links or bad format)")
+                  
               name = j.get('ps', f"proxy-{index}")
               server = j.get('add', '')
               uuid = j.get('id', '')
               if not server: raise Exception("Missing server")
               if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VMess UUID")
-
-              allow_insecure = clean_str(j.get('allowInsecure', '')).lower()
-              skip_cert = clean_str(j.get('skip-cert-verify', '')).lower()
-              if j.get('allowInsecure') is True or j.get('skip-cert-verify') is True or allow_insecure in ['1', 'true'] or skip_cert in ['1', 'true']:
-                  raise Exception("Skipping insecure VMess node")
 
               try: port = int(j.get('port', 443))
               except: port = 443
@@ -339,8 +335,8 @@ jobs:
                   raise Exception(f"Invalid VMess security: {scy}")
 
               net = clean_str(j.get('net', 'tcp')).lower()
+              if not net or net == "raw": net = "tcp"
               if net in ["http", "h2", "splithttp"]: net = "xhttp"
-              if net == "raw": net = "tcp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   raise Exception(f"Invalid VMess network: {net}")
 
@@ -437,12 +433,14 @@ jobs:
 
               if '@' in netloc:
                   userinfo, server_port = netloc.rsplit('@', 1)
+                  userinfo = urllib.parse.unquote(userinfo)
                   if ':' not in userinfo: userinfo = decode_base64(userinfo)
               else:
                   decoded = decode_base64(netloc)
                   if '@' in decoded: userinfo, server_port = decoded.rsplit('@', 1)
                   else: raise Exception("Invalid SS format")
 
+              userinfo = urllib.parse.unquote(userinfo)
               if ':' not in userinfo: raise Exception("Invalid SS credentials (missing cipher)")
               method, password = userinfo.split(':', 1)
               if not method or not password: raise Exception("Missing SS credentials")
@@ -482,14 +480,9 @@ jobs:
               password = clean_str(password)
               if not password: raise Exception("Missing trojan password")
 
-              allow_insecure = clean_str(params.get('allowInsecure', ['0'])[0]).lower()
-              insecure = clean_str(params.get('insecure', ['0'])[0]).lower()
-              if allow_insecure in ['1', 'true'] or insecure in ['1', 'true']:
-                  raise Exception("Skipping insecure Trojan node")
-
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
+              if not net or net == "raw": net = "tcp"
               if net in ["http", "h2", "splithttp"]: net = "xhttp"
-              if net == "raw": net = "tcp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   raise Exception(f"Invalid Trojan network type: {net}")
 
@@ -541,7 +534,7 @@ jobs:
                   if '@' in host_val or ' ' in host_val or '{' in host_val:
                       raise Exception("Malformed XHTTP Host")
 
-                  mode_val = clean_str(params.get('mode', ['auto'])[0])
+                  mode_val = clean_str(j.get('mode', 'auto'))
                   if not mode_val: mode_val = "auto"
 
                   xhttp_settings = {
@@ -597,7 +590,7 @@ jobs:
               links = links[start_idx:end_idx]
               parsed_nodes = []
               for i, link in enumerate(links):
-                  link = link.replace('&amp;', '&')
+                  link = html.unescape(link)
                   for prefix, p_func in parsers.items():
                       if link.startswith(prefix):
                           try:
