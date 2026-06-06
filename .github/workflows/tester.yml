@@ -167,8 +167,8 @@ jobs:
           def decode_base64(s):
               s = s.strip().split('#')[0]
               s = re.sub(r'<[^>]+>', '', s)
-              s = re.sub(r'\s+', '', s)
               s = urllib.parse.unquote(s)
+              s = re.sub(r'[^A-Za-z0-9+/=_-]', '', s) 
               s += '=' * (-len(s) % 4)
               s = s.replace('-', '+').replace('_', '/')
               try: return base64.b64decode(s).decode('utf-8', errors='ignore')
