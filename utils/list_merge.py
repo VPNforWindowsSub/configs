@@ -1,5 +1,4 @@
-#!/usr/bin/env python3
-
+import glob
 from sub_convert import sub_convert
 from list_update import update_url
 from get_subs import subs
@@ -10,7 +9,6 @@ import yaml
 from urllib import request
 from urllib.parse import urlparse
 
-# File paths
 Eterniy = './Eternity'
 readme = './README.md'
 sub_list_txt = './sub/sub_list.txt'
@@ -133,24 +131,50 @@ class sub_merge():
                 print(e)
 
         print(f"found {yaml_proxies.__len__() - temp.__len__()} bad lines :)")
-        content_yaml = "\n".join(temp)
-        if content_yaml[-1:] == '\n':
-            content_yaml[-1:] = ''
-        content_yaml = 'proxies:\n' + content_yaml
+        
+        content_yaml_str = "\n".join(temp)
+        if content_yaml_str[-1:] == '\n':
+            content_yaml_str = content_yaml_str[:-1]
+        content_yaml_str = 'proxies:\n' + content_yaml_str
 
-        content_raw = sub_convert.yaml_decode(content_yaml)
-        content_base64 = sub_convert.base64_encode(content_raw)
-        content = content_raw
+        content_raw = sub_convert.yaml_decode(content_yaml_str)
+        valid_links = content_raw.splitlines()
 
-        def content_write(file, output_type):
-            with open(file, 'w+', encoding='utf-8') as f:
-                f.write(output_type)
+        for f in glob.glob(f'{sub_merge_path}sub_merge*'):
+            if f.endswith('.txt') or f.endswith('.yml'):
+                os.remove(f)
 
-        write_list = [f'{sub_merge_path}/sub_merge.txt',
-                      f'{sub_merge_path}/sub_merge_base64.txt', f'{sub_merge_path}/sub_merge_yaml.yml']
-        content_type = (content, content_base64, content_yaml)
-        for index in range(len(write_list)):
-            content_write(write_list[index], content_type[index])
+        MAX_BYTES = 70 * 1024 * 1024
+        chunks = []
+        current_chunk = []
+        current_size = 0
+
+        for link in valid_links:
+            link_size = len(link.encode('utf-8')) + 1
+            if current_size + link_size > MAX_BYTES:
+                chunks.append(current_chunk)
+                current_chunk = [link]
+                current_size = link_size
+            else:
+                current_chunk.append(link)
+                current_size += link_size
+
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        for i, chunk in enumerate(chunks):
+            suffix = "" if i == 0 else f"_{i+1}"
+            plain_text = '\n'.join(chunk)
+            b64_text = sub_convert.base64_encode(plain_text)
+            chunk_yaml_str = sub_convert.main(plain_text, 'content', 'YAML', {'dup_rm_enabled': False, 'format_name_enabled': False})
+            
+            with open(f'{sub_merge_path}sub_merge{suffix}.txt', 'w+', encoding='utf-8') as f:
+                f.write(plain_text)
+            with open(f'{sub_merge_path}sub_merge_base64{suffix}.txt', 'w+', encoding='utf-8') as f:
+                f.write(b64_text)
+            with open(f'{sub_merge_path}sub_merge_yaml{suffix}.yml', 'w+', encoding='utf-8') as f:
+                f.write(chunk_yaml_str)
+
         print('Done!\n')
 
     @staticmethod
@@ -201,33 +225,38 @@ class sub_merge():
         with open(readme_file, 'r', encoding='utf-8') as f:
             lines = f.readlines()
 
-        with open('./sub/sub_merge.txt', 'r', encoding='utf-8') as f:
-            total = len(f.readlines())
-            total = f'Total number of merged nodes: `{total}`\n'
-            thanks = []
-            repo_amount_dic = {}
-            for repo in sub_list:
-                try:
-                    line = ''
-                    if repo['enabled'] == True:
-                        id = repo['id']
-                        remarks = repo['remarks']
-                        repo_site = repo['site']
+        total = 0
+        for f in glob.glob('./sub/sub_merge*.txt'):
+            if 'base64' not in f:
+                with open(f, 'r', encoding='utf-8') as file:
+                    total += len([l for l in file.readlines() if l.strip()])
+                    
+        total_str = f'Total number of merged nodes: `{total}`\n'
+        
+        thanks = []
+        repo_amount_dic = {}
+        for repo in sub_list:
+            try:
+                line = ''
+                if repo['enabled'] == True:
+                    id = repo['id']
+                    remarks = repo['remarks']
+                    repo_site = repo['site']
 
-                        sub_file = f'./sub/list/{id:0>2d}.txt'
-                        with open(sub_file, 'r', encoding='utf-8') as sf:
-                            proxies = sf.readlines()
-                            if proxies == ['Url 解析错误'] or proxies == ['订阅内容解析错误']:
-                                amount = 0
-                            else:
-                                amount = len(proxies)
-                        repo_amount_dic.setdefault(id, amount)
-                        line = f'- [{remarks}]({repo_site}), number of nodes: `{amount}`\n'
-                        thanks.append(line)
-                except FileNotFoundError:
-                    pass
-                except Exception:
-                    pass
+                    sub_file = f'./sub/list/{id:0>2d}.txt'
+                    with open(sub_file, 'r', encoding='utf-8') as sf:
+                        proxies = sf.readlines()
+                        if proxies == ['Url 解析错误'] or proxies == ['订阅内容解析错误']:
+                            amount = 0
+                        else:
+                            amount = len(proxies)
+                    repo_amount_dic.setdefault(id, amount)
+                    line = f'- [{remarks}]({repo_site}), number of nodes: `{amount}`\n'
+                    thanks.append(line)
+            except FileNotFoundError:
+                pass
+            except Exception:
+                pass
 
         for index in range(len(lines)):
             if lines[index] == '### high-speed node\n':
@@ -239,7 +268,7 @@ class sub_merge():
                     proxies_base64 = f.read()
                     proxies = sub_convert.base64_decode(proxies_base64)
                     proxies = proxies.split('\n')
-                    proxies = ['    '+proxy for proxy in proxies]
+                    proxies = ['    '+proxy for proxy in proxies if proxy.strip()]
                     proxies = [proxy+'\n' for proxy in proxies]
                 top_amount = len(proxies)
 
@@ -254,11 +283,13 @@ class sub_merge():
             if lines[index] == '### all nodes\n':
                 lines.pop(index+1)
 
-                with open('./sub/sub_merge_yaml.yml', 'r', encoding='utf-8') as f:
-                    proxies = f.read()
-                    proxies = proxies.split('\n')
-                    top_amount = len(proxies) - 1
-                lines.insert(index+1, f'merge nodes w/o dup: `{top_amount}`\n')
+                total_yaml = 0
+                for f in glob.glob('./sub/sub_merge_yaml*.yml'):
+                    with open(f, 'r', encoding='utf-8') as file:
+                        prox_lines = file.read().split('\n')
+                        total_yaml += len([p for p in prox_lines if p.strip() and not p.startswith('proxies:')])
+
+                lines.insert(index+1, f'merge nodes w/o dup: `{total_yaml}`\n')
                 break
 
         for index in range(len(lines)):
