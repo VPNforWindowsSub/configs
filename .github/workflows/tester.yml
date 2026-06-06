@@ -766,7 +766,7 @@ jobs:
           fi
 
       - name: Trigger Run
-        if: false # success()
+        if: success()
         env:
           GH_TOKEN: ${{ secrets.VPB_PAT }}
         run: |
