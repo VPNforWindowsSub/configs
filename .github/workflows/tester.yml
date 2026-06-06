@@ -195,7 +195,8 @@ jobs:
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
               if not net_type or net_type == "raw": net_type = "tcp"
               if net_type in ["http", "h2", "splithttp"]: net_type = "xhttp"
-              if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
+              if net_type == "quic": raise Exception("QUIC is deprecated in Xray v26+")
+              if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp"]:
                   raise Exception(f"Invalid VLESS network type: {net_type}")
 
               config = {
@@ -273,9 +274,10 @@ jobs:
                   if '@' in host_val or ' ' in host_val or '{' in host_val:
                       raise Exception("Malformed XHTTP Host")
 
-                  mode_val = clean_str(params.get('mode', ['auto'])[0])
-                  if not mode_val: mode_val = "auto"
-
+                  mode_val = clean_str(params.get('mode', ['auto'])[0]).lower()
+                  if mode_val not in ["auto", "stream-one", "stream-up", "stream-down", "packet-up"]: 
+                      mode_val = "auto"
+                      
                   xhttp_settings = {
                       "path": path_val,
                       "host": host_val,
@@ -337,7 +339,8 @@ jobs:
               net = clean_str(j.get('net', 'tcp')).lower()
               if not net or net == "raw": net = "tcp"
               if net in ["http", "h2", "splithttp"]: net = "xhttp"
-              if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
+              if net == "quic": raise Exception("QUIC is deprecated in Xray v26+")
+              if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp"]:
                   raise Exception(f"Invalid VMess network: {net}")
 
               tls = clean_str(j.get('tls', '')).lower()
@@ -392,8 +395,9 @@ jobs:
                   if '@' in host_val or ' ' in host_val or '{' in host_val:
                       raise Exception("Malformed XHTTP Host")
 
-                  mode_val = clean_str(j.get('mode', 'auto'))
-                  if not mode_val: mode_val = "auto"
+                  mode_val = clean_str(j.get('mode', 'auto')).lower()
+                  if mode_val not in ["auto", "stream-one", "stream-up", "stream-down", "packet-up"]: 
+                      mode_val = "auto"
 
                   xhttp_settings = {
                       "path": path_val,
@@ -451,8 +455,11 @@ jobs:
 
               if method.startswith("2022-"):
                   pwd = clean_str(password)
-                  if not re.match(r'^[A-Za-z0-9+/=_-]+$', pwd):
-                      raise Exception("Invalid SS-2022 base64 key format")
+                  try:
+                      pad = pwd + '=' * (-len(pwd) % 4)
+                      base64.b64decode(pad.replace('-', '+').replace('_', '/'), validate=True)
+                  except:
+                      raise Exception("Invalid SS-2022 base64 key data")
 
               server, port_str = server_port.split(':', 1)
               if not server: raise Exception("Missing server")
@@ -483,7 +490,8 @@ jobs:
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
               if not net or net == "raw": net = "tcp"
               if net in ["http", "h2", "splithttp"]: net = "xhttp"
-              if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
+              if net == "quic": raise Exception("QUIC is deprecated in Xray v26+")
+              if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp"]:
                   raise Exception(f"Invalid Trojan network type: {net}")
 
               sec = clean_str(params.get('security', ['tls'])[0]).lower()
@@ -534,8 +542,9 @@ jobs:
                   if '@' in host_val or ' ' in host_val or '{' in host_val:
                       raise Exception("Malformed XHTTP Host")
 
-                  mode_val = clean_str(j.get('mode', 'auto'))
-                  if not mode_val: mode_val = "auto"
+                  mode_val = clean_str(params.get('mode', ['auto'])[0]).lower()
+                  if mode_val not in ["auto", "stream-one", "stream-up", "stream-down", "packet-up"]: 
+                      mode_val = "auto"
 
                   xhttp_settings = {
                       "path": path_val,
