@@ -166,6 +166,8 @@ jobs:
 
           def decode_base64(s):
               s = s.strip().split('#')[0]
+              s = re.sub(r'<[^>]+>', '', s)
+              s = urllib.parse.unquote(s)
               s += '=' * (-len(s) % 4)
               s = s.replace('-', '+').replace('_', '/')
               try: return base64.b64decode(s).decode('utf-8', errors='ignore')
@@ -198,7 +200,8 @@ jobs:
               if enc != 'none': raise Exception(f"Invalid VLESS encryption: {enc}")
 
               net_type = clean_str(params.get('type', ['tcp'])[0]).lower()
-              if net_type in ["http", "h2"]: net_type = "xhttp"
+              if net_type in ["http", "h2", "splithttp"]: net_type = "xhttp"
+              if net_type == "raw": net_type = "tcp"
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   raise Exception(f"Invalid VLESS network type: {net_type}")
 
@@ -336,11 +339,14 @@ jobs:
                   raise Exception(f"Invalid VMess security: {scy}")
 
               net = clean_str(j.get('net', 'tcp')).lower()
-              if net in ["http", "h2"]: net = "xhttp"
+              if net in ["http", "h2", "splithttp"]: net = "xhttp"
+              if net == "raw": net = "tcp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   raise Exception(f"Invalid VMess network: {net}")
 
               tls = clean_str(j.get('tls', '')).lower()
+              if tls in ["true", "1"]: tls = "tls"
+              if tls in ["false", "0"]: tls = "none"
               if tls not in ["", "none", "tls", "reality"]:
                   raise Exception(f"Invalid VMess TLS: {tls}")
               if tls == 'reality' and net not in ['tcp', 'grpc', 'xhttp']:
@@ -437,6 +443,7 @@ jobs:
                   if '@' in decoded: userinfo, server_port = decoded.rsplit('@', 1)
                   else: raise Exception("Invalid SS format")
 
+              if ':' not in userinfo: raise Exception("Invalid SS credentials (missing cipher)")
               method, password = userinfo.split(':', 1)
               if not method or not password: raise Exception("Missing SS credentials")
 
@@ -481,7 +488,8 @@ jobs:
                   raise Exception("Skipping insecure Trojan node")
 
               net = clean_str(params.get('type', ['tcp'])[0]).lower()
-              if net in ["http", "h2"]: net = "xhttp"
+              if net in ["http", "h2", "splithttp"]: net = "xhttp"
+              if net == "raw": net = "tcp"
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp", "quic"]:
                   raise Exception(f"Invalid Trojan network type: {net}")
 
@@ -589,6 +597,7 @@ jobs:
               links = links[start_idx:end_idx]
               parsed_nodes = []
               for i, link in enumerate(links):
+                  link = link.replace('&amp;', '&')
                   for prefix, p_func in parsers.items():
                       if link.startswith(prefix):
                           try:
