@@ -694,7 +694,6 @@ def process_and_save_results():
     top_countries = country_dist.most_common(15)
 
     stats_md = f"""# 📊 Proxy Processing Statistics
-*Generated on: {datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S')} UTC*
 
 ## 📈 Pipeline Overview
 - **Total Incoming Configs:** {total_incoming_nodes}
