@@ -691,11 +691,11 @@ def process_and_save_results():
         elif n['speed'] > 1_000_000: perf_brackets['🚀 Fast (1-5 MB/s)'] += 1
         else: perf_brackets['🐢 Slow (<1 MB/s)'] += 1
 
-    country_dist = Counter([n['country_name'] for n in conventional_nodes])
+    country_dist = Counter([(n['country'], n['country_name']) for n in conventional_nodes])
     top_countries = country_dist.most_common(15)
 
     stats_md = f"""# 📊 Proxy Processing Statistics
-*Generated on: {datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')} UTC*
+*Generated on: {datetime.now(datetime.UTC).strftime('%Y-%m-%d %H:%M:%S')} UTC*
 
 ## 📈 Pipeline Overview
 - **Total Incoming Configs:** {total_incoming_nodes}
@@ -738,15 +738,10 @@ def process_and_save_results():
 | Country | Count |
 |---------|-------|
 """
-    for c, count in top_countries:
-        c_code = 'XX'
-        for code, name in COUNTRY_NAME_MAPPING.items():
-            if name == c: c_code = code
-        if c_code == 'XX': 
-            for code, name in EMOJI.items(): 
-                if name == c: c_code = code
+    for (c_code, c_name), count in top_countries:
         flag = EMOJI.get(c_code, '🌐')
-        stats_md += f"| {flag} {c} | {count} |\n"
+        display_name = COUNTRY_NAME_MAPPING.get(c_name, c_name)
+        stats_md += f"| {flag} {display_name} | {count} |\n"
 
     with open('Stats.md', 'w', encoding='utf-8') as f:
         f.write(stats_md)
