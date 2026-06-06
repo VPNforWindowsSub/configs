@@ -294,8 +294,14 @@ jobs:
                                   del parsed_extra["headers"]
                               if "xPaddingBytes" in parsed_extra:
                                   pad_val = str(parsed_extra["xPaddingBytes"]).strip()
-                                  if not re.match(r'^\d+(-\d+)?$', pad_val):
+                                  pad_match = re.match(r'^(\d+)(?:-(\d+))?$', pad_val)
+                                  if not pad_match:
                                       del parsed_extra["xPaddingBytes"]
+                                  else:
+                                      if pad_match.group(2) and int(pad_match.group(1)) > int(pad_match.group(2)):
+                                          del parsed_extra["xPaddingBytes"]
+                                      else:
+                                          parsed_extra["xPaddingBytes"] = pad_val
                               xhttp_settings["extra"] = parsed_extra
                       except:
                           raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
@@ -421,8 +427,14 @@ jobs:
                                   del parsed_extra["headers"]
                               if "xPaddingBytes" in parsed_extra:
                                   pad_val = str(parsed_extra["xPaddingBytes"]).strip()
-                                  if not re.match(r'^\d+(-\d+)?$', pad_val):
+                                  pad_match = re.match(r'^(\d+)(?:-(\d+))?$', pad_val)
+                                  if not pad_match:
                                       del parsed_extra["xPaddingBytes"]
+                                  else:
+                                      if pad_match.group(2) and int(pad_match.group(1)) > int(pad_match.group(2)):
+                                          del parsed_extra["xPaddingBytes"]
+                                      else:
+                                          parsed_extra["xPaddingBytes"] = pad_val
                               xhttp_settings["extra"] = parsed_extra
                       except:
                           raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
@@ -562,8 +574,14 @@ jobs:
                                   del parsed_extra["headers"]
                               if "xPaddingBytes" in parsed_extra:
                                   pad_val = str(parsed_extra["xPaddingBytes"]).strip()
-                                  if not re.match(r'^\d+(-\d+)?$', pad_val):
+                                  pad_match = re.match(r'^(\d+)(?:-(\d+))?$', pad_val)
+                                  if not pad_match:
                                       del parsed_extra["xPaddingBytes"]
+                                  else:
+                                      if pad_match.group(2) and int(pad_match.group(1)) > int(pad_match.group(2)):
+                                          del parsed_extra["xPaddingBytes"]
+                                      else:
+                                          parsed_extra["xPaddingBytes"] = pad_val
                               xhttp_settings["extra"] = parsed_extra
                       except:
                           raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
@@ -614,7 +632,7 @@ jobs:
                           break
 
               tlog(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...")
-              results, chunk_size = [], 100
+              results, chunk_size = [], 150
               total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
 
               for i in range(0, len(parsed_nodes), chunk_size):
