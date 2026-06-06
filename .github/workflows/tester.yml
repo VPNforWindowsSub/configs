@@ -566,11 +566,11 @@ jobs:
               delay, speed = 0, 0
               try:
                   start = time.time()
-                  resp = requests.head("http://www.gstatic.com/generate_204", proxies=proxies, timeout=5)
+                  resp = requests.head("http://www.gstatic.com/generate_204", proxies=proxies, timeout=10)
                   if resp.status_code == 204:
                       delay = int((time.time() - start) * 1000)
                       start = time.time()
-                      with requests.get("https://speed.cloudflare.com/__down?bytes=5000000", proxies=proxies, timeout=5, stream=True) as r:
+                      with requests.get("https://speed.cloudflare.com/__down?bytes=5000000", proxies=proxies, timeout=10, stream=True) as r:
                           bytes_received = 0
                           for chunk in r.iter_content(8192):
                               bytes_received += len(chunk)
@@ -599,7 +599,7 @@ jobs:
                           break
 
               tlog(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...")
-              results, chunk_size = [], 150
+              results, chunk_size = [], 100
               total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
 
               for i in range(0, len(parsed_nodes), chunk_size):
@@ -628,7 +628,7 @@ jobs:
                       clog(msg)
                       continue
 
-                  with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
+                  with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
                       futures = {executor.submit(test_node, node_ports[j]): node for j, node in enumerate(chunk)}
                       for future in concurrent.futures.as_completed(futures):
                           node, (delay, speed) = futures[future], future.result()
