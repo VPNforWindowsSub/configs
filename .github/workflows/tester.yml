@@ -290,19 +290,14 @@ jobs:
                       try:
                           parsed_extra = json.loads(urllib.parse.unquote(extra_str))
                           if isinstance(parsed_extra, dict):
-                              if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
-                                  del parsed_extra["headers"]
-                              if "xPaddingBytes" in parsed_extra:
-                                  pad_val = str(parsed_extra["xPaddingBytes"]).strip()
-                                  pad_match = re.match(r'^(\d+)(?:-(\d+))?$', pad_val)
-                                  if not pad_match:
-                                      del parsed_extra["xPaddingBytes"]
-                                  else:
-                                      if pad_match.group(2) and int(pad_match.group(1)) > int(pad_match.group(2)):
-                                          del parsed_extra["xPaddingBytes"]
-                                      else:
-                                          parsed_extra["xPaddingBytes"] = pad_val
-                              xhttp_settings["extra"] = parsed_extra
+                              clean_extra = {}
+                              for k, v in parsed_extra.items():
+                                  kl = k.lower()
+                                  if kl == "headers" and isinstance(v, str): continue
+                                  if "padding" in kl: continue
+                                  clean_extra[k] = v
+                              if clean_extra:
+                                  xhttp_settings["extra"] = clean_extra
                       except:
                           raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
 
@@ -423,19 +418,14 @@ jobs:
                               parsed_extra = {}
 
                           if isinstance(parsed_extra, dict):
-                              if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
-                                  del parsed_extra["headers"]
-                              if "xPaddingBytes" in parsed_extra:
-                                  pad_val = str(parsed_extra["xPaddingBytes"]).strip()
-                                  pad_match = re.match(r'^(\d+)(?:-(\d+))?$', pad_val)
-                                  if not pad_match:
-                                      del parsed_extra["xPaddingBytes"]
-                                  else:
-                                      if pad_match.group(2) and int(pad_match.group(1)) > int(pad_match.group(2)):
-                                          del parsed_extra["xPaddingBytes"]
-                                      else:
-                                          parsed_extra["xPaddingBytes"] = pad_val
-                              xhttp_settings["extra"] = parsed_extra
+                              clean_extra = {}
+                              for k, v in parsed_extra.items():
+                                  kl = k.lower()
+                                  if kl == "headers" and isinstance(v, str): continue
+                                  if "padding" in kl: continue
+                                  clean_extra[k] = v
+                              if clean_extra:
+                                  xhttp_settings["extra"] = clean_extra
                       except:
                           raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
 
@@ -570,19 +560,14 @@ jobs:
                       try:
                           parsed_extra = json.loads(urllib.parse.unquote(extra_str))
                           if isinstance(parsed_extra, dict):
-                              if "headers" in parsed_extra and isinstance(parsed_extra["headers"], str):
-                                  del parsed_extra["headers"]
-                              if "xPaddingBytes" in parsed_extra:
-                                  pad_val = str(parsed_extra["xPaddingBytes"]).strip()
-                                  pad_match = re.match(r'^(\d+)(?:-(\d+))?$', pad_val)
-                                  if not pad_match:
-                                      del parsed_extra["xPaddingBytes"]
-                                  else:
-                                      if pad_match.group(2) and int(pad_match.group(1)) > int(pad_match.group(2)):
-                                          del parsed_extra["xPaddingBytes"]
-                                      else:
-                                          parsed_extra["xPaddingBytes"] = pad_val
-                              xhttp_settings["extra"] = parsed_extra
+                              clean_extra = {}
+                              for k, v in parsed_extra.items():
+                                  kl = k.lower()
+                                  if kl == "headers" and isinstance(v, str): continue
+                                  if "padding" in kl: continue
+                                  clean_extra[k] = v
+                              if clean_extra:
+                                  xhttp_settings["extra"] = clean_extra
                       except:
                           raise Exception("Malformed XHTTP extra JSON (corrupted by scraper)")
 
