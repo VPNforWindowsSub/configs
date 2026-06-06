@@ -16,24 +16,24 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-      
+
       - id: set-matrix
         run: |
-          # Count active sources in sub_list.json (excluding ID 5, the airport)
-          TOTAL=$(jq '[.[] | select(.enabled == true and .id != 5)] | length' ./sub/sub_list.json)
+          # Count total valid lines (sources) in sub_list.txt
+          TOTAL=$(grep -cv '^\s*$' ./sub/sub_list.txt)
           echo "Total active sources: $TOTAL"
-          
+
           # Spin up 10 workers for downloading subscriptions concurrently
           WORKERS=10
           CHUNK_SIZE=$(( (TOTAL + WORKERS - 1) / WORKERS ))
           echo "Chunk size per worker: $CHUNK_SIZE"
-          
+
           CHUNKS=$(for i in $(seq 0 $CHUNK_SIZE $(($TOTAL - 1)) ); do
             START=$i
             END=$(($i + $CHUNK_SIZE))
             echo "{\"start\":${START},\"end\":${END}}"
           done | paste -sd, -)
-          
+
           echo "matrix={\"include\":[${CHUNKS}]}" >> $GITHUB_OUTPUT
 
   collect-chunk:
@@ -62,7 +62,7 @@ jobs:
           tar -zxvf subconverter.tar.gz -C ./
           chmod +x ./subconverter/subconverter && nohup ./subconverter/subconverter >./subconverter.log 2>&1 &
           sleep 2
-          
+
           cat <<'EOF' > utils/chunk_collector.py
           import sys, os, re, json, base64, urllib.parse, yaml, requests
           from requests.adapters import HTTPAdapter
@@ -76,7 +76,7 @@ jobs:
                       server = parsed.hostname or "unknown"
                       port = parsed.port or 443
                       return f"{server}:{port}:{uuid}"
-                  
+
                   elif link.startswith('ss://'):
                       parsed = urllib.parse.urlparse(link)
                       if '@' in parsed.netloc:
@@ -101,7 +101,7 @@ jobs:
                       return f"{server}:{port}:{uuid}"
               except:
                   pass
-              
+
               if '#' in link:
                   return link.split('#')[0]
               return link
@@ -133,7 +133,7 @@ jobs:
                           v['host'] = p['ws-opts'].get('headers', {}).get('Host', '')
                       elif 'grpc-opts' in p:
                           v['path'] = p['grpc-opts'].get('grpc-service-name', '')
-                      
+
                       b64 = base64.b64encode(json.dumps({k:v for k,v in v.items() if v}).encode()).decode('ascii')
                       return f"vmess://{b64}"
 
@@ -163,13 +163,21 @@ jobs:
           start_idx = int(sys.argv[1])
           end_idx = int(sys.argv[2])
           output_path = f"chunk_{start_idx}"
-          
-          # Native loading directly from JSON (no external scripts needed)
-          with open('./sub/sub_list.json', 'r', encoding='utf-8') as f:
-              raw_list = json.load(f)
-          sub_list = [x for x in raw_list if x.get('enabled')]
-          
-          chunk = list(filter(lambda x: x['id'] != 5, sub_list))[start_idx:end_idx]
+
+          # Native loading directly from TXT
+          sub_list = []
+          with open('./sub/sub_list.txt', 'r', encoding='utf-8') as f:
+              lines = [l.strip() for l in f if l.strip()]
+
+          for idx, line in enumerate(lines, 1):
+              if " _ " in line:
+                  url_part = line.split(" _ ", 1)[0]
+              else:
+                  url_part = line
+              urls = [u.strip() for u in url_part.split('|') if u.strip()]
+              sub_list.append({"id": idx, "url": urls})
+
+          chunk = sub_list[start_idx:end_idx]
           if not chunk: sys.exit(0)
 
           session = requests.Session()
@@ -180,21 +188,15 @@ jobs:
           for url_container in chunk:
               ids = url_container['id']
               repo_links = []
-              
-              raw_urls = url_container.get("url", [])
-              if isinstance(raw_urls, str):
-                  raw_urls = [u.strip() for u in raw_urls.split('|') if u.strip()]
-              elif not isinstance(raw_urls, list):
-                  raw_urls = []
-              
-              for each_url in raw_urls:
+
+              for each_url in url_container["url"]:
                   print(f"===> Processing URL: {each_url}", flush=True)
                   try:
                       resp = session.get(each_url, timeout=15)
                       resp.raise_for_status()
                       text = resp.text
                       extracted = []
-                      
+
                       try:
                           data = yaml.safe_load(text)
                           if isinstance(data, dict) and 'proxies' in data:
@@ -207,7 +209,7 @@ jobs:
 
                       matches = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', text)
                       for m in matches: extracted.append(f"{m.group(1)}://{m.group(2)}")
-                          
+
                       try:
                           b64_text = text.strip()
                           b64_text += '=' * (-len(b64_text) % 4)
@@ -217,7 +219,7 @@ jobs:
                           for m in matches_b64: extracted.append(f"{m.group(1)}://{m.group(2)}")
                       except Exception:
                           pass
-                          
+
                       if not extracted:
                           print(f"No direct links found, falling back to subconverter...", flush=True)
                           try:
@@ -227,18 +229,18 @@ jobs:
                                   matches_sc = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', decoded_sc)
                                   for m in matches_sc: extracted.append(f"{m.group(1)}://{m.group(2)}")
                           except Exception: pass
-                              
+
                       extracted = list(set(extracted))
                       print(f"Found {len(extracted)} links from {each_url}", flush=True)
                       repo_links.extend(extracted)
                   except Exception as e:
                       print(f"Failed to process {each_url}: {e}", flush=True)
-              
+
               repo_links = list(set(repo_links))
               os.makedirs('./sub/list/', exist_ok=True)
               with open(f'./sub/list/{ids:02d}.txt', 'w', encoding='utf-8') as f: f.write("\n".join(repo_links))
               for link in repo_links: all_clash_proxies.append({"link": link})
-          
+
           # Bulletproof Deduplication per chunk
           unique_links = []
           seen_sigs = set()
@@ -293,7 +295,7 @@ jobs:
         run: |
           mkdir -p ./sub/list/
           mv downloaded_chunks/list/[0-9][0-9].txt ./sub/list/ 2>/dev/null || true
-          
+
           cat <<'EOF' > utils/global_merge.py
           import glob
           import base64
@@ -311,7 +313,7 @@ jobs:
                       server = parsed.hostname or "unknown"
                       port = parsed.port or 443
                       return f"{server}:{port}:{uuid}"
-                  
+
                   elif link.startswith('ss://'):
                       parsed = urllib.parse.urlparse(link)
                       if '@' in parsed.netloc:
@@ -336,7 +338,7 @@ jobs:
                       return f"{server}:{port}:{uuid}"
               except:
                   pass
-              
+
               if '#' in link:
                   return link.split('#')[0]
               return link
@@ -348,24 +350,24 @@ jobs:
           all_links = []
 
           print("Starting global deduplication across all chunks...")
-          
+
           for f in glob.glob('downloaded_chunks/*_base64.txt'):
               with open(f, 'r', encoding='utf-8') as file:
                   b64_content = file.read().strip()
                   if not b64_content: continue
-                  
+
                   decoded = base64.b64decode(b64_content).decode('utf-8', errors='ignore')
                   for link in decoded.splitlines():
                       link = link.strip()
                       if not link: continue
-                      
+
                       sig = get_proxy_signature(link)
                       if sig not in unique_signatures:
                           unique_signatures.add(sig)
                           all_links.append(link)
 
           original_count = len(all_links)
-          
+
           # Randomly shuffle the entire proxy pool.
           random.shuffle(all_links)
 
@@ -391,7 +393,7 @@ jobs:
 
           EOF
           python utils/global_merge.py
-          
+
       - name: Log VLESS Count After Collection
         run: |
           echo "--- Verifying proxy file after collection ---"
