@@ -93,6 +93,23 @@ jobs:
           cat <<'EOF' > xray_tester.py
           import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket, re
 
+          try:
+              start_idx = int(sys.argv[1])
+              end_idx = int(sys.argv[2])
+          except:
+              start_idx = 0
+              end_idx = 0
+
+          def tlog(msg):
+              print(msg, flush=True)
+              with open(f"chunk_{start_idx}_debug.log", "a", encoding="utf-8") as f: f.write(msg + "\n")
+
+          def elog(link, err):
+              with open(f"chunk_{start_idx}_errors.log", "a", encoding="utf-8") as f: f.write(f"[{err}] {link}\n")
+
+          def clog(msg):
+              with open(f"chunk_{start_idx}_crashes.log", "a", encoding="utf-8") as f: f.write(msg + "\n")
+
           ALLOWED_SS_METHODS = {
               "2022-blake3-aes-128-gcm", "2022-blake3-aes-256-gcm", "2022-blake3-chacha20-poly1305",
               "aes-256-gcm", "aes-128-gcm", "chacha20-poly1305", "chacha20-ietf-poly1305",
@@ -162,7 +179,7 @@ jobs:
           def parse_vless(link, index):
               parsed = urllib.parse.urlparse(link)
               uuid, server = parsed.username, parsed.hostname
-              if not uuid or not server: raise Exception("Invalid vless")
+              if not uuid or not server: raise Exception("Invalid vless format")
               if not is_valid_uuid_or_id(uuid): raise Exception("Invalid VLESS UUID")
 
               try: port = int(parsed.port or 443)
@@ -295,7 +312,7 @@ jobs:
 
           def parse_vmess(link, index):
               decoded = decode_base64(link.replace("vmess://", ""))
-              if not decoded: raise Exception("Invalid vmess")
+              if not decoded: raise Exception("Invalid vmess base64")
               j = json.loads(decoded)
               name = j.get('ps', f"proxy-{index}")
               server = j.get('add', '')
@@ -418,7 +435,7 @@ jobs:
               else:
                   decoded = decode_base64(netloc)
                   if '@' in decoded: userinfo, server_port = decoded.rsplit('@', 1)
-                  else: raise Exception("Invalid SS")
+                  else: raise Exception("Invalid SS format")
 
               method, password = userinfo.split(':', 1)
               if not method or not password: raise Exception("Missing SS credentials")
@@ -566,8 +583,6 @@ jobs:
           parsers = {'vless://': parse_vless, 'vmess://': parse_vmess, 'ss://': parse_ss, 'trojan://': parse_trojan}
 
           try:
-              start_idx = int(sys.argv[1])
-              end_idx = int(sys.argv[2])
               with open('proxies.txt', 'r', encoding='utf-8') as f:
                   links = [line.strip() for line in f if line.strip()]
 
@@ -579,16 +594,17 @@ jobs:
                           try:
                               cfg, srv, name = p_func(link, start_idx + i)
                               parsed_nodes.append({"link": link, "config": cfg, "server": srv, "tag": cfg['tag'], "name": name})
-                          except Exception: pass
+                          except Exception as e: 
+                              elog(link, str(e))
                           break
 
-              print(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...", flush=True)
+              tlog(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...")
               results, chunk_size = [], 150
               total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
 
               for i in range(0, len(parsed_nodes), chunk_size):
                   chunk_index = (i // chunk_size) + 1
-                  print(f"Testing batch {chunk_index}/{total_chunks}...", flush=True)
+                  tlog(f"Testing batch {chunk_index}/{total_chunks}...")
                   chunk = parsed_nodes[i:i+chunk_size]
                   inbounds, outbounds, rules = [], [{"protocol": "freedom", "tag": "direct"}], []
                   node_ports = []
@@ -607,7 +623,9 @@ jobs:
 
                   if proc.poll() is not None:
                       out, err = proc.communicate()
-                      print(f"⚠️ XRAY CRASHED ON BATCH {chunk_index}! Skipping batch. Error:\n{err.decode('utf-8', errors='ignore')}\n{out.decode('utf-8', errors='ignore')}", flush=True)
+                      msg = f"⚠️ XRAY CRASHED ON BATCH {chunk_index}! Skipping batch. Error:\n{err.decode('utf-8', errors='ignore')}\n{out.decode('utf-8', errors='ignore')}"
+                      tlog(msg)
+                      clog(msg)
                       continue
 
                   with concurrent.futures.ThreadPoolExecutor(max_workers=64) as executor:
@@ -621,9 +639,9 @@ jobs:
 
               output_file = f"meta_chunk_{start_idx}.json"
               with open(output_file, 'w') as f: json.dump(results, f, indent=2)
-              print(f"Testing complete. Results saved to {output_file}", flush=True)
+              tlog(f"Testing complete. Results saved to {output_file}")
           except FileNotFoundError:
-              print("proxies.txt not found", flush=True); sys.exit(1)
+              tlog("proxies.txt not found"); sys.exit(1)
           EOF
 
       - name: Run Xray Tester
@@ -633,7 +651,9 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: chunk-result-${{ matrix.start }}
-          path: meta_chunk_${{ matrix.start }}.json
+          path: |
+            meta_chunk_${{ matrix.start }}.json
+            chunk_${{ matrix.start }}_*.log
           retention-days: 1
 
   merge-and-publish:
@@ -689,7 +709,23 @@ jobs:
                   all_data.extend(json.load(file))
           with open('meta.json', 'w') as out:
               json.dump(all_data, out, indent=2)
-          print(f'Merged {len(all_data)} tested nodes from all workers.')
+              
+          def merge_logs(pattern, outfile):
+              lines = []
+              for f in sorted(glob.glob(pattern)):
+                  try:
+                      with open(f, 'r', encoding='utf-8') as file:
+                          lines.extend(file.readlines())
+                  except: pass
+              if lines:
+                  with open(outfile, 'w', encoding='utf-8') as out:
+                      out.writelines(lines)
+
+          merge_logs('processed_chunks/*_debug.log', 'runner_logs.txt')
+          merge_logs('processed_chunks/*_errors.log', 'parse_errors.txt')
+          merge_logs('processed_chunks/*_crashes.log', 'xray_crashes.txt')
+
+          print(f'Merged {len(all_data)} tested nodes and compiled all debug logs.')
           EOF
           python merge.py
 
@@ -703,9 +739,9 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git pull origin ${{ github.ref_name }}
-          git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience full.txt full_base64.txt LogInfo.txt sub/
+          git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience full.txt full_base64.txt LogInfo.txt sub/ Logs/ Stats.md
           if ! git diff --staged --quiet; then
-            git commit -m "✔️ Updated proxy lists"
+            git commit -m "✔️ Updated proxy lists and compiled statistics"
             git push
           else
             echo "No changes to commit."
