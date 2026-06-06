@@ -572,20 +572,18 @@ def process_and_save_results():
     with open(RESILIENCE_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write('\n'.join(res_links))
     with open(RESILIENCE_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode('\n'.join(res_links).encode()).decode())
 
-    print(f"Filtering out UUID spam (Max {MAX_SAME_UUID} instances per UUID)...")
-    uuid_counts = {}
-    filtered_unique_nodes = []
+    print("Calculating UUID spam metrics...")
+    uuid_counts_stats = {}
+    spam_removed = 0
     for node in all_processed_nodes:
         uuid = get_uuid(node['link'])
-        if not uuid:
-            filtered_unique_nodes.append(node)
-            continue
-        if uuid_counts.get(uuid, 0) < MAX_SAME_UUID:
-            filtered_unique_nodes.append(node)
-            uuid_counts[uuid] = uuid_counts.get(uuid, 0) + 1
+        if uuid:
+            if uuid_counts_stats.get(uuid, 0) >= MAX_SAME_UUID:
+                spam_removed += 1
+            uuid_counts_stats[uuid] = uuid_counts_stats.get(uuid, 0) + 1
 
-    spam_removed = len(all_processed_nodes) - len(filtered_unique_nodes)
-    final_nodes = filtered_unique_nodes
+    # Keep ALL nodes for Resilience, Diversity, and Full lists!
+    final_nodes = all_processed_nodes
 
     print("\n--- Generating Diversity List ---")
     diversity_nodes_by_country = {}
@@ -629,8 +627,21 @@ def process_and_save_results():
     with open(LOG_INFO_FILE, 'w', encoding='utf-8') as f: f.writelines(log_list)
 
     print("\n--- Generating Eternity List ---")
-    nodes_by_country = {}
+    
+    # Apply UUID Spam Filter strictly to Eternity candidates
+    uuid_counts_eternity = {}
+    eternity_candidates = []
     for node in conventional_nodes:
+        uuid = get_uuid(node['link'])
+        if not uuid:
+            eternity_candidates.append(node)
+            continue
+        if uuid_counts_eternity.get(uuid, 0) < MAX_SAME_UUID:
+            eternity_candidates.append(node)
+            uuid_counts_eternity[uuid] = uuid_counts_eternity.get(uuid, 0) + 1
+
+    nodes_by_country = {}
+    for node in eternity_candidates:
         if node['speed'] > 50000:
             c = node['country']
             if c not in nodes_by_country: nodes_by_country[c] = []
