@@ -5,6 +5,7 @@ import base64
 import urllib.parse
 import yaml
 import requests
+import glob
 from requests.adapters import HTTPAdapter
 
 sub_list_txt = './sub/sub_list.txt'
@@ -33,8 +34,6 @@ class subs:
 
         for index, url_container in enumerate(content_urls):
             ids = url_container['id']
-            remarks = url_container['remarks']
-
             repo_links = []
 
             for each_url in url_container.get("url", []):
@@ -45,12 +44,10 @@ class subs:
                     text = resp.text
 
                     extracted = []
-                    # 1. Direct Regex
                     matches = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', text)
                     for m in matches:
                         extracted.append(f"{m.group(1)}://{m.group(2)}")
 
-                    # 2. Try Base64 Decode
                     try:
                         b64_text = text.strip()
                         b64_text += '=' * (-len(b64_text) % 4)
@@ -62,7 +59,6 @@ class subs:
                     except Exception:
                         pass
 
-                    # 3. Fallback to Subconverter
                     if not extracted:
                         print(f"No direct links found, falling back to subconverter for {each_url}...", flush=True)
                         try:
@@ -91,17 +87,44 @@ class subs:
                 ptype = link.split("://")[0]
                 all_clash_proxies.append({"type": ptype, "link": link})
 
-        print(f"\n===> STEP 3: Generating final output files...", flush=True)
-
         unique_links = list(set([p['link'] for p in all_clash_proxies]))
         os.makedirs(sub_merge_path, exist_ok=True)
 
-        final_clash_dict = {'proxies': [{"type": p.split("://")[0]} for p in unique_links]}
-        with open(os.path.join(sub_merge_path, f'{output_path}.yml'), 'w', encoding='utf-8') as f:
-            yaml.dump(final_clash_dict, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+        for f in glob.glob(os.path.join(sub_merge_path, f'{output_path}*')):
+            if f.endswith('.txt') or f.endswith('.yml'):
+                os.remove(f)
 
-        content_base64 = base64.b64encode("\n".join(unique_links).encode('utf-8')).decode('ascii')
-        with open(os.path.join(sub_merge_path, f'{output_path}_base64.txt'), 'w', encoding='utf-8') as f:
-            f.write(content_base64)
+        MAX_BYTES = 70 * 1024 * 1024
+        chunks = []
+        current_chunk = []
+        current_size = 0
+
+        for link in unique_links:
+            link_size = len(link.encode('utf-8')) + 1
+            if current_size + link_size > MAX_BYTES:
+                chunks.append(current_chunk)
+                current_chunk = [link]
+                current_size = link_size
+            else:
+                current_chunk.append(link)
+                current_size += link_size
+
+        if current_chunk:
+            chunks.append(current_chunk)
+
+        for i, chunk in enumerate(chunks):
+            suffix = "" if i == 0 else f"_{i+1}"
+            plain_text = '\n'.join(chunk)
+            b64_text = base64.b64encode(plain_text.encode('utf-8')).decode('ascii')
+            yaml_proxies = [{"type": link.split("://")[0]} for link in chunk]
+
+            with open(os.path.join(sub_merge_path, f'{output_path}{suffix}.yml'), 'w', encoding='utf-8') as f:
+                yaml.dump({'proxies': yaml_proxies}, f, default_flow_style=False, sort_keys=False, allow_unicode=True)
+
+            with open(os.path.join(sub_merge_path, f'{output_path}_base64{suffix}.txt'), 'w', encoding='utf-8') as f:
+                f.write(b64_text)
+
+            with open(os.path.join(sub_merge_path, f'{output_path}{suffix}.txt'), 'w', encoding='utf-8') as f:
+                f.write(plain_text)
 
         print(f"Successfully wrote {len(unique_links)} nodes.", flush=True)
