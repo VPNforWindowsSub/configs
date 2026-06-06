@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "./sub/sub_merge_base64.txt"
-      - "./sub/sub_merge_yaml.yml"
+      - "./sub/sub_merge_base64*.txt"
+      - "./sub/sub_merge_yaml*.yml"
 
 jobs:
   prepare-matrix:
@@ -19,21 +19,16 @@ jobs:
 
       - id: set-matrix
         run: |
-          # Count total valid lines (sources) in sub_list.txt
           TOTAL=$(grep -cv '^\s*$' ./sub/sub_list.txt)
           echo "Total active sources: $TOTAL"
-
-          # Spin up 10 workers for downloading subscriptions concurrently
           WORKERS=10
           CHUNK_SIZE=$(( (TOTAL + WORKERS - 1) / WORKERS ))
           echo "Chunk size per worker: $CHUNK_SIZE"
-
           CHUNKS=$(for i in $(seq 0 $CHUNK_SIZE $(($TOTAL - 1)) ); do
             START=$i
             END=$(($i + $CHUNK_SIZE))
             echo "{\"start\":${START},\"end\":${END}}"
           done | paste -sd, -)
-
           echo "matrix={\"include\":[${CHUNKS}]}" >> $GITHUB_OUTPUT
 
   collect-chunk:
@@ -68,7 +63,6 @@ jobs:
           from requests.adapters import HTTPAdapter
 
           def get_proxy_signature(link):
-              """Creates a bulletproof signature based strictly on Server, Port, and UUID/Password"""
               try:
                   if link.startswith('vless://') or link.startswith('trojan://'):
                       parsed = urllib.parse.urlparse(link)
@@ -76,7 +70,6 @@ jobs:
                       server = parsed.hostname or "unknown"
                       port = parsed.port or 443
                       return f"{server}:{port}:{uuid}"
-
                   elif link.startswith('ss://'):
                       parsed = urllib.parse.urlparse(link)
                       if '@' in parsed.netloc:
@@ -89,7 +82,6 @@ jobs:
                               return link
                       server, port_str = server_port.split(':', 1)
                       return f"{server}:{port_str}:{userinfo}"
-
                   elif link.startswith('vmess://'):
                       b64 = link.replace("vmess://", "").split('#')[0]
                       b64 += '=' * (-len(b64) % 4)
@@ -101,7 +93,6 @@ jobs:
                       return f"{server}:{port}:{uuid}"
               except:
                   pass
-
               if '#' in link:
                   return link.split('#')[0]
               return link
@@ -113,13 +104,11 @@ jobs:
                   server = p.get('server', '')
                   port = p.get('port', '')
                   if not server or not port: return None
-
                   if ptype == 'ss':
                       method = p.get('cipher', p.get('method', ''))
                       password = p.get('password', '')
                       cred = base64.b64encode(f"{method}:{password}".encode()).decode('ascii')
                       return f"ss://{cred}@{server}:{port}#{name}"
-
                   elif ptype == 'vmess':
                       v = {
                           "v": "2", "ps": p.get('name', ''), "add": server, "port": port,
@@ -133,10 +122,8 @@ jobs:
                           v['host'] = p['ws-opts'].get('headers', {}).get('Host', '')
                       elif 'grpc-opts' in p:
                           v['path'] = p['grpc-opts'].get('grpc-service-name', '')
-
                       b64 = base64.b64encode(json.dumps({k:v for k,v in v.items() if v}).encode()).decode('ascii')
                       return f"vmess://{b64}"
-
                   elif ptype in ['vless', 'trojan']:
                       password = p.get('uuid', '') if ptype == 'vless' else p.get('password', '')
                       params = {}
@@ -146,14 +133,12 @@ jobs:
                       if p.get('sni') or p.get('servername'): params['sni'] = p.get('sni', p.get('servername'))
                       if p.get('flow'): params['flow'] = p.get('flow')
                       if p.get('client-fingerprint'): params['fp'] = p.get('client-fingerprint')
-
                       if net == 'ws' and 'ws-opts' in p:
                           params['path'] = p['ws-opts'].get('path', '/')
                           host = p['ws-opts'].get('headers', {}).get('Host', '')
                           if host: params['host'] = host
                       elif net == 'grpc' and 'grpc-opts' in p:
                           params['serviceName'] = p['grpc-opts'].get('grpc-service-name', '')
-
                       qs = urllib.parse.urlencode({k:v for k,v in params.items() if v})
                       return f"{ptype}://{password}@{server}:{port}?{qs}#{name}"
               except Exception:
@@ -164,7 +149,6 @@ jobs:
           end_idx = int(sys.argv[2])
           output_path = f"chunk_{start_idx}"
 
-          # Native loading directly from TXT
           sub_list = []
           with open('./sub/sub_list.txt', 'r', encoding='utf-8') as f:
               lines = [l.strip() for l in f if l.strip()]
@@ -188,7 +172,6 @@ jobs:
           for url_container in chunk:
               ids = url_container['id']
               repo_links = []
-
               for each_url in url_container["url"]:
                   print(f"===> Processing URL: {each_url}", flush=True)
                   try:
@@ -196,7 +179,6 @@ jobs:
                       resp.raise_for_status()
                       text = resp.text
                       extracted = []
-
                       try:
                           data = yaml.safe_load(text)
                           if isinstance(data, dict) and 'proxies' in data:
@@ -206,10 +188,8 @@ jobs:
                                       if uri: extracted.append(uri)
                       except Exception:
                           pass
-
                       matches = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', text)
                       for m in matches: extracted.append(f"{m.group(1)}://{m.group(2)}")
-
                       try:
                           b64_text = text.strip()
                           b64_text += '=' * (-len(b64_text) % 4)
@@ -219,7 +199,6 @@ jobs:
                           for m in matches_b64: extracted.append(f"{m.group(1)}://{m.group(2)}")
                       except Exception:
                           pass
-
                       if not extracted:
                           print(f"No direct links found, falling back to subconverter...", flush=True)
                           try:
@@ -229,7 +208,6 @@ jobs:
                                   matches_sc = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', decoded_sc)
                                   for m in matches_sc: extracted.append(f"{m.group(1)}://{m.group(2)}")
                           except Exception: pass
-
                       extracted = list(set(extracted))
                       print(f"Found {len(extracted)} links from {each_url}", flush=True)
                       repo_links.extend(extracted)
@@ -241,7 +219,6 @@ jobs:
               with open(f'./sub/list/{ids:02d}.txt', 'w', encoding='utf-8') as f: f.write("\n".join(repo_links))
               for link in repo_links: all_clash_proxies.append({"link": link})
 
-          # Bulletproof Deduplication per chunk
           unique_links = []
           seen_sigs = set()
           for p in all_clash_proxies:
@@ -303,9 +280,9 @@ jobs:
           import random
           import urllib.parse
           import json
+          import os
 
           def get_proxy_signature(link):
-              """Creates a bulletproof signature based strictly on Server, Port, and UUID/Password"""
               try:
                   if link.startswith('vless://') or link.startswith('trojan://'):
                       parsed = urllib.parse.urlparse(link)
@@ -313,7 +290,6 @@ jobs:
                       server = parsed.hostname or "unknown"
                       port = parsed.port or 443
                       return f"{server}:{port}:{uuid}"
-
                   elif link.startswith('ss://'):
                       parsed = urllib.parse.urlparse(link)
                       if '@' in parsed.netloc:
@@ -326,7 +302,6 @@ jobs:
                               return link
                       server, port_str = server_port.split(':', 1)
                       return f"{server}:{port_str}:{userinfo}"
-
                   elif link.startswith('vmess://'):
                       b64 = link.replace("vmess://", "").split('#')[0]
                       b64 += '=' * (-len(b64) % 4)
@@ -338,75 +313,76 @@ jobs:
                       return f"{server}:{port}:{uuid}"
               except:
                   pass
-
               if '#' in link:
                   return link.split('#')[0]
               return link
 
-          # Hard cap to ensure we never hit GitHub's 100MB file limit
-          MAX_NODES = 250000
-
           unique_signatures = set()
           all_links = []
-
-          print("Starting global deduplication across all chunks...")
 
           for f in glob.glob('downloaded_chunks/*_base64.txt'):
               with open(f, 'r', encoding='utf-8') as file:
                   b64_content = file.read().strip()
                   if not b64_content: continue
-
                   decoded = base64.b64decode(b64_content).decode('utf-8', errors='ignore')
                   for link in decoded.splitlines():
                       link = link.strip()
                       if not link: continue
-
                       sig = get_proxy_signature(link)
                       if sig not in unique_signatures:
                           unique_signatures.add(sig)
                           all_links.append(link)
 
-          original_count = len(all_links)
-
-          # Randomly shuffle the entire proxy pool.
           random.shuffle(all_links)
 
-          all_links = all_links[:MAX_NODES] # Apply Hard Cap
+          MAX_BYTES = 70 * 1024 * 1024
+          chunks = []
+          current_chunk = []
+          current_size = 0
 
-          print(f"Global deduplication complete.")
-          print(f"Total unique nodes: {original_count}")
-          if original_count > MAX_NODES:
-              print(f"⚠️ Limit reached! Capped and randomized to {MAX_NODES} to prevent GitHub 100MB limit crash.")
+          for link in all_links:
+              link_size = len(link.encode('utf-8')) + 1
+              if current_size + link_size > MAX_BYTES:
+                  chunks.append(current_chunk)
+                  current_chunk = [link]
+                  current_size = link_size
+              else:
+                  current_chunk.append(link)
+                  current_size += link_size
 
-          # 1. Write Plain Text
-          with open('./sub/sub_merge.txt', 'w', encoding='utf-8') as out:
-              out.write('\n'.join(all_links))
+          if current_chunk:
+              chunks.append(current_chunk)
 
-          # 2. Write Base64
-          with open('./sub/sub_merge_base64.txt', 'w', encoding='utf-8') as out:
-              out.write(base64.b64encode('\n'.join(all_links).encode('utf-8')).decode('ascii'))
+          for f in glob.glob('./sub/sub_merge*'):
+              os.remove(f)
 
-          # 3. Write YAML
-          yaml_proxies = [{"type": link.split("://")[0]} for link in all_links]
-          with open('./sub/sub_merge_yaml.yml', 'w', encoding='utf-8') as out:
-              yaml.dump({'proxies': yaml_proxies}, out, allow_unicode=True, default_flow_style=False, sort_keys=False)
+          for i, chunk in enumerate(chunks):
+              suffix = "" if i == 0 else f"_{i+1}"
+              plain_text = '\n'.join(chunk)
+              b64_text = base64.b64encode(plain_text.encode('utf-8')).decode('ascii')
+              yaml_proxies = [{"type": link.split("://")[0]} for link in chunk]
+              
+              with open(f'./sub/sub_merge{suffix}.txt', 'w', encoding='utf-8') as out:
+                  out.write(plain_text)
+              with open(f'./sub/sub_merge_base64{suffix}.txt', 'w', encoding='utf-8') as out:
+                  out.write(b64_text)
+              with open(f'./sub/sub_merge_yaml{suffix}.yml', 'w', encoding='utf-8') as out:
+                  yaml.dump({'proxies': yaml_proxies}, out, allow_unicode=True, default_flow_style=False, sort_keys=False)
 
           EOF
           python utils/global_merge.py
 
       - name: Log VLESS Count After Collection
         run: |
-          echo "--- Verifying proxy file after collection ---"
-          VLESS_COUNT=$(grep -c "type: vless" ./sub/sub_merge_yaml.yml || echo "0")
-          echo "-> [Collector.yml] VLESS nodes in sub_merge_yaml.yml: $VLESS_COUNT"
-          echo "--------------------------------------------"
+          VLESS_COUNT=$(cat ./sub/sub_merge_yaml*.yml | grep -c "type: vless" || echo "0")
+          echo "-> [Collector.yml] VLESS nodes across all yaml chunks: $VLESS_COUNT"
 
       - name: Commit Collection Changes
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
           git pull origin master
-          git add ./sub/sub_merge_base64.txt ./sub/sub_merge_yaml.yml ./sub/sub_merge.txt ./sub/list/
+          git add ./sub/sub_merge*.txt ./sub/sub_merge*.yml ./sub/list/
           if ! git diff-index --quiet HEAD; then
             git commit -m "✔️ $(date '+%Y-%m-%d %H:%M:%S') Collected (Matrix)"
             git push origin master
@@ -419,5 +395,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          echo "Triggering the tester.yml workflow on the master branch..."
           gh workflow run tester.yml --ref master
