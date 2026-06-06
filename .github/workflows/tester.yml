@@ -591,6 +591,10 @@ jobs:
               parsed_nodes = []
               for i, link in enumerate(links):
                   link = html.unescape(link)
+                  
+                  link = re.sub(r'([?&])allowInsecure=(?:1|true)', r'\1allowInsecure=0', link, flags=re.IGNORECASE)
+                  link = re.sub(r'([?&])insecure=(?:1|true)', r'\1insecure=0', link, flags=re.IGNORECASE)
+                  
                   for prefix, p_func in parsers.items():
                       if link.startswith(prefix):
                           try:
