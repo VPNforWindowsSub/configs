@@ -1,57 +1,57 @@
 # 📊 Proxy Processing Statistics
 
 ## 📈 Pipeline Overview
-- **Total Incoming Configs:** 242236
-- **Failed Parsing (Invalid/Corrupted):** 68727 *(See `Logs/parse_errors.txt`)*
-- **Successfully Tested by Xray:** 173509
-- **Dead Nodes (Timeout/0ms):** 171223 *(See `Logs/dead_nodes.txt`)*
-- **Working Nodes (Ping > 0):** 2286
+- **Total Incoming Configs:** 243570
+- **Failed Parsing (Invalid/Corrupted):** 69910 *(See `Logs/parse_errors.txt`)*
+- **Successfully Tested by Xray:** 173660
+- **Dead Nodes (Timeout/0ms):** 171681 *(See `Logs/dead_nodes.txt`)*
+- **Working Nodes (Ping > 0):** 1979
 
 ## 🗑️ Filtering & Deduplication
 - **Duplicates Removed (Same IP/Port/ID):** 0
-- **UUID Spam Removed (Over 5 instances):** 691
-- **Final Unique & Safe Working Nodes:** 2221
+- **UUID Spam Removed (Over 5 instances):** 644
+- **Final Unique & Safe Working Nodes:** 1942
 
 ## 📁 Output Lists Sizes
 - 💎 **Eternity:** 165 configs
-- 🌍 **Diversity:** 135 configs
-- 🛡️ **Resilience (Domain-Fronted):** 361 configs
-- 📦 **Full:** 2221 configs
+- 🌍 **Diversity:** 136 configs
+- 🛡️ **Resilience (Domain-Fronted):** 185 configs
+- 📦 **Full:** 1942 configs
 
 ---
 
 ## 📡 Protocol Distribution (Full List)
 | Protocol | Count |
 |----------|-------|
-| **VLESS** | 1022 |
-| **VMess** | 103 |
-| **Trojan** | 248 |
-| **Shadowsocks** | 848 |
+| **VLESS** | 824 |
+| **VMess** | 99 |
+| **Trojan** | 180 |
+| **Shadowsocks** | 839 |
 
 ## 🚀 Speed Performance (Full List)
 | Speed Bracket | Count |
 |---------------|-------|
-| ⚡ Ultra Fast (>5 MB/s) | 95 |
-| 🚀 Fast (1-5 MB/s) | 1322 |
-| 🐢 Slow (<1 MB/s) | 804 |
+| ⚡ Ultra Fast (>5 MB/s) | 66 |
+| 🚀 Fast (1-5 MB/s) | 834 |
+| 🐢 Slow (<1 MB/s) | 1042 |
 
 ---
 
 ## 🌍 Geographic Distribution (Top 15)
 | Country | Count |
 |---------|-------|
-| 🏁 Relay | 533 |
-| 🇬🇧 UK | 502 |
-| 🇺🇸 USA | 245 |
-| 🇳🇱 Netherlands | 206 |
-| 🇩🇪 Germany | 104 |
-| 🇮🇹 Italy | 86 |
-| 🇫🇷 France | 63 |
-| 🇯🇵 Japan | 57 |
-| 🇸🇨 Seychelles | 51 |
-| 🇹🇼 Taiwan | 45 |
-| 🇰🇷 South Korea | 31 |
-| 🇷🇴 Romania | 24 |
-| 🇫🇮 Finland | 24 |
-| 🇵🇱 Poland | 20 |
-| 🇸🇬 Singapore | 19 |
+| 🇬🇧 UK | 513 |
+| 🇺🇸 USA | 280 |
+| 🏁 Relay | 266 |
+| 🇳🇱 Netherlands | 171 |
+| 🇩🇪 Germany | 105 |
+| 🇮🇹 Italy | 75 |
+| 🇸🇨 Seychelles | 56 |
+| 🇯🇵 Japan | 55 |
+| 🇫🇷 France | 53 |
+| 🇹🇼 Taiwan | 52 |
+| 🇸🇬 Singapore | 27 |
+| 🇰🇷 South Korea | 26 |
+| 🇷🇴 Romania | 23 |
+| 🇨🇦 Canada | 16 |
+| 🇫🇮 Finland | 16 |
