@@ -1,57 +1,57 @@
 # 📊 Proxy Processing Statistics
 
 ## 📈 Pipeline Overview
-- **Total Incoming Configs:** 280781
-- **Failed Parsing (Invalid/Corrupted):** 97277 *(See `Logs/parse_errors.txt`)*
-- **Successfully Tested by Xray:** 183504
-- **Dead Nodes (Timeout/0ms):** 181373 *(See `Logs/dead_nodes.txt`)*
-- **Working Nodes (Ping > 0):** 2131
+- **Total Incoming Configs:** 281162
+- **Failed Parsing (Invalid/Corrupted):** 98315 *(See `Logs/parse_errors.txt`)*
+- **Successfully Tested by Xray:** 182847
+- **Dead Nodes (Timeout/0ms):** 180594 *(See `Logs/dead_nodes.txt`)*
+- **Working Nodes (Ping > 0):** 2253
 
 ## 🗑️ Filtering & Deduplication
 - **Duplicates Removed (Same IP/Port/ID):** 0
-- **UUID Spam Removed (Over 5 instances):** 1125
-- **Final Unique & Safe Working Nodes:** 2087
+- **UUID Spam Removed (Over 5 instances):** 995
+- **Final Unique & Safe Working Nodes:** 2182
 
 ## 📁 Output Lists Sizes
 - 💎 **Eternity:** 165 configs
-- 🌍 **Diversity:** 121 configs
-- 🛡️ **Resilience (Domain-Fronted):** 389 configs
-- 📦 **Full:** 2087 configs
+- 🌍 **Diversity:** 137 configs
+- 🛡️ **Resilience (Domain-Fronted):** 572 configs
+- 📦 **Full:** 2182 configs
 
 ---
 
 ## 📡 Protocol Distribution (Full List)
 | Protocol | Count |
 |----------|-------|
-| **VLESS** | 1272 |
-| **VMess** | 84 |
-| **Trojan** | 402 |
-| **Shadowsocks** | 329 |
+| **VLESS** | 1309 |
+| **VMess** | 85 |
+| **Trojan** | 451 |
+| **Shadowsocks** | 337 |
 
 ## 🚀 Speed Performance (Full List)
 | Speed Bracket | Count |
 |---------------|-------|
-| ⚡ Ultra Fast (>5 MB/s) | 94 |
-| 🚀 Fast (1-5 MB/s) | 808 |
-| 🐢 Slow (<1 MB/s) | 1185 |
+| ⚡ Ultra Fast (>5 MB/s) | 109 |
+| 🚀 Fast (1-5 MB/s) | 1223 |
+| 🐢 Slow (<1 MB/s) | 850 |
 
 ---
 
 ## 🌍 Geographic Distribution (Top 15)
 | Country | Count |
 |---------|-------|
-| 🏁 Relay | 562 |
-| 🇸🇨 Seychelles | 280 |
-| 🇺🇸 USA | 210 |
-| 🇬🇧 UK | 195 |
-| 🇩🇪 Germany | 135 |
-| 🇱🇹 Lithuania | 121 |
-| 🇳🇱 Netherlands | 90 |
-| 🇯🇵 Japan | 77 |
-| 🇰🇷 South Korea | 50 |
-| 🇫🇮 Finland | 39 |
-| 🇮🇹 Italy | 38 |
-| 🇸🇬 Singapore | 37 |
-| 🇫🇷 France | 36 |
-| 🇭🇰 Hong Kong | 32 |
-| 🇮🇳 India | 23 |
+| 🏁 Relay | 829 |
+| 🇸🇨 Seychelles | 235 |
+| 🇺🇸 USA | 228 |
+| 🇩🇪 Germany | 142 |
+| 🇬🇧 UK | 120 |
+| 🇳🇱 Netherlands | 85 |
+| 🇯🇵 Japan | 63 |
+| 🇱🇹 Lithuania | 61 |
+| 🇫🇷 France | 38 |
+| 🇰🇷 South Korea | 38 |
+| 🇮🇹 Italy | 37 |
+| 🇸🇬 Singapore | 33 |
+| 🇫🇮 Finland | 33 |
+| 🇮🇳 India | 31 |
+| 🇭🇰 Hong Kong | 30 |
