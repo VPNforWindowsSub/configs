@@ -1,57 +1,57 @@
 # 📊 Proxy Processing Statistics
 
 ## 📈 Pipeline Overview
-- **Total Incoming Configs:** 334662
-- **Failed Parsing (Invalid/Corrupted):** 50427 *(See `Logs/parse_errors.txt`)*
-- **Successfully Tested by Xray:** 284235
-- **Dead Nodes (Timeout/0ms):** 279870 *(See `Logs/dead_nodes.txt`)*
-- **Working Nodes (Ping > 0):** 4365
+- **Total Incoming Configs:** 333321
+- **Failed Parsing (Invalid/Corrupted):** 49605 *(See `Logs/parse_errors.txt`)*
+- **Successfully Tested by Xray:** 283716
+- **Dead Nodes (Timeout/0ms):** 281200 *(See `Logs/dead_nodes.txt`)*
+- **Working Nodes (Ping > 0):** 2516
 
 ## 🗑️ Filtering & Deduplication
-- **Duplicates Removed (Same IP/Port/ID):** 290
-- **UUID Spam Removed (Over 5 instances):** 997
-- **Final Unique & Safe Working Nodes:** 3989
+- **Duplicates Removed (Same IP/Port/ID):** 184
+- **UUID Spam Removed (Over 5 instances):** 821
+- **Final Unique & Safe Working Nodes:** 2272
 
 ## 📁 Output Lists Sizes
 - 💎 **Eternity:** 165 configs
-- 🌍 **Diversity:** 140 configs
-- 🛡️ **Resilience (Domain-Fronted):** 643 configs
-- 📦 **Full:** 3989 configs
+- 🌍 **Diversity:** 138 configs
+- 🛡️ **Resilience (Domain-Fronted):** 200 configs
+- 📦 **Full:** 2272 configs
 
 ---
 
 ## 📡 Protocol Distribution (Full List)
 | Protocol | Count |
 |----------|-------|
-| **VLESS** | 3246 |
-| **VMess** | 78 |
-| **Trojan** | 99 |
-| **Shadowsocks** | 566 |
+| **VLESS** | 1548 |
+| **VMess** | 66 |
+| **Trojan** | 63 |
+| **Shadowsocks** | 595 |
 
 ## 🚀 Speed Performance (Full List)
 | Speed Bracket | Count |
 |---------------|-------|
-| ⚡ Ultra Fast (>5 MB/s) | 303 |
-| 🚀 Fast (1-5 MB/s) | 1680 |
-| 🐢 Slow (<1 MB/s) | 2006 |
+| ⚡ Ultra Fast (>5 MB/s) | 266 |
+| 🚀 Fast (1-5 MB/s) | 1323 |
+| 🐢 Slow (<1 MB/s) | 683 |
 
 ---
 
 ## 🌍 Geographic Distribution (Top 15)
 | Country | Count |
 |---------|-------|
-| 🏁 Relay | 1865 |
-| 🇺🇸 USA | 458 |
-| 🇬🇧 UK | 372 |
-| 🇳🇱 Netherlands | 244 |
-| 🇩🇪 Germany | 185 |
-| 🇯🇵 Japan | 82 |
+| 🇬🇧 UK | 392 |
+| 🏁 Relay | 379 |
+| 🇺🇸 USA | 353 |
+| 🇳🇱 Netherlands | 203 |
+| 🇩🇪 Germany | 151 |
 | 🇦🇪 Emirates | 74 |
-| 🇫🇷 France | 69 |
-| 🇳🇴 Norway | 51 |
-| 🇸🇬 Singapore | 49 |
-| 🇭🇰 Hong Kong | 49 |
-| 🇵🇱 Poland | 37 |
-| 🇨🇦 Canada | 34 |
-| 🇫🇮 Finland | 33 |
-| 🇰🇷 South Korea | 32 |
+| 🇯🇵 Japan | 72 |
+| 🇸🇬 Singapore | 69 |
+| 🇫🇷 France | 62 |
+| 🇳🇴 Norway | 60 |
+| 🇵🇱 Poland | 39 |
+| 🇰🇷 South Korea | 35 |
+| 🇨🇦 Canada | 30 |
+| 🇭🇰 Hong Kong | 28 |
+| 🇦🇷 Argentina | 28 |
