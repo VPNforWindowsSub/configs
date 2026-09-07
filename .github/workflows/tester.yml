@@ -697,7 +697,7 @@ jobs:
                           break
 
               tlog(f"Parsed {len(parsed_nodes)} nodes for chunk. Starting test via Xray...")
-              results, chunk_size, used_ports = [], 150, set()
+              results, chunk_size = [], 150
               total_chunks = (len(parsed_nodes) + chunk_size - 1) // chunk_size
 
               for i in range(0, len(parsed_nodes), chunk_size):
@@ -705,7 +705,7 @@ jobs:
                   tlog(f"Testing batch {chunk_index}/{total_chunks}...")
                   chunk = parsed_nodes[i:i+chunk_size]
                   inbounds, outbounds, rules = [], [{"protocol": "freedom", "tag": "direct"}], []
-                  node_ports = []
+                  node_ports, used_ports = [], set()
                   for j, node in enumerate(chunk):
                       port = get_free_port(used_ports)
                       node_ports.append(port)
