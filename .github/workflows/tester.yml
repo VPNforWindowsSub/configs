@@ -2,6 +2,11 @@ name: Test Proxies
 
 on:
   workflow_dispatch:
+    inputs:
+      trigger_bot:
+        description: "Trigger VPB Telegram Bot"
+        type: boolean
+        default: false
 
 jobs:
   prepare-matrix:
@@ -754,7 +759,7 @@ jobs:
           fi
 
       - name: Trigger Run
-        if: success()
+        if: success() && inputs.trigger_bot == true
         env:
           GH_TOKEN: ${{ secrets.VPB_PAT }}
         run: |
