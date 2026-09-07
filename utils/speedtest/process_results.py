@@ -10,7 +10,6 @@ import concurrent.futures
 import random
 import shutil
 from collections import Counter
-from datetime import datetime
 
 # --- Configuration ---
 META_FILE = 'meta.json'
@@ -419,7 +418,7 @@ def process_and_save_results():
     print(f"Found {len(working_nodes)} working nodes.")
     working_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
 
-    unique_servers = list(set([node.get('server', '') for node in working_nodes if node.get('server')]))
+    unique_servers = list({node.get('server', '') for node in working_nodes if node.get('server')})
     resolved_ips = {}
     print(f"Resolving {len(unique_servers)} unique domains concurrently...", flush=True)
 
@@ -582,12 +581,9 @@ def process_and_save_results():
                 spam_removed += 1
             uuid_counts_stats[uuid] = uuid_counts_stats.get(uuid, 0) + 1
 
-    # Keep ALL nodes for Resilience, Diversity, and Full lists!
-    final_nodes = all_processed_nodes
-
     print("\n--- Generating Diversity List ---")
     diversity_nodes_by_country = {}
-    for node in final_nodes:
+    for node in all_processed_nodes:
         c = node['country']
         if c in ['RELAY', 'XX']: continue
         if node['delay'] < 2000 and node['speed'] >= 50000:
@@ -604,7 +600,7 @@ def process_and_save_results():
     with open(DIVERSITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write('\n'.join(diversity_links))
     with open(DIVERSITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode('\n'.join(diversity_links).encode()).decode())
 
-    conventional_nodes = [p for p in final_nodes if p['country'] not in BLOCKED_COUNTRIES]
+    conventional_nodes = [p for p in all_processed_nodes if p['country'] not in BLOCKED_COUNTRIES]
     full_links = [p['link'] for p in conventional_nodes]
     random.shuffle(full_links)
 
