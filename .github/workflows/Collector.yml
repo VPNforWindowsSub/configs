@@ -81,14 +81,14 @@ jobs:
                               userinfo, server_port = decoded.rsplit('@', 1)
                           else:
                               return link
-                      server, port_str = server_port.split(':', 1)
-                      return f"{server}:{port_str}:{userinfo}"
+                      server, port_str = server_port.rsplit(':', 1)
+                      return f"{server.strip('[]')}:{port_str}:{userinfo}"
                   elif link.startswith('vmess://'):
                       b64 = link.replace("vmess://", "").split('#')[0]
                       b64 += '=' * (-len(b64) % 4)
                       b64 = b64.replace('-', '+').replace('_', '/')
                       j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
-                      server = j.get('add', 'unknown')
+                      server = str(j.get('add', 'unknown')).strip('[]')
                       port = j.get('port', '443')
                       uuid = j.get('id', 'unknown')
                       return f"{server}:{port}:{uuid}"
@@ -123,14 +123,26 @@ jobs:
                           v['host'] = p['ws-opts'].get('headers', {}).get('Host', '')
                       elif 'grpc-opts' in p:
                           v['path'] = p['grpc-opts'].get('grpc-service-name', '')
+                      elif 'xhttp-opts' in p or 'splithttp-opts' in p:
+                          xo = p.get('xhttp-opts') or p.get('splithttp-opts') or {}
+                          if xo.get('path'): v['path'] = xo['path']
+                          if xo.get('host'): v['host'] = xo['host']
                       b64 = base64.b64encode(json.dumps({k:v for k,v in v.items() if v}).encode()).decode('ascii')
                       return f"vmess://{b64}"
                   elif ptype in ['vless', 'trojan']:
                       password = p.get('uuid', '') if ptype == 'vless' else p.get('password', '')
                       params = {}
                       net = p.get('network', 'tcp')
+                      if net in ['splithttp', 'xhttp']: net = 'xhttp'
                       if net != 'tcp': params['type'] = net
-                      if p.get('tls'): params['security'] = 'tls'
+                      if p.get('reality-opts'):
+                          params['security'] = 'reality'
+                          ro = p['reality-opts']
+                          if ro.get('public-key'): params['pbk'] = ro['public-key']
+                          if ro.get('short-id'): params['sid'] = ro['short-id']
+                          if ro.get('spider-x'): params['spx'] = ro['spider-x']
+                      elif p.get('tls'):
+                          params['security'] = 'tls'
                       if p.get('sni') or p.get('servername'): params['sni'] = p.get('sni', p.get('servername'))
                       if p.get('flow'): params['flow'] = p.get('flow')
                       if p.get('client-fingerprint'): params['fp'] = p.get('client-fingerprint')
@@ -140,7 +152,12 @@ jobs:
                           if host: params['host'] = host
                       elif net == 'grpc' and 'grpc-opts' in p:
                           params['serviceName'] = p['grpc-opts'].get('grpc-service-name', '')
-                      qs = urllib.parse.urlencode({k:v for k,v in params.items() if v})
+                      elif net == 'xhttp' and ('xhttp-opts' in p or 'splithttp-opts' in p):
+                          xo = p.get('xhttp-opts') or p.get('splithttp-opts') or {}
+                          if xo.get('path'): params['path'] = xo['path']
+                          if xo.get('host'): params['host'] = xo['host']
+                          if xo.get('mode'): params['mode'] = xo['mode']
+                      qs = urllib.parse.urlencode({k:v for k,v in params.items() if v}, quote_via=urllib.parse.quote)
                       return f"{ptype}://{password}@{server}:{port}?{qs}#{name}"
               except Exception:
                   pass
@@ -301,14 +318,14 @@ jobs:
                               userinfo, server_port = decoded.rsplit('@', 1)
                           else:
                               return link
-                      server, port_str = server_port.split(':', 1)
-                      return f"{server}:{port_str}:{userinfo}"
+                      server, port_str = server_port.rsplit(':', 1)
+                      return f"{server.strip('[]')}:{port_str}:{userinfo}"
                   elif link.startswith('vmess://'):
                       b64 = link.replace("vmess://", "").split('#')[0]
                       b64 += '=' * (-len(b64) % 4)
                       b64 = b64.replace('-', '+').replace('_', '/')
                       j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
-                      server = j.get('add', 'unknown')
+                      server = str(j.get('add', 'unknown')).strip('[]')
                       port = j.get('port', '443')
                       uuid = j.get('id', 'unknown')
                       return f"{server}:{port}:{uuid}"
