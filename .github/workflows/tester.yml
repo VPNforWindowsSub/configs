@@ -759,7 +759,7 @@ jobs:
           fi
 
       - name: Trigger Run
-        if: success() && inputs.trigger_bot == true
+        if: success() && (inputs.trigger_bot == true || inputs.trigger_bot == 'true')
         env:
           GH_TOKEN: ${{ secrets.VPB_PAT }}
         run: |
