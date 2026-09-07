@@ -6,10 +6,7 @@ on:
       trigger_bot:
         description: "Trigger VPB Telegram Bot"
         type: boolean
-        default: false
-  push:
-    paths:
-      - "sub/sub_list.txt"
+        default: true
 
 jobs:
   prepare-matrix:
@@ -399,9 +396,4 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            TRIGGER_BOT="${{ inputs.trigger_bot }}"
-          else
-            TRIGGER_BOT="true"
-          fi
-          gh workflow run tester.yml --ref master -f trigger_bot="$TRIGGER_BOT"
+          gh workflow run tester.yml --ref master -f trigger_bot="${{ inputs.trigger_bot }}"
