@@ -4,8 +4,7 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "./sub/sub_merge_base64*.txt"
-      - "./sub/sub_merge_yaml*.yml"
+      - "sub/sub_list.txt"
 
 jobs:
   prepare-matrix:
@@ -168,7 +167,7 @@ jobs:
           session.mount('http://', HTTPAdapter(max_retries=2))
           session.mount('https://', HTTPAdapter(max_retries=2))
 
-          all_clash_proxies = []
+          all_collected_links = []
           for url_container in chunk:
               ids = url_container['id']
               repo_links = []
@@ -188,14 +187,14 @@ jobs:
                                       if uri: extracted.append(uri)
                       except Exception:
                           pass
-                      matches = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', text)
+                      matches = re.finditer(r'(vless|vmess|trojan|ss)://([^\s<>"\'`]+)', text)
                       for m in matches: extracted.append(f"{m.group(1)}://{m.group(2)}")
                       try:
                           b64_text = text.strip()
                           b64_text += '=' * (-len(b64_text) % 4)
                           b64_text = b64_text.replace('-', '+').replace('_', '/')
                           decoded = base64.b64decode(b64_text).decode('utf-8', errors='ignore')
-                          matches_b64 = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', decoded)
+                          matches_b64 = re.finditer(r'(vless|vmess|trojan|ss)://([^\s<>"\'`]+)', decoded)
                           for m in matches_b64: extracted.append(f"{m.group(1)}://{m.group(2)}")
                       except Exception:
                           pass
@@ -205,7 +204,7 @@ jobs:
                               sc_resp = session.post("http://127.0.0.1:25500/sub?target=mixed", data=text.encode('utf-8'), timeout=15)
                               if sc_resp.status_code == 200:
                                   decoded_sc = base64.b64decode(sc_resp.text.strip()).decode('utf-8', errors='ignore')
-                                  matches_sc = re.finditer(r'(vless|vmess|trojan|ss|ssr)://([^\s<>"\'`]+)', decoded_sc)
+                                  matches_sc = re.finditer(r'(vless|vmess|trojan|ss)://([^\s<>"\'`]+)', decoded_sc)
                                   for m in matches_sc: extracted.append(f"{m.group(1)}://{m.group(2)}")
                           except Exception: pass
                       extracted = list(set(extracted))
@@ -217,15 +216,15 @@ jobs:
               repo_links = list(set(repo_links))
               os.makedirs('./sub/list/', exist_ok=True)
               with open(f'./sub/list/{ids:02d}.txt', 'w', encoding='utf-8') as f: f.write("\n".join(repo_links))
-              for link in repo_links: all_clash_proxies.append({"link": link})
+              all_collected_links.extend(repo_links)
 
           unique_links = []
           seen_sigs = set()
-          for p in all_clash_proxies:
-              sig = get_proxy_signature(p['link'])
+          for link in all_collected_links:
+              sig = get_proxy_signature(link)
               if sig not in seen_sigs:
                   seen_sigs.add(sig)
-                  unique_links.append(p['link'])
+                  unique_links.append(link)
 
           os.makedirs('./sub/', exist_ok=True)
           with open(f'./sub/{output_path}.yml', 'w', encoding='utf-8') as f:
@@ -271,7 +270,7 @@ jobs:
       - name: Merge and format lists
         run: |
           mkdir -p ./sub/list/
-          mv downloaded_chunks/list/[0-9][0-9].txt ./sub/list/ 2>/dev/null || true
+          mv downloaded_chunks/list/*.txt ./sub/list/ 2>/dev/null || true
 
           cat <<'EOF' > utils/global_merge.py
           import glob
