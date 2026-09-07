@@ -9,6 +9,8 @@ import urllib.parse
 import concurrent.futures
 import random
 import shutil
+import ipaddress
+import html
 from collections import Counter
 
 # --- Configuration ---
@@ -162,10 +164,23 @@ RESILIENCE_THEMES=["🌐 Grid","🏹 Barton","👻 Roach","🌙 Twilight","⚡ Z
 
 CF_PORTS = [443, 2053, 2083, 2087, 2096, 8443]
 
+PREFERRED_TARGETS = [
+    "www.npmjs.com", "www.canva.com", "unpkg.com", "www.speedtest.net",
+    "104.24.172.105", "141.101.90.101"
+]
+RESILIENCE_TARGETS = TRUSTED_DOMAINS + (PREFERRED_TARGETS * 2)
+
+FINALMASK_SETTINGS = {
+    "tcp": [
+        {"type": "fragment", "settings": {"packets": "tlshello", "lengths": ["5", "94", "1"], "delays": ["0"], "maxSplit": "0"}},
+        {"type": "fragment", "settings": {"packets": "1-1", "lengths": ["109", "1"], "delays": ["1"], "maxSplit": "355"}}
+    ]
+}
+
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
-VLESS_TARGET_PERCENT = 0.55
-VLESS_TARGET_SIZE = math.ceil(ETERNITY_LIST_SIZE * VLESS_TARGET_PERCENT)
+REALITY_TARGET_PERCENT = 0.50
+REALITY_TARGET_SIZE = math.ceil(ETERNITY_LIST_SIZE * REALITY_TARGET_PERCENT)
 NODES_PER_COUNTRY = 1
 COUNTRY_NODE_LIMITS = {
     'TR': 4,
@@ -179,7 +194,8 @@ COUNTRY_MAX_LIMITS = {
     'US': 30,
     'CA': 10,
     'CN': 2,
-    'TR': 4
+    'TR': 4,
+    'RELAY': 30
 }
 
 # Maximum allowed nodes that share the exact same UUID/Password.
@@ -188,8 +204,13 @@ MAX_SAME_UUID = 5
 def is_ip_address(address):
     if not isinstance(address, str):
         return False
-    return bool(re.match(r"^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$", address))
-
+    clean = address.strip('[]')
+    try:
+        ipaddress.ip_address(clean)
+        return True
+    except ValueError:
+        return False
+    
 def get_proxy_signature(link):
     try:
         if link.startswith('vless://') or link.startswith('trojan://'):
@@ -209,15 +230,15 @@ def get_proxy_signature(link):
                     userinfo, server_port = decoded.rsplit('@', 1)
                 else:
                     return link
-            server, port_str = server_port.split(':', 1)
-            return f"{server}:{port_str}:{userinfo}"
+            server, port_str = server_port.rsplit(':', 1)
+            return f"{server.strip('[]')}:{port_str}:{userinfo}"
 
         elif link.startswith('vmess://'):
             b64 = link.replace("vmess://", "").split('#')[0]
             b64 += '=' * (-len(b64) % 4)
             b64 = b64.replace('-', '+').replace('_', '/')
             j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
-            server = j.get('add', 'unknown')
+            server = str(j.get('add', 'unknown')).strip('[]')
             port = j.get('port', '443')
             uuid = j.get('id', 'unknown')
             return f"{server}:{port}:{uuid}"
@@ -231,15 +252,27 @@ def get_proxy_signature(link):
 def is_cloudflare_ip(ip):
     if not ip: return False
     try:
-        octets = [int(o) for o in ip.split('.')]
-        if len(octets) != 4: return False
-        
-        if octets[0] == 104 and (16 <= octets[1] <= 31): return True
-        if octets[0] == 172 and (64 <= octets[1] <= 71): return True
-        if octets[0] == 162 and octets[1] == 159: return True
-        if octets[0] == 188 and octets[1] == 114 and (96 <= octets[2] <= 111): return True
-        if octets[0] == 108 and octets[1] == 162 and (192 <= octets[2] <= 255): return True
-        if octets[0] == 198 and octets[1] == 41 and (128 <= octets[2] <= 255): return True
+        clean = ip.strip('[]')
+        addr = ipaddress.ip_address(clean)
+        if addr.version == 4:
+            octets = [int(o) for o in clean.split('.')]
+            if octets[0] == 104 and (16 <= octets[1] <= 31): return True
+            if octets[0] == 172 and (64 <= octets[1] <= 71): return True
+            if octets[0] == 162 and (158 <= octets[1] <= 159): return True
+            if octets[0] == 188 and octets[1] == 114 and (96 <= octets[2] <= 111): return True
+            if octets[0] == 108 and octets[1] == 162 and (192 <= octets[2] <= 255): return True
+            if octets[0] == 198 and octets[1] == 41 and (128 <= octets[2] <= 255): return True
+            if octets[0] == 173 and octets[1] == 245 and (48 <= octets[2] <= 63): return True
+            if octets[0] == 103 and octets[1] == 21 and (244 <= octets[2] <= 247): return True
+            if octets[0] == 103 and octets[1] == 22 and (200 <= octets[2] <= 203): return True
+            if octets[0] == 103 and octets[1] == 31 and (4 <= octets[2] <= 7): return True
+            if octets[0] == 141 and octets[1] == 101 and (64 <= octets[2] <= 127): return True
+            if octets[0] == 190 and octets[1] == 93 and (240 <= octets[2] <= 255): return True
+            if octets[0] == 197 and octets[1] == 234 and (240 <= octets[2] <= 243): return True
+            if octets[0] == 131 and octets[1] == 0 and (72 <= octets[2] <= 75): return True
+        elif addr.version == 6:
+            cf_v6 = ['2606:4700::/32', '2803:f800::/32', '2405:b500::/32', '2405:8100::/32', '2a06:98c0::/29', '2c0f:f248::/32']
+            return any(addr in ipaddress.ip_network(net) for net in cf_v6)
     except:
         pass
     return False
@@ -283,77 +316,95 @@ def ensure_empty_files():
     for p in ['vmess.txt', 'vless.txt', 'trojan.txt', 'ss.txt']:
         open(os.path.join(SPLITTED_OUTPUT_DIR, p), 'w').close()
 
-def create_resilience_clone(node, theme_name):
+def create_resilience_clone(node, theme_name, apply_fragment=False):
     link = node.get('link', '')
     ip = node.get('ip', '')
     if not is_cloudflare_ip(ip): return None
 
-    trusted_domain = random.choice(TRUSTED_DOMAINS)
-    
+    target_addr = random.choice(RESILIENCE_TARGETS)
+
     if link.startswith('vless://') or link.startswith('trojan://'):
         try:
             scheme, rest = link.split('://', 1)
             user_server, query_name = rest.split('?', 1)
             user, server_port = user_server.split('@', 1)
-            
+
             if ':' in server_port:
-                server, port_str = server_port.split(':', 1)
+                server, port_str = server_port.rsplit(':', 1)
+                server = server.strip('[]')
                 port = int(port_str)
             else:
-                server = server_port
+                server = server_port.strip('[]')
                 port = 443
-                
+
             if port not in CF_PORTS: return None
-                
+
             if '#' in query_name: query, name = query_name.split('#', 1)
             else: query, name = query_name, "Proxy"
-                
+
             params = dict(urllib.parse.parse_qsl(query, keep_blank_values=True))
             net = params.get('type', 'tcp')
             sec = params.get('security', 'none')
-            
+
             if sec != 'tls': return None
-            if net not in ['ws', 'grpc', 'httpupgrade']: return None
-            
-            if 'sni' not in params or not params['sni']: params['sni'] = server
+            if net not in ['ws', 'grpc', 'httpupgrade', 'xhttp']: return None
+
+            origin_sni = params.get('sni') or (server if not is_ip_address(server) else '')
+            if not origin_sni: return None
+            params['sni'] = origin_sni
             if net in ['ws', 'httpupgrade', 'xhttp']:
-                if 'host' not in params or not params['host']: params['host'] = server
-                    
-            server = trusted_domain
-            new_query = urllib.parse.urlencode(params)
+                if 'host' not in params or not params['host']: params['host'] = origin_sni
+
+            params['security'] = 'tls'
+            params['fp'] = 'chrome'
+            params.pop('cipherSuites', None)
+            if scheme == 'vless' and not params.get('encryption'):
+                params['encryption'] = 'none'
+
+            if apply_fragment:
+                params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
+            else:
+                params.pop('fm', None)
+
+            server = target_addr
+            new_query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
             quoted_theme_name = urllib.parse.quote(theme_name)
-            
+
             clone = node.copy()
             clone['link'] = f"{scheme}://{user}@{server}:{port}?{new_query}#{quoted_theme_name}"
             clone['tag'] = theme_name
             return clone
         except Exception: return None
-            
+
     elif link.startswith('vmess://'):
         try:
             b64 = link[8:].split('#')[0]
             b64 += '=' * (-len(b64) % 4)
             b64 = b64.replace('-', '+').replace('_', '/')
             j = json.loads(base64.b64decode(b64).decode('utf-8', errors='ignore'))
-            
+
             port = int(j.get('port', 443))
             if port not in CF_PORTS: return None
-                
+
             net = str(j.get('net', 'tcp'))
             tls = str(j.get('tls', 'none'))
-            
+
             if tls != 'tls': return None
-            if net not in ['ws', 'grpc', 'httpupgrade']: return None
-                
+            if net not in ['ws', 'grpc', 'httpupgrade', 'xhttp']: return None
+
             original_add = str(j.get('add', ''))
-            if 'sni' not in j or not j['sni']: j['sni'] = original_add
+            origin_sni = str(j.get('sni', '')) or (original_add if not is_ip_address(original_add) else '')
+            if not origin_sni: return None
+            j['sni'] = origin_sni
             if net in ['ws', 'httpupgrade', 'xhttp']:
-                if 'host' not in j or not j['host']: j['host'] = original_add
-                    
-            j['add'] = trusted_domain
+                if 'host' not in j or not j['host']: j['host'] = origin_sni
+
+            j['tls'] = 'tls'
+            j['fp'] = 'chrome'
+            j['add'] = target_addr
             j['ps'] = theme_name
             new_b64 = base64.b64encode(json.dumps(j, separators=(',', ':'), ensure_ascii=False).encode('utf-8')).decode('ascii')
-            
+
             clone = node.copy()
             clone['link'] = f"vmess://{new_b64}"
             clone['tag'] = j['ps']
@@ -423,7 +474,8 @@ def process_and_save_results():
     print(f"Resolving {len(unique_servers)} unique domains concurrently...", flush=True)
 
     def resolve_domain(server):
-        if is_ip_address(server): return server, server
+        clean = server.strip('[]')
+        if is_ip_address(clean): return server, clean
         try: return server, socket.gethostbyname(server)
         except: return server, ''
 
@@ -488,6 +540,39 @@ def process_and_save_results():
             if node['health_score'] > seen_signatures[signature]['health_score']:
                 seen_signatures[signature] = node
 
+    def clean_link_params(raw_link):
+        raw_link = html.unescape(raw_link)
+        raw_link = re.sub(r'([?&])allowInsecure=(?:1|true)', r'\1allowInsecure=0', raw_link, flags=re.IGNORECASE)
+        raw_link = re.sub(r'([?&])insecure=(?:1|true)', r'\1insecure=0', raw_link, flags=re.IGNORECASE)
+
+        def process_fm(m):
+            raw_fm = urllib.parse.unquote(m.group(2))
+            valid_fm = None
+            for candidate in [raw_fm, raw_fm.replace('+', ' ')]:
+                try:
+                    obj = json.loads(candidate)
+                    if isinstance(obj, dict) and any(x in obj for x in ("tcp", "udp", "quicParams")):
+                        valid_fm = json.dumps(obj, separators=(',', ':'))
+                        break
+                except Exception:
+                    pass
+            
+            if valid_fm:
+                return m.group(1) + "fm=" + urllib.parse.quote(valid_fm) + m.group(3)
+            else:
+                if m.group(1) == '?' and m.group(3) == '&': return '?'
+                elif m.group(1) == '&' and m.group(3) == '&': return '&'
+                else: return ''
+
+        if "fm=" in raw_link:
+            while True:
+                new_link = re.sub(r'([?&])fm=([^&#]*)(&?)', process_fm, raw_link)
+                if new_link == raw_link:
+                    break
+                raw_link = new_link
+                
+        return raw_link
+
     unique_nodes = list(seen_signatures.values())
     unique_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
     duplicates_removed = len(raw_processed) - len(unique_nodes)
@@ -502,7 +587,7 @@ def process_and_save_results():
         pretty_name = f'{name_emoji} {country_name_formatted}-{random_numbers[index]}'
         quoted_pretty_name = urllib.parse.quote(pretty_name)
 
-        link = node['link']
+        link = clean_link_params(node['link'])
         if link.startswith("vmess://"):
             try:
                 b64 = link.replace("vmess://", "").split('#')[0]
@@ -525,27 +610,29 @@ def process_and_save_results():
     def calculate_iran_score(node):
         score = node.get('health_score', 0)
         link = node.get('link', '')
-        sni, port, path = "", 443, ""
+        sni, port = "", 443
         try:
             if link.startswith('vless://') or link.startswith('trojan://'):
                 parsed = urllib.parse.urlparse(link)
                 port = parsed.port if parsed.port else 443
                 query = dict(urllib.parse.parse_qsl(parsed.query))
                 sni = query.get('sni', '').lower()
-                path = query.get('path', '').lower()
             elif link.startswith('vmess://'):
                 b64 = link.split('://')[1].split('#')[0]
                 b64 += '=' * (-len(b64) % 4)
                 j = json.loads(base64.b64decode(b64.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore'))
                 port = int(j.get('port', 443))
                 sni = str(j.get('sni', '')).lower()
-                path = str(j.get('path', '')).lower()
         except: pass
-            
-        burned = ['workers.dev', 'trycloudflare.com', 'pages.dev', 'eu.org', '.cc', 'multiplydose', 'calmloud', 'ignitelimit', 'gossipglove', 'calmlunch', 'creationlong']
-        if any(b in sni for b in burned) or '/assignment' in path: score -= 20
-        if port != 443 and port in CF_PORTS: score += 15
-        if '.ir' in sni or sni.endswith('.ir.'): score += 25
+
+        burned = ['workers.dev', 'trycloudflare.com', 'pages.dev', 'eu.org']
+        if any(b in sni for b in burned):
+            score -= 25
+
+        if port == 443:
+            score += 15
+        if '.ir' in sni or sni.endswith('.ir.'):
+            score += 25
         return score
 
     resilience_candidates.sort(key=calculate_iran_score, reverse=True)
@@ -558,11 +645,12 @@ def process_and_save_results():
         if not theme_pool:
             theme_pool = list(RESILIENCE_THEMES)
             random.shuffle(theme_pool)
-            
+
         current_theme = theme_pool.pop(0)
         theme_name = f"{current_theme}-{random.randint(1000, 9999)}"
-        
-        cloned = create_resilience_clone(node, theme_name)
+
+        apply_fragment = (len(resilience_nodes) % 2 == 0)
+        cloned = create_resilience_clone(node, theme_name, apply_fragment)
         if cloned: resilience_nodes.append(cloned)
         else: theme_pool.insert(0, current_theme)
 
@@ -623,12 +711,20 @@ def process_and_save_results():
     with open(LOG_INFO_FILE, 'w', encoding='utf-8') as f: f.writelines(log_list)
 
     print("\n--- Generating Eternity List ---")
-    
-    # Apply UUID Spam Filter strictly to Eternity candidates
+
+    def is_vless_reality(link):
+        if not link.startswith('vless://'):
+            return False
+        l = link.lower()
+        return 'security=reality' in l or 'security%3dreality' in l
+
     uuid_counts_eternity = {}
     eternity_candidates = []
     for node in conventional_nodes:
-        uuid = get_uuid(node['link'])
+        link = node['link']
+        if link.startswith(('ss://', 'vmess://')):
+            continue
+        uuid = get_uuid(link)
         if not uuid:
             eternity_candidates.append(node)
             continue
@@ -640,27 +736,30 @@ def process_and_save_results():
     for node in eternity_candidates:
         if node['speed'] > 50000:
             c = node['country']
-            if c not in nodes_by_country: nodes_by_country[c] = []
+            if c not in nodes_by_country:
+                nodes_by_country[c] = []
             nodes_by_country[c].append(node)
 
     for c in nodes_by_country:
-        nodes_by_country[c].sort(key=lambda x: (0 if x['link'].startswith('vless://') else 1, -x['speed']))
+        nodes_by_country[c].sort(key=lambda x: (0 if is_vless_reality(x['link']) else 1, -x['speed']))
 
     eternity_nodes = []
     selected = set()
-    vless_c = 0
+    reality_c = 0
     c_counts = {}
 
     def add_to_eternity(n):
-        nonlocal vless_c
+        nonlocal reality_c
         c_code = n['country']
         max_allowed = COUNTRY_MAX_LIMITS.get(c_code, 999)
-        if c_counts.get(c_code, 0) >= max_allowed: return False
-            
+        if c_counts.get(c_code, 0) >= max_allowed:
+            return False
+
         eternity_nodes.append(n)
         selected.add(n['link'])
         c_counts[c_code] = c_counts.get(c_code, 0) + 1
-        if n['link'].startswith('vless://'): vless_c += 1
+        if is_vless_reality(n['link']):
+            reality_c += 1
         return True
 
     for c in sorted(nodes_by_country.keys()):
@@ -668,18 +767,24 @@ def process_and_save_results():
         to_take = min(limit, len(nodes_by_country[c]))
         added = 0
         for n in nodes_by_country[c]:
-            if added >= to_take: break
-            if n['link'] not in selected and add_to_eternity(n): added += 1
+            if added >= to_take:
+                break
+            if n['link'] not in selected and add_to_eternity(n):
+                added += 1
 
-    if vless_c < VLESS_TARGET_SIZE:
-        for n in conventional_nodes:
-            if len(eternity_nodes) >= ETERNITY_LIST_SIZE or vless_c >= VLESS_TARGET_SIZE: break
-            if n['link'].startswith('vless://') and n['link'] not in selected: add_to_eternity(n)
+    if reality_c < REALITY_TARGET_SIZE:
+        for n in eternity_candidates:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE or reality_c >= REALITY_TARGET_SIZE:
+                break
+            if is_vless_reality(n['link']) and n['link'] not in selected:
+                add_to_eternity(n)
 
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
-        for n in conventional_nodes:
-            if len(eternity_nodes) >= ETERNITY_LIST_SIZE: break
-            if n['link'] not in selected: add_to_eternity(n)
+        for n in eternity_candidates:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+                break
+            if n['link'] not in selected:
+                add_to_eternity(n)
 
     eternity_links = [p['link'] for p in eternity_nodes]
     random.shuffle(eternity_links)
