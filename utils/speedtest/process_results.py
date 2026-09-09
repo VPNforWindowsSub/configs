@@ -610,19 +610,21 @@ def process_and_save_results():
     def calculate_iran_score(node):
         score = node.get('health_score', 0)
         link = node.get('link', '')
-        sni, port = "", 443
+        sni, port, net = "", 443, ""
         try:
-            if link.startswith('vless://') or link.startswith('trojan://'):
+            if link.startswith(('vless://', 'trojan://')):
                 parsed = urllib.parse.urlparse(link)
                 port = parsed.port if parsed.port else 443
                 query = dict(urllib.parse.parse_qsl(parsed.query))
                 sni = query.get('sni', '').lower()
+                net = query.get('type', '').lower()
             elif link.startswith('vmess://'):
                 b64 = link.split('://')[1].split('#')[0]
                 b64 += '=' * (-len(b64) % 4)
                 j = json.loads(base64.b64decode(b64.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore'))
                 port = int(j.get('port', 443))
                 sni = str(j.get('sni', '')).lower()
+                net = str(j.get('net', '')).lower()
         except: pass
 
         burned = ['workers.dev', 'trycloudflare.com', 'pages.dev', 'eu.org']
@@ -631,6 +633,8 @@ def process_and_save_results():
 
         if port == 443:
             score += 15
+        if net in ['xhttp', 'grpc']:
+            score += 10
         if '.ir' in sni or sni.endswith('.ir.'):
             score += 25
         return score
@@ -740,8 +744,18 @@ def process_and_save_results():
                 nodes_by_country[c] = []
             nodes_by_country[c].append(node)
 
+    def reality_rank(link):
+        if not is_vless_reality(link):
+            return 2
+        l = link.lower()
+        if 'type=grpc' in l or 'type=xhttp' in l:
+            return 0
+        return 1
+
+    eternity_candidates.sort(key=lambda x: (reality_rank(x['link']), -x['speed']))
+
     for c in nodes_by_country:
-        nodes_by_country[c].sort(key=lambda x: (0 if is_vless_reality(x['link']) else 1, -x['speed']))
+        nodes_by_country[c].sort(key=lambda x: (reality_rank(x['link']), -x['speed']))
 
     eternity_nodes = []
     selected = set()
