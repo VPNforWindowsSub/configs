@@ -166,7 +166,7 @@ CF_PORTS = [443, 2053, 2083, 2087, 2096, 8443]
 
 PREFERRED_TARGETS = [
     "www.npmjs.com", "www.canva.com", "unpkg.com", "www.speedtest.net",
-    "104.24.172.105", "141.101.90.101"
+    "104.21.33.59", "104.24.172.105", "141.101.90.101"
 ]
 RESILIENCE_TARGETS = TRUSTED_DOMAINS + (PREFERRED_TARGETS * 2)
 
