@@ -762,11 +762,11 @@ def process_and_save_results():
     reality_c = 0
     c_counts = {}
 
-    def add_to_eternity(n):
+    def add_to_eternity(n, ignore_country_limit=False):
         nonlocal reality_c
         c_code = n['country']
         max_allowed = COUNTRY_MAX_LIMITS.get(c_code, 999)
-        if c_counts.get(c_code, 0) >= max_allowed:
+        if not ignore_country_limit and c_counts.get(c_code, 0) >= max_allowed:
             return False
 
         eternity_nodes.append(n)
@@ -775,6 +775,51 @@ def process_and_save_results():
         if is_vless_reality(n['link']):
             reality_c += 1
         return True
+
+    def get_extra_signatures():
+        sigs = set()
+        url_target = 'patterniha/Free-Configs'
+        sub_list_file = './sub/sub_list.txt'
+        if os.path.exists(sub_list_file):
+            try:
+                with open(sub_list_file, 'r', encoding='utf-8') as f:
+                    lines = [l.strip() for l in f if l.strip()]
+                for idx, line in enumerate(lines, 1):
+                    if url_target in line:
+                        list_file = f'./sub/list/{idx:02d}.txt'
+                        if os.path.exists(list_file):
+                            with open(list_file, 'r', encoding='utf-8') as lf:
+                                for l in lf:
+                                    l = l.strip()
+                                    if l:
+                                        sigs.add(get_proxy_signature(l))
+            except Exception:
+                pass
+        if not sigs:
+            try:
+                import requests
+                resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
+                if resp.status_code == 200:
+                    for l in resp.text.splitlines():
+                        l = l.strip()
+                        if l:
+                            sigs.add(get_proxy_signature(l))
+            except Exception:
+                pass
+        return sigs
+
+    extra_sigs = get_extra_signatures()
+    extra_fast = [
+        n for n in eternity_candidates
+        if get_proxy_signature(n['link']) in extra_sigs and n.get('speed', 0) >= 1_000_000
+    ]
+    extra_fast.sort(key=lambda x: -x.get('speed', 0))
+
+    for n in extra_fast[:10]:
+        if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+            break
+        if n['link'] not in selected:
+            add_to_eternity(n, ignore_country_limit=True)
 
     for c in sorted(nodes_by_country.keys()):
         limit = COUNTRY_NODE_LIMITS.get(c, NODES_PER_COUNTRY)
