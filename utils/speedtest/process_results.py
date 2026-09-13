@@ -11,6 +11,8 @@ import random
 import shutil
 import ipaddress
 import html
+import time
+import datetime
 from collections import Counter
 
 # --- Configuration ---
@@ -77,98 +79,84 @@ COUNTRY_NAME_MAPPING = {
     'United Arab Emirates': 'Emirates'
 }
 
-# --- Domain Fronting Configuration ---
-TRUSTED_DOMAINS = [
-    "www.digitalocean.com", "npmjs.com", "registry.npmjs.org", "digitalocean.com", "hcaptcha.com", "www.w3.org",
-    "getbootstrap.com", "ietf.org", "cloudflare.net", "nodejs.org", "cpanel.com", "npmjs.org",
-    "www.icann.org", "hub.docker.com", "about.gitlab.com", "postman.com", "codepen.io", "unpkg.com",
-    "raspberrypi.com", "readthedocs.org", "codeforces.com", "chat.openai.com", "platform.openai.com", "api.openai.com",
-    "pingdom.com", "unicode.org", "openai.com", "character.ai", "bitdefender.com", "deepl.com",
-    "1password.com", "crowdstrike.com", "nordpass.com", "www.bitwarden.com", "doi.org", "dashlane.com",
-    "researchgate.net", "cambridge.org", "columbia.edu", "fao.org", "umich.edu", "acm.org",
-    "udemy.com", "worldbank.org", "orcid.org", "asu.edu",
-    "pnas.org", "dictionary.com", "ipcc.ch", "findlaw.com",
-    "thesaurus.com", "scholastic.com", "ourworldindata.org", "medium.com", "moodle.org", "fiverr.com",
-    "glassdoor.com", "csis.org", "www.medium.com", "iaea.org", "upwork.com", "hubspot.com",
-    "thelancet.com", "vocabulary.com", "visa.com", "monday.com", "envato.com", "crunchbase.com",
-    "elementor.com", "toptal.com", "squareup.com", "sage.com", "doodle.com", "alison.com",
-    "patreon.com", "zoominfo.com", "www.patreon.com", "apollo.io", "tesla.services", "philips.com",
-    "nestle.com", "spacex.com", "lilly.com", "pfizer.com", "techrepublic.com", "timeanddate.com",
-    "appleinsider.com", "chess.com", "kraken.com", "gizmodo.com", "vizio.com", "pcworld.com",
-    "warthunder.com", "cointelegraph.com", "trustwallet.com", "creativecommons.org", "investopedia.com", "www.okx.com",
-    "crypto.com", "sourceforge.net", "roku.com", "indeed.com", "metamask.io", "jquery.com",
-    "onetrust.com", "plesk.com", "ikea.com", "braze.com", "sedo.com",
-    "fontawesome.com", "anydesk.com", "hostgator.com.br", "cloudinary.com", "jimdo.com", "garmin.com",
-    "apnews.com", "tabelog.com", "trendyol.com", "economist.com", "hostinger.com", "plos.org",
-    "remove.bg", "actu.fr", "rustdesk.com", "haberler.com", "namu.wiki", "jusbrasil.com.br",
-    "mediaexpert.pl", "cloudflareclient.com", "ixl.com", "autotrader.co.uk", "ilmeteo.it", "bookmyshow.com",
-    "travelandtourworld.com", "zedge.net", "typing.com", "id.me", "3bmeteo.com", "cardmarket.com",
-    "dogdrip.net", "autoplius.lt", "dzexams.com", "auth0.com", "elegantthemes.com", "jamanetwork.com",
-    "syosetu.org", "about.com", "typepad.com", "bootstrapcdn.com", "themeisle.com", "scan-manga.com",
-    "runescape.wiki", "rfc-editor.org", "matterport.com", "yallakora.com", "curseforge.com", "jwplayer.com",
-    "example.org", "blueapron.com", "cloudflarestorage.com", "earthlink.net", "generatepress.com", "pcmag.com",
-    "flightradar24.com","lww.com", "scmp.com", "qz.com", "indiegogo.com",
-    "webs.com", "cell.com", "bitnami.com", "ilo.org", "slashdot.org", "getyourguide.com",
-    "quillbot.com", "podbean.com", "libsyn.com", "padlet.com", "medscape.com", "affirm.com",
-    "register.com", "cookieyes.com", "fool.com", "laracasts.com", "redis.io", "joomla.org",
-    "ko-fi.com", "hopkinsmedicine.org", "pravda.com.ua", "feedly.com", "nzherald.co.nz", "riskified.com",
-    "allrecipes.com", "thingiverse.com", "identrust.com", "ably.io", "politico.eu", "nhl.com",
-    "handelsblatt.com", "gamma.app", "flightaware.com", "tagesspiegel.de", "oneindia.com", "bb.com.br",
-    "cnbcindonesia.com", "worldcat.org", "piano.io", "news24.com", "independent.ie", "buzzsprout.com",
-    "g2.com", "domain.com", "verywellhealth.com", "takeaway.com", "prestashop.com", "routledge.com",
-    "nefisyemektarifleri.com", "verywellmind.com", "capitaloneshopping.com", "visualcapitalist.com", "complianz.io",
-    "producthunt.com", "grandviewresearch.com", "thenextweb.com", "marthastewart.com", "cyberark.com", "neilpatel.com",
-    "travelandleisure.com", "arlo.com", "backblaze.com", "buffer.com", "snowflake.com", "blender.org",
-    "japantimes.co.jp", "southernliving.com", "belkin.com", "atera.com", "myfitnesspal.com", "theregister.co.uk",
-    "rae.es", "prweb.com", "tanium.com", "worldometers.info", "rome2rio.com", "khaleejtimes.com",
-    "sibforms.com", "eatingwell.com", "atlasobscura.com", "hindawi.com", "reclameaqui.com.br", "vinted.com",
-    "blinkit.com", "directadmin.com", "biorxiv.org", "doxygen.nl", "meteoblue.com", "dynadot.com",
-    "pressreader.com", "zopim.com", "royalsocietypublishing.org", "moma.org", "thebalancemoney.com", "thespruce.com",
-    "telus.com", "gamebanana.com", "thoughtco.com", "bleepingcomputer.com", "liquidweb.com",
-    "benzinga.com", "tutsplus.com", "revolut.com", "jooble.org", "humblebundle.com", "cash.app",
-    "oanda.com", "clutch.co", "router-network.com", "pipedrive.com", "bootstrapmade.com", "techopedia.com",
-    "iucn.org", "hostmonster.com", "ethereum.org", "kinsta.cloud", "sendinblue.com", "homeadvisor.com",
-    "typingtest.com", "matrix.org", "ivanti.com", "foreignaffairs.com", "vestiairecollective.com", "trezor.io",
-    "streamlabs.com", "simonandschuster.com", "linksys.com", "workable.com", "investors.com", "microworkers.com",
-    "artsy.net", "veed.io", "interestingengineering.com", "css-tricks.com", "lifehack.org", "authorize.net",
-    "futurelearn.com", "marketsandmarkets.com", "masterclass.com", "skillshare.com", "gameloop.com", "matillion.com",
-    "karger.com", "jumpcloud.com", "adapty.io", "thehackernews.com", "dzone.com", "templatemonster.com",
-    "standardnotes.com", "purchasely.io", "idrlabs.com", "pngtree.com", "anyflip.com", "trueachievements.com",
-    "ultahost.com", "equifax.com", "activehosted.com", "plyr.io", "pathofexile.com", "wemod.com",
-    "gulfnews.com", "law.com", "asda.com", "rawstory.com", "siliconcanals.com", "futura-sciences.com",
-    "webassign.net", "insidehighered.com", "sphinx-doc.org", "nexcess.net", "dignitymemorial.com", "helpguide.org",
-    "bscscan.com", "edublogs.org", "readwrite.com", "learncbse.in", "twword.com", "pdfcoffee.com",
-    "teacherease.com", "teamstoday.com", "bizimhesap.com", "mattermost.com", "cdnfonts.com", "blockchain.com",
-    "fireeye.com", "web.com", "pingdom.net", "spring.io", "jsfiddle.net", "linear.app",
-    "apachehaus.com", "cloudlinux.com", "gtmetrix.com", "cdnjs.com", "configcat.com", "linux.org",
-    "radar.io", "wp-rocket.me", "avastbrowser.com", "interserver.net", "sourceforge.io", "maxmind.com",
-    "bitmovin.com", "netcraft.com", "siteorigin.com", "yarnpkg.com", "usenix.org", "jquery.org",
-    "bugfender.com", "winudf.com", "uniswap.org", "higgsfield.ai", "suno.ai", "activecampaign.com",
-    "weglot.com", "on24.com", "uipath.com", "blibli.com", "retailmenot.com", "volusion.com",
-    "liebherr.com", "reverb.com", "whatfix.com", "zeffy.com", "donorbox.org", "bloomreach.com",
-    "aqara.com", "cal.com", "getsitecontrol.com", "feefo.com", "getclicky.com", "eneba.com",
-    "opencart.com", "bufferapp.com", "cybersource.com", "mypertamina.id", "mynewsdesk.com", "aweber.com",
-    "grofers.com", "tidio.co", "dexcom.com", "novartis.com", "chime.com", "lendingtree.com",
-    "988lifeline.org", "pluralsight.com", "avaaz.org", "ncsl.org", "usgbc.org", "amnh.org",
-    "commonsensemedia.org", "rsf.org", "psychiatry.org", "doaj.org", "leo.org", "altmetric.com",
-    "uwa.edu.au", "stonybrook.edu", "gatesfoundation.org", "mind.org.uk", "plannedparenthood.org",
-    "taylorandfrancis.com", "quran.com", "peta.org", "delfi.ee", "nolo.com", "themoscowtimes.com",
-    "informationweek.com", "geekwire.com", "meduza.io", "petapixel.com", "businessinsider.de", "designboom.com",
-    "deseret.com", "sme.sk", "computerweekly.com", "parsec.app", "wego.com", "plarium.com",
-    "open-meteo.com", "newspapers.com", "commbank.com.au", "basketball-reference.com", "lexology.com", "tasteofhome.com",
-    "delfi.lv", "thehindubusinessline.com", "talabat.com", "newindianexpress.com", "nv.ua", "wiwo.de",
-    "testmy.net", "denik.cz", "webopedia.com"
-]
-
 RESILIENCE_THEMES=["🌐 Grid","🏹 Barton","👻 Roach","🌙 Twilight","⚡ Zenitsu","🕸️ Shadow","🦅 Raptor","🏔️ Ridge","🔥 Inferno","🦁 CapeTown","⚔️ Zoro","🌙 Lunar","✈️ Spitfire","🗡️ Dagger","👻 Rayman","📡 Bandwidth","📡 Antenna","🌿 Amazon","🦊 MetaMask","⚖️ Gravity","🦇 Gotham","🗡️ Cloud","🧙 Dumbledore","👽 Stitch","🌲 Taiga","🏹 Hanzo","🕸️ Node","🌟 Zenith","🎤 Billie","☯️ Yin","🔫 Jules","🚀 Normandy","🕶️ JayZ","🐰 Bunny","🚢 Nelson","🌫️ Vapor","🦍 Gorilla","🖼️ NFT","⛏️ Steve","🏖️ Miami","📞 Tardis","🦾 Cyborg","🎩 Lincoln","☄️ Comet","🚘 CJ","🔪 Ripper","🦂 Scorpion","🏌️ Woods","👺 Ronin","🔥 Scorpion","🏇 Attila","🏝️ Bali","🔭 Optics","🥊 Ryu","🦖 Godzilla","🐰 Bugs","🕵️‍♀️ Kim","🧬 Helix","😈 Daemon","⚡ Kinetic","👾 Virus","🎤 Abel","🙏 Cleric","🌋 Tremor","📡 Beacon","☀️ Summer","🧩 Enigma","🌿 Jade","🌑 Blackhole","🚪 Gateway","📡 Proxy","🍔 Burger","☄️ Flare","🤠 Morgan","🛡️ Chief","🔶 Amber","⚖️ Anubis","🔭 Galileo","🧊 Sid","🌘 Eclipse","🏀 Bird","🏁 McLaren","🌌 Jupiter","🦅 Phoenix","🦾 Stark","🌌 Gurren","❄️ Frost","🚬 Noir","⚙️ Inertia","🔫 Flintlock","⚪ Silver","📡 Sonar","🚀 Soyuz","🧥 Armani","🛡️ Bastion","🤖 Daft","💥 Fission","🌑 MoonKnight","🔮 Oracle","🍸 Bond","🕷️ Parker","🌠 Asteroid","🍸 Martini","⚡ Fiber","🦅 Scout","🌑 Raven","🤖 C3PO","🧪 Chemistry","🐂 Minotaur","🌬️ Chicago","🚀 Saturn","🎹 Moog","♌ Leo","🌌 Fractal","🦾 MegaMan","🧘 Zen","🏹 Quiver","🏰 Gondor","🐈 Catwoman","🛡️ Rogers","💍 Crystal","🚬 Spike","🦄 Unicorn","🕌 Dubai","📓 Light","🤖 Gundam","🦅 Hawk","🍷 Speakeasy","🧵 Dior","🏛️ Aurelius","🐶 Inuyasha","🧬 Augment","🦍 Tarzan","🧚‍♀️ Tinkerbell","🦍 Beast","🌌 Mercury","🦅 Horus","🥞 Pancake","♔ King","❄️ Isotope","🏎️ Ferrari","🦍 Caesar","🦏 Rhinoceros","🤖 Shinji","🦅 Griffin","🍄 Mario","👑 Peach","💣 Claymore","🌳 Druid","✈️ Boeing","🎹 Chopin","🐉 Spyro","🐺 Geralt","✨ Aura","🍣 Sushi","🌐 Polygon","♍ Virgo","🎯 Darts","🦁 Simba","🕶️ Cypher","🌉 SF","🥊 Ken","🎸 Punk","🕵️ Stealth","🏎️ M3","🦅 Skyline","🌿 Solstice","🔴 Asuka","👦 Ben10","🎸 Zeppelin","💦 Aqua","⚔️ Jedi","🌅 Dawn","📉 Bear","⛵ Columbus","🦾 Genji","⚔️ Halberd","🚀 Moon","⚾ Ruth","🦒 Giraffe","♖ Rook","🍎 Newton","🦦 Otter","🌊 Hydro","🌌 Tatooine","🏎️ Veyron","💎 Onyx","🎀 Swift","✨ Topaz","🔨 Warhammer","🦖 Jurassic","🐷 Porky","💻 Matrix","🏎️ Leclerc","🕵️ Poirot","⚙️ Macro","🤖 AI","🌠 Orion","⚪ Pearl","🏀 Shaq","🔴 Garnet","👁️ Cyclops","✨ Quasar","🏀 Magic","🦁 Lion","🦁 Lannister","⛄ Snow","🌕 Moon","🎧 Skrillex","🥊 Drago","🔗 Ledger","💣 C4","🐉 Shenron","🎤 Mercury","📡 Radar","💻 Windows","🦇 Alucard","🏈 Manning","🌑 Pulsar","⚔️ Sora","🚗 Tesla","⚡ Speedster","🏐 Shoyo","🏛️ Sparta","🔥 Hades","🎸 Jagger","🕯️ Ritual","🛡️ Vanguard","🐼 Po","📏 Zenith","🛡️ Wakanda","⚡ Bolt","🍹 Mojito","💼 Vuitton","🍂 Autumn","🦇 Batgirl","🤖 Bender","⚡ ACDC","🌀 Karma","🦅 Hawkeye","⚔️ Maximus","🛡️ Leonidas","🐍 Kobe","⚔️ Sephiroth","🥊 Ali","🚙 Wrangler","💣 Grenade","🎸 Slash","✍️ Plato","📜 Aristotle","♏ Scorpio","🔥 Wildfire","🧽 Sponge","♑ Capricorn","🔗 Mesh","🐉 Targaryen","☁️ Cloud","🌀 Flux","🍀 Luck","🦇 Belmont","🎩 Gatsby","⚡ Static","🐍 Shelby","⚡ Sith","🐎 Knight","🕶️ Gojo","🐪 Camel","🗡️ Sasuke","🎯 Ballistic","❄️ Tundra","🧿 Ward","🔢 Algebra","🌟 Bowie","⚔️ Kenshin","🌌 Cosmos","🦅 Napoleon","✍️ Socrates","⚽ Henry","🖥️ Mainframe","🎱 Billiards","🍕 Milan","♈ Aries","🗽 NY","🌭 Dog","🦇 Nightwing","📜 Washington","🏹 Crossbow","🦅 Alexander","🌳 Jungle","🏀 Curry","🌟 Madonna","🐿️ Squirrel","🔱 Curry","🐺 Direwolf","👑 Drake","🛡️ Troy","🔥 Loki","👁️ Vision","🏝️ Island","🔌 Jack","🌌 Void","🏈 Brady","🔬 Mutation","💣 Torpedo","🌀 Cyclone","🚀 Shepard","♗ Bishop","🎧 Tiesto","⚽ Mbappe","🥚 Egg","💎 Tiffany","🏙️ Berlin","🥊 McGregor","⚔️ Berserker","🛹 Skateboard","💨 Sonic","🌌 Galaxy","🌿 Leon","♟️ Checkmate","🟥 Carnage","🦅 Hermes","🚀 Rover","🀄 Mahjong","🚁 Drone","🍩 Homer","🌐 Nexus","🌊 Tsunami","☔ Seattle","🔨 Hephaestus","🦈 Shark","🔫 Master","🦹‍♂️ Lex","🗡️ Guts","🛹 Mullen","🏰 Madrid","🌌 Pluto","🎾 Federer","🤖 WallE","🔥 Pyromancer","🎩 Mobster","🌑 NewMoon","🦸‍♂️ Incredible","🔊 Echo","🔨 Thor","🛳️ Cruise","🔵 Cobalt","🌋 Mustafar","⛏️ Miner","📐 Geometry","🌹 Nobara","🛰️ Sputnik","🗡️ Kirito","❄️ SubZero","🌿 Mantis","☀️ Apollo","✈️ Airbus","⚔️ Deadpool","🐉 Dovahkiin","♋ Cancer","🏎️ Senna","🐻 Grizzly","🌫️ Fog","🎤 Dua","💀 Diablo","💨 Gale","🧇 Waffle","😈 Dante","⚙️ Steel","🏹 Cupid","🛰️ Hubble","♠️ Syndicate","🦅 Robin","🎤 Ariana","🔵 Aquamarine","👁️ Strange","💣 Missile","☯️ Yang","🦂 Cobra","🧲 Magneto","💾 Cache","🐉 Smaug","🏍️ Ducati","⌚ Omega","🍵 Matcha","🍁 Fall","🌌 Kamina","🕴️ BabaYaga","✨ Opal","🔱 Trident","💥 Blast","🏎️ Hamilton","🐎 Mustang","💀 Punisher","🦈 Jaws","🌑 Midnight","👑 Caesar","☕ Mocha","🌬️ Breeze","👁️ Retina","🏎️ Schumacher","🌌 Venus","💎 Zircon","☄️ Meteor","🦊 Naruto","🌪️ Storm","🔭 Copernicus","💊 Neo","👨‍🚀 Astronaut","💾 Byte","🧪 Pinkman","⛵ Titanic","💎 Cartier","🌠 Halley","🏎️ AMG","🚁 Chinook","🌋 Crater","🔫 Tommy","🔥 Flint","☀️ Solar","🦇 Wayne","🦅 Eagle","🏔️ Alps","💻 Root","🔥 Firewall","📏 Kelvin","🧊 Frostbite","🔮 Magic","🏦 Vault","🌮 Taco","🎈 Zeppelin","🛡️ VPN","🐉 Mushu","🌀 Vortex","⚽ Zidane","🌟 Kirby","🔥 Roy","☕ Latte","🏎️ Supra","🍰 Cake","🤠 Indy","📐 Matrix","❤️ Heart","💥 Jinx","🎾 Nadal","☁️ AWS","🌙 Night","⚔️ Wilson","🗼 Tokyo","🦊 Fox","👽 Alien","💀 Necromancer","👑 Nefertiti","🧬 DNA","☀️ Sun","🚂 Loco","😈 Daredevil","🤺 Zorro","🏍️ Kaneda","🏹 Arrow","📡 Server","🍺 Stout","🌇 Dusk","🎮 Chief","🛸 Romulan","🧪 Catalyst","⚾ Jeter","⚙️ Kernel","⚔️ Glaive","🎹 Synth","💼 Goodman","💥 Bakugo","🦥 Sloth","🛡️ Aegis","⚛️ Quantum","⛏️ Dwarf","🌙 Selene","🏖️ Ibiza","📈 Vector","⛏️ Coal","🎲 Casino","🧚‍♂️ Elf","🦖 Rex","🖖 Spock","👻 Megumi","🧫 Cell","🐉 Beijing","👑 Cleopatra","💊 Overdose","👑 Victoria","🦋 Paramore","📜 Curse","🧊 Frost","🏹 Bow","🔫 Solo","🥁 Snare","📜 Churchill","🛡️ Naofumi","👊 JoJo","🌲 Forest","⚖️ Osiris","😈 Doom","🏎️ F1","👜 Prada","🔭 Parallax","🧩 Scrabble","🐺 Stark","🚗 Civic","👾 Samus","🌊 Leviathan","🐺 Hati","⚪ Ivory","💣 Mine","🏎️ Kart","👗 Gucci","📷 Kodak","⚛️ Electron","🛡️ Shield","🔋 Battery","🥊 Mayweather","🤖 T800","⚡ Killua","🐰 NewJeans","🍷 Cartel","🥖 Baguette","🗼 Paris","🔥 Fusion","🗡️ Machete","⚙️ Panzer","🥊 Tyson","♙ Pawn","🌬️ Wind","🏔️ Denver","⚽ Neymar","🌌 Asgard","🛡️ Buckler","🤖 Cylon","🌋 Magma","⚡ Tempest","💥 Tetsuo","🦛 Hippo","🐭 Jerry","☀️ Heatwave","🌊 Ocean","🧿 Zenith","🐉 Goku","🐧 Linux","🔺 Apex","⚔️ Raiden","🦅 Ezio","🗡️ Broadsword","🛸 Voyager","🏙️ Zion","🎾 Djokovic","🌌 Horizon","🦇 Dracula","💿 Platinum","🐱 Tom","🐘 Manny","🌌 Thanos","🦘 Kangaroo","🥊 Rocky","🏙️ Gotham","🔭 Scope","🦋 Shinobu","🧥 Nomad","🛡️ Spartacus","🏦 Defi","🕷️ Widow","🌍 Orbit","✨ Nebula","🕊️ Hawks","🎼 Beethoven","🐰 Rabbit","💨 Aero","💍 Gollum","♎ Libra","🏇 Genghis","🔮 Quartz","🐍 Viper","🎧 Guetta","🃏 Poker","🌸 Seoul","🦆 Donald","🦉 Minerva","❄️ Moscow","🧊 Todoroki","🐉 Dragon","🧠 Neural","🌱 Bloom","🍩 Donut","🚁 Apache","🐗 Pumbaa","♕ Queen","🌌 MilkyWay","🌌 Klingon","🐕 Doge","🌌 Supernova","🐎 Aragorn","🏎️ Falcon","☀️ Morning","🌸 Sakura","🐅 Tiger","🎤 Freddie","🦡 Badger","🛡️ Zelda","⚔️ Levi","🔑 Token","☕ Espresso","🏛️ Rome","🤠 Woody","🎤 Kendrick","🎭 Rio","🐉 Drogo","🐍 Slytherin","🚗 Furiosa","⚙️ Logic","🎸 Cobain","🐺 Skoll","⚡ Tracer","⚡ Flash","🐉 Bowser","🐴 Donkey","🎭 Mirage","❄️ Blizzard","🐺 Logan","🏂 White","🌘 Equinox","🧹 Nimbus","🔭 Astro","🔫 Vash","🚬 Detective","☔ Monsoon","😈 Krampus","🏍️ Harley","💻 Zero","🌃 Skyline","🎙️ Sinatra","🌌 Sky","🖥️ Monitor","🗡️ Katana","🍻 Brew","🔫 Vincent","⚔️ Tanjiro","🦅 Falco","🔥 Torch","🌡️ Celsius","🔫 Magnum","🐻 Bear","🔴 Ruby","⚛️ Neutron","🛸 UFO","🏹 Rambo","👾 Glitch","🏜️ Canyon","☄️ Meteorite","🌆 Metropolis","🛥️ Stealth","🔒 Crypto","🦅 Garuda","🍖 Sanji","🚜 Tractor","🔬 Proton","🚪 Portal","♠️ Spade","🦍 Kong","🦸‍♂️ KalEl","🌐 IP","🍪 Cookie","✨ Stardust","💘 IVE","🪄 Merlin","🏀 LeBron","🔥 Illidan","⚡ Storm","🌊 Surge","🖥️ Host","❄️ Arthas","🛸 Enterprise","🗡️ Rogue","❄️ Winter","🗡️ Marth","🚲 BMX","🛥️ Yacht","☀️ Helios","🎧 Kanye","🔷 Sapphire","🚪 Narnia","🔫 Musket","⚔️ Spear","🦝 Rocket","🔫 Croft","🎯 Wick","🏜️ Oasis","🦉 Athena","🐘 Elephant","👁️ Fremen","🏎️ GTR","🌌 Andromeda","⏳ Chronos","🗻 Fuji","🖖 Vulcan","⚔️ Wallace","👻 Phantom","🚀 Concorde","🎼 Mozart","🥪 Sub","♉ Taurus","🐈 Sylvester","♊ Gemini","⚔️ Link","🤖 Claptrap","♒ Aquarius","🎸 Gibson","🦊 Kurama","⬛ Borg","🐘 Hannibal","🦾 Jax","💥 Oppenheimer","🧠 Brain","🏢 McClane","🧟‍ Rick","🤡 Joker","⚙️ Chrome","🦝 Raccoon","🐉 Toothless","🐉 Triad","🥩 Wagyu","🐭 Mouse","🔨 Odinson","🌐 Ping","🐍 Snake","📓 Ryuk","👽 Predator","🗡️ Snow","🔌 Cable","🏂 McMorris","🌌 Dimension","🦅 Raven","⚔️ Mandalorian","🌊 Poseidon","⚡ Socket","🏔️ Avalanche","⛄ Olaf","🔗 Blockchain","🥊 ChunLi","♓ Pisces","🕶️ Snoop","💻 Cipher","🐎 Rohan","🍫 Gump","🦇 Gargoyle","👑 Richard","⚙️ RAM","🦾 Malware","🔭 Einstein","♐ Sagittarius","🐆 Jaguar","🐺 Coyote","🥊 Pacquiao","🧝‍♀️ Galadriel","🏀 Jordan","🐪 Cairo","⚽ Maradona","🧸 Pooh","🛡️ Kevlar","🏎️ Bugatti","🍁 Toronto","🚀 Ripley","🦨 Skunk","🍷 Lecter","😈 Lucifer","🚢 Davy","🌐 Protocol","⚔️ Saladin","♘ Knight","🏜️ Dune","🌑 Omen","🎸 Elvis","🔑 RSA","⚓ Dreadnought","👹 Shrek","🍷 Merlot","⚔️ Valkyrie","✈️ Maverick","🦅 Pegasus","🦇 Morrigan","🕉️ Om","🎸 Metallica","🌌 Mars","⛏️ Gordon","🕰️ Paradox","🌋 Volcano","🔱 Odin","📉 Entropy","🔩 Tungsten","🐦 Tweety","🧱 Clay","🍏 Apple","⚔️ Mulan","🌳 Groot","⚙️ Marcus","⚙️ Edward","🌌 Saturn","🔥 Ember","❄️ Yeti","🧬 Gene","🚗 Brian","🦉 Hedwig","🏎️ Verstappen","🎸 Sheeran","💥 Nova","👜 Birkin","🦅 Kent","🍷 Shiraz","🏰 Hogwarts","🗡️ Arya","🧪 Plasma","🍃 Totoro","🐙 Kraken","🍷 Dionysus","💾 Drive","🌋 Mordor","🌧️ Rain","⚓ Freeman","🐉 Yakuza","🌸 Spring","🕵️ L","💎 Hodl","🛡️ Kite","🛡️ Carbon","🕶️ Eazy","⛰️ Mountain","📊 Calculus","🦇 Aventador","🐗 Inosuke","🛸 Apollo","👑 Jackson","⚽ Ronaldo","💻 Pixel","⚡ Switch","🏎️ Furiosa","🦆 Daffy","🌾 Demeter","🦊 StarFox","☀️ Ra","🎸 Fender","🎣 Gon","⚡ Potter","🎰 Vegas","🎩 Corleone","🐺 KaerMorhen","🗡️ Joan","🎤 Adele","🌐 Web","🤖 2B","🏎️ Dom","👊 Baki","🌟 Rihanna","🐱 Puss","⚔️ Vader","🎩 Shelby","🏍️ Akira","✨ Halo","🐼 Panda","🕸️ Darknet","📜 SunTzu","🌉 London","🤖 R2D2","🎸 Nirvana","🦴 Spine","🌌 Surfer","🌙 Hunter","👊 Monk","🏰 Citadel","🥓 Bacon","🛰️ Webb","🕶️ Mirage","⛵ Magellan","🏙️ Neon","☀️ Daylight","🐶 Scooby","🌊 Abyss","🏞️ River","🐾 Cerberus","💎 Diamond","🌊 Giyu","🗡️ Ichigo","🌴 LA","🌪️ Typhoon","⚡ Shazam","🧲 Electromagnet","🧞 Genie","🎤 Eminem","🏌️ McIlroy","🚦 Router","🐈 BlackCat","🔬 Biology","⛓️ Titanium","🕵️ Bourne","🧀 Cheese","🦍 Donkey","🥯 Bagel","🐆 Panther","🐭 Mickey","⚡ Kakashi","🦾 Cable","👹 Slayer","💀 Hel","🧪 Heisenberg","✨ Nirvana","🦆 Scrooge","🍄 Luigi","🍟 Fries","💊 Pill","💻 Turing","⚽ Messi","📸 Leica","⛈️ Thunder","🏹 Ranger","🚪 Port","🎨 DaVinci","🖤 PinkFloyd","🦇 Bat","⚡ Spark","👑 Tupac","🧞‍♂️ Aladdin","🦾 Bionic","🎧 Avicii","🐨 Koala","🍕 Slice","🛡️ Porsche","🌵 Desert","🥃 Bourbon","🐍 Medusa","⛵ Galleon","🏹 Artemis","🖤 Obsidian","🎲 Roulette","🗡️ Brutus","💉 Serum","⚔️ Pike","⚽ Beckham","⚙️ Docker","🥂 Champagne","🎾 Serena","🎸 Hendrix","🏎️ McQueen","🌨️ Hail","🗡️ Scimitar","🛡️ Paladin","⚡ Zeus","🧸 Ted","🍫 Cacao","🔌 Node","🕳️ Wormhole","🐯 Diego","🔵 Lapis","🛹 Hawk","🦈 Orca","🦴 Skull","🧬 Chromosome","🌌 Aether","👁️ Karma","🧚‍♀️ Freya","✨ Spice","🏊 Phelps","🕵️ Holmes","🖤 Blackpink","🏴‍☠️ Sparrow","⚔️ Ragnar","🧱 Thing","💍 Ring","🔊 Sonic","💃 Tango","🎹 Mozart","⌚ Rolex","🔫 Doomguy","🦁 Mufasa","⚽ Pele","🥐 Croissant","🐍 Jormungandr","⛓️ Kratos","☮️ Peace","🐺 Wolf","🚗 McFly","🐢 Raphael","🏹 Katniss","🐺 Jon","🕵️ Assassin","🖥️ Terminal","🎲 Monopoly","🎶 Bard","🗡️ Yuji","🔌 Motoko","👑 Charlemagne","🌍 Atlas","🏍️ Chopper","🌟 Jotaro","🧟 Jill","🥨 Pretzel","🦞 Boston","🕊️ Gandhi","🧊 Elsa","👊 Saitama","📈 Bull","🗡️ Rapier","🦅 Sphinx","🔫 Sniper","🏜️ Sahara","🌌 Neptune","🌠 ShootingStar","🔮 Mystic","🦓 Zebra","🔥 Hestia","🌌 Quill","💡 Tesla","✈️ Blackbird","🚬 Draper","🛡️ Arthur","🌀 String","💀 Reaper","🦅 Gryffindor","🏔️ Everest","🦾 Alphonse","⚽ Ronaldinho","📡 Uplink","🗝️ Key","🕷️ Morales","🚀 Falcon9","⌨️ Hacker","💠 Vertex","🔫 Price","🦅 Falcon","🐺 Fenrir","🎭 Persona","🚀 Buzz","🛡️ Ares","🎩 Wonka","🕸️ Venom","🚬 Cigar","🍖 Luffy"]
 
 CF_PORTS = [443, 2053, 2083, 2087, 2096, 8443]
 
+def get_patterniha_commit_time():
+    headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        import requests
+        url = "https://api.github.com/repos/patterniha/Free-Configs/commits?path=configs.txt&page=1&per_page=1"
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            if isinstance(data, list) and data:
+                date_str = data[0]["commit"]["committer"]["date"]
+                return datetime.datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+    except Exception:
+        pass
+    return None
+
+def sync_patterniha_if_needed():
+    commit_dt = get_patterniha_commit_time()
+    if not commit_dt:
+        return
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    age_hours = (now_utc - commit_dt).total_seconds() / 3600.0
+    if age_hours > 20.0:
+        print(f"Patterniha configs updated {age_hours:.1f}h ago (>20h). Waiting up to 45m for fresh release...", flush=True)
+        deadline = time.time() + (45 * 60)
+        while time.time() < deadline:
+            time.sleep(60)
+            new_dt = get_patterniha_commit_time()
+            if new_dt and (new_dt > commit_dt or (datetime.datetime.now(datetime.timezone.utc) - new_dt).total_seconds() / 3600.0 < 2.0):
+                print("Fresh Patterniha release detected! Proceeding.", flush=True)
+                break
+        else:
+            print("45m wait limit reached without new release. Proceeding with current version.", flush=True)
+
+sync_patterniha_if_needed()
+
+def get_dynamic_clean_ip():
+    try:
+        import requests
+        resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
+        if resp.status_code == 200:
+            for l in resp.text.splitlines():
+                m = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
+                if m:
+                    return m.group(1)
+    except Exception:
+        pass
+    url_target = 'patterniha/Free-Configs'
+    sub_list_file = './sub/sub_list.txt'
+    if os.path.exists(sub_list_file):
+        try:
+            with open(sub_list_file, 'r', encoding='utf-8') as f:
+                lines = [l.strip() for l in f if l.strip()]
+            for idx, line in enumerate(lines, 1):
+                if url_target in line:
+                    list_file = f'./sub/list/{idx:02d}.txt'
+                    if os.path.exists(list_file):
+                        with open(list_file, 'r', encoding='utf-8') as lf:
+                            for l in lf:
+                                m = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
+                                if m:
+                                    return m.group(1)
+        except Exception:
+            pass
+    return "104.21.33.59"
+
 PREFERRED_TARGETS = [
     "www.npmjs.com", "www.canva.com", "unpkg.com", "www.speedtest.net",
-    "104.21.33.59", "104.24.172.105", "141.101.90.101"
+    "www.cdnjs.com", "www.nodejs.org", "141.101.90.101", "104.18.2.92"
 ]
-RESILIENCE_TARGETS = TRUSTED_DOMAINS + (PREFERRED_TARGETS * 5)
+DYNAMIC_CLEAN_IP = get_dynamic_clean_ip()
+RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
 
 FINALMASK_SETTINGS = {
     "tcp": [
@@ -666,7 +654,7 @@ def process_and_save_results():
     random.shuffle(theme_pool)
 
     for node in resilience_candidates:
-        if len(resilience_nodes) >= 1000: break
+        if len(resilience_nodes) >= 300: break
         if not theme_pool:
             theme_pool = list(RESILIENCE_THEMES)
             random.shuffle(theme_pool)
@@ -780,6 +768,7 @@ def process_and_save_results():
 
     eternity_nodes = []
     selected = set()
+    selected_sigs = set()
     reality_c = 0
     c_counts = {}
 
@@ -792,54 +781,77 @@ def process_and_save_results():
 
         eternity_nodes.append(n)
         selected.add(n['link'])
+        sig = get_proxy_signature(n['link'])
+        if sig:
+            selected_sigs.add(sig)
         c_counts[c_code] = c_counts.get(c_code, 0) + 1
         if is_vless_reality(n['link']):
             reality_c += 1
         return True
 
-    def get_extra_signatures():
-        sigs = set()
-        url_target = 'patterniha/Free-Configs'
-        sub_list_file = './sub/sub_list.txt'
-        if os.path.exists(sub_list_file):
-            try:
-                with open(sub_list_file, 'r', encoding='utf-8') as f:
-                    lines = [l.strip() for l in f if l.strip()]
-                for idx, line in enumerate(lines, 1):
-                    if url_target in line:
-                        list_file = f'./sub/list/{idx:02d}.txt'
-                        if os.path.exists(list_file):
-                            with open(list_file, 'r', encoding='utf-8') as lf:
-                                for l in lf:
-                                    l = l.strip()
-                                    if l:
-                                        sigs.add(get_proxy_signature(l))
-            except Exception:
-                pass
-        if not sigs:
-            try:
-                import requests
-                resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
-                if resp.status_code == 200:
-                    for l in resp.text.splitlines():
-                        l = l.strip()
-                        if l:
-                            sigs.add(get_proxy_signature(l))
-            except Exception:
-                pass
-        return sigs
+    def get_patterniha_raw_links():
+        links = []
+        try:
+            import requests
+            resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
+            if resp.status_code == 200:
+                links = [l.strip() for l in resp.text.splitlines() if l.strip() and l.startswith(('vless://', 'trojan://'))]
+        except Exception:
+            pass
+        if not links:
+            url_target = 'patterniha/Free-Configs'
+            sub_list_file = './sub/sub_list.txt'
+            if os.path.exists(sub_list_file):
+                try:
+                    with open(sub_list_file, 'r', encoding='utf-8') as f:
+                        lines = [l.strip() for l in f if l.strip()]
+                    for idx, line in enumerate(lines, 1):
+                        if url_target in line:
+                            list_file = f'./sub/list/{idx:02d}.txt'
+                            if os.path.exists(list_file):
+                                with open(list_file, 'r', encoding='utf-8') as lf:
+                                    links = [l.strip() for l in lf if l.strip() and l.startswith(('vless://', 'trojan://'))]
+                except Exception:
+                    pass
+        return links
 
-    extra_sigs = get_extra_signatures()
-    extra_fast = [
+    raw_patterniha_links = get_patterniha_raw_links()
+    patterniha_sigs = {get_proxy_signature(l) for l in raw_patterniha_links if l}
+
+    if raw_patterniha_links:
+        untested_sample = random.sample(raw_patterniha_links, min(5, len(raw_patterniha_links)))
+        for raw_link in untested_sample:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+                break
+            cleaned = clean_link_params(raw_link)
+            tag = f"🏁 Relay-{random.randint(1000, 9999)}"
+            formatted_link = f"{cleaned.split('#')[0]}#{urllib.parse.quote(tag)}"
+            untested_node = {
+                'link': formatted_link,
+                'tag': tag,
+                'country': 'RELAY',
+                'country_name': 'Relay',
+                'speed': 0,
+                'delay': 0,
+                'health_score': 0
+            }
+            if add_to_eternity(untested_node, ignore_country_limit=True):
+                selected.add(raw_link)
+                selected.add(cleaned)
+
+    patterniha_working = [
         n for n in eternity_candidates
-        if get_proxy_signature(n['link']) in extra_sigs and n.get('speed', 0) >= 1_000_000
+        if get_proxy_signature(n['link']) in patterniha_sigs
+        and get_proxy_signature(n['link']) not in selected_sigs
+        and n.get('health_score', 0) > 0
+        and n['link'] not in selected
     ]
-    extra_fast.sort(key=lambda x: -x.get('speed', 0))
+    patterniha_working.sort(key=lambda x: -x.get('speed', 0))
 
-    for n in extra_fast[:10]:
+    for n in patterniha_working[:10]:
         if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
             break
-        if n['link'] not in selected:
+        if n['link'] not in selected and get_proxy_signature(n['link']) not in selected_sigs:
             add_to_eternity(n, ignore_country_limit=True)
 
     for c in sorted(nodes_by_country.keys()):
