@@ -891,6 +891,8 @@ jobs:
           python merge.py
 
       - name: Process Test Results
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           echo "Processing metadata, sorting, and creating geo-balanced lists..."
           python utils/speedtest/process_results.py
