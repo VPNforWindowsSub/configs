@@ -121,49 +121,77 @@ def sync_patterniha_if_needed():
 
 sync_patterniha_if_needed()
 
-def get_dynamic_clean_ip():
+DEFAULT_FINALMASK_SETTINGS = {
+    "tcp": [
+        {"type": "fragment", "settings": {"packets": "tlshello", "lengths": ["0", "104", "1"], "delays": ["0"], "maxSplit": "0"}},
+        {"type": "fragment", "settings": {"packets": "1-1", "lengths": ["114", "1"], "delays": ["1"], "maxSplit": "11"}}
+    ]
+}
+
+def get_dynamic_patterniha_settings():
+    clean_ip, clean_fm = None, None
     try:
         import requests
         resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
         if resp.status_code == 200:
             for l in resp.text.splitlines():
-                m = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
-                if m:
-                    return m.group(1)
+                if not clean_ip:
+                    m_ip = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
+                    if m_ip:
+                        clean_ip = m_ip.group(1)
+                if not clean_fm:
+                    m_fm = re.search(r'[?&]fm=([^&#]+)', l)
+                    if m_fm:
+                        try:
+                            parsed_fm = json.loads(urllib.parse.unquote(m_fm.group(1)))
+                            if isinstance(parsed_fm, dict) and "tcp" in parsed_fm:
+                                clean_fm = parsed_fm
+                        except Exception:
+                            pass
+                if clean_ip and clean_fm:
+                    break
     except Exception:
         pass
-    url_target = 'patterniha/Free-Configs'
-    sub_list_file = './sub/sub_list.txt'
-    if os.path.exists(sub_list_file):
-        try:
-            with open(sub_list_file, 'r', encoding='utf-8') as f:
-                lines = [l.strip() for l in f if l.strip()]
-            for idx, line in enumerate(lines, 1):
-                if url_target in line:
-                    list_file = f'./sub/list/{idx:02d}.txt'
-                    if os.path.exists(list_file):
-                        with open(list_file, 'r', encoding='utf-8') as lf:
-                            for l in lf:
-                                m = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
-                                if m:
-                                    return m.group(1)
-        except Exception:
-            pass
-    return "104.21.33.59"
+
+    if not clean_ip or not clean_fm:
+        url_target = 'patterniha/Free-Configs'
+        sub_list_file = './sub/sub_list.txt'
+        if os.path.exists(sub_list_file):
+            try:
+                with open(sub_list_file, 'r', encoding='utf-8') as f:
+                    lines = [l.strip() for l in f if l.strip()]
+                for idx, line in enumerate(lines, 1):
+                    if url_target in line:
+                        list_file = f'./sub/list/{idx:02d}.txt'
+                        if os.path.exists(list_file):
+                            with open(list_file, 'r', encoding='utf-8') as lf:
+                                for l in lf:
+                                    if not clean_ip:
+                                        m_ip = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
+                                        if m_ip:
+                                            clean_ip = m_ip.group(1)
+                                    if not clean_fm:
+                                        m_fm = re.search(r'[?&]fm=([^&#]+)', l)
+                                        if m_fm:
+                                            try:
+                                                parsed_fm = json.loads(urllib.parse.unquote(m_fm.group(1)))
+                                                if isinstance(parsed_fm, dict) and "tcp" in parsed_fm:
+                                                    clean_fm = parsed_fm
+                                            except Exception:
+                                                pass
+                                    if clean_ip and clean_fm:
+                                        break
+            except Exception:
+                pass
+
+    return clean_ip or "188.114.97.6", clean_fm or DEFAULT_FINALMASK_SETTINGS
 
 PREFERRED_TARGETS = [
     "www.npmjs.com", "www.canva.com", "unpkg.com", "www.speedtest.net",
     "www.cdnjs.com", "www.nodejs.org", "141.101.90.101", "104.18.2.92"
 ]
-DYNAMIC_CLEAN_IP = get_dynamic_clean_ip()
+DYNAMIC_CLEAN_IP, FINALMASK_SETTINGS = get_dynamic_patterniha_settings()
 RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
-
-FINALMASK_SETTINGS = {
-    "tcp": [
-        {"type": "fragment", "settings": {"packets": "tlshello", "lengths": ["5", "94", "1"], "delays": ["0"], "maxSplit": "0"}},
-        {"type": "fragment", "settings": {"packets": "1-1", "lengths": ["109", "1"], "delays": ["1"], "maxSplit": "355"}}
-    ]
-}
 
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
@@ -346,6 +374,7 @@ def create_resilience_clone(node, theme_name, apply_fragment=False):
             params['security'] = 'tls'
             params['fp'] = 'chrome'
             params.pop('cipherSuites', None)
+            params.pop('cs', None)
             if scheme == 'vless' and not params.get('encryption'):
                 params['encryption'] = 'none'
 
