@@ -151,7 +151,7 @@ def coordinate_iran_probe(candidate_links):
         "run_id": run_id,
         "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
         "status": "pending",
-        "candidates": candidate_links[:2000]
+        "candidates": candidate_links[:3000]
     }
 
     current_data, current_sha = get_file_from_branch(repo, branch, "probe_job.json", token)
