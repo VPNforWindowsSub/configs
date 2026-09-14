@@ -1014,20 +1014,17 @@ def process_and_save_results():
                 node_copy['iran_delay'] = verified_map[n['link']]
                 verified_nodes_pool.append(node_copy)
 
-        verified_nodes_pool.sort(key=lambda x: x.get('iran_delay', 9999))
-        uuid_counts_verified = {}
+        verified_nodes_pool.sort(key=lambda x: -x.get('speed', 0))
+        verified_added_count = 0
         for vn in verified_nodes_pool:
-            if len(eternity_nodes) >= 140:
+            if verified_added_count >= 50 or len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
-            uid = get_uuid(vn['link'])
-            if uid:
-                if uuid_counts_verified.get(uid, 0) >= MAX_SAME_UUID:
-                    continue
-                uuid_counts_verified[uid] = uuid_counts_verified.get(uid, 0) + 1
-            add_to_eternity(vn, ignore_country_limit=True)
+            if add_to_eternity(vn, ignore_country_limit=True):
+                verified_added_count += 1
                 
     raw_patterniha_links = get_patterniha_raw_links()
     patterniha_sigs = {get_proxy_signature(l) for l in raw_patterniha_links if l}
+    patterniha_untested_links = []
 
     if raw_patterniha_links:
         untested_sample = random.sample(raw_patterniha_links, min(5, len(raw_patterniha_links)))
@@ -1049,6 +1046,7 @@ def process_and_save_results():
             if add_to_eternity(untested_node, ignore_country_limit=True):
                 selected.add(raw_link)
                 selected.add(cleaned)
+                patterniha_untested_links.append(formatted_link)
 
     patterniha_working = [
         n for n in eternity_candidates
@@ -1089,15 +1087,9 @@ def process_and_save_results():
             if n['link'] not in selected:
                 add_to_eternity(n)
 
-    if iran_verified_records:
-        verified_links_set = {item['link'] for item in iran_verified_records if 'link' in item}
-        verified_tier = [p['link'] for p in eternity_nodes if p['link'] in verified_links_set]
-        fallback_tier = [p['link'] for p in eternity_nodes if p['link'] not in verified_links_set]
-        random.shuffle(fallback_tier)
-        eternity_links = verified_tier + fallback_tier
-    else:
-        eternity_links = [p['link'] for p in eternity_nodes]
-        random.shuffle(eternity_links)
+    tested_eternity_nodes = [n for n in eternity_nodes if n['link'] not in patterniha_untested_links]
+    tested_eternity_nodes.sort(key=lambda x: -x.get('speed', 0))
+    eternity_links = patterniha_untested_links + [n['link'] for n in tested_eternity_nodes]
 
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write('\n'.join(eternity_links))
     with open(ETERNITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode('\n'.join(eternity_links).encode()).decode())
