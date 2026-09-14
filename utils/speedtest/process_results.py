@@ -1092,9 +1092,8 @@ def process_and_save_results():
             if n['link'] not in selected:
                 add_to_eternity(n)
 
-    tested_eternity_nodes = [n for n in eternity_nodes if n['link'] not in patterniha_untested_links]
-    tested_eternity_nodes.sort(key=lambda x: -x.get('speed', 0))
-    eternity_links = patterniha_untested_links + [n['link'] for n in tested_eternity_nodes]
+    eternity_links = [p['link'] for p in eternity_nodes]
+    random.shuffle(eternity_links)
 
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write('\n'.join(eternity_links))
     with open(ETERNITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode('\n'.join(eternity_links).encode()).decode())
