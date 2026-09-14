@@ -171,6 +171,7 @@ def coordinate_iran_probe(candidate_links):
 
     print(f"Dispatched {len(job_payload['candidates'])} candidates to local Iran probe. Waiting for client response...")
     deadline = time.time() + 600
+    deferred_logged = False
     while time.time() < deadline:
         time.sleep(10)
         data, _ = get_file_from_branch(repo, branch, "probe_job.json", token)
@@ -184,6 +185,10 @@ def coordinate_iran_probe(candidate_links):
             verified = data.get("verified", [])
             print(f"Local probe completed successfully. Received {len(verified)} verified nodes from Iran.")
             return verified
+        elif status == "deferred":
+            if not deferred_logged:
+                print("Local probe deferred for 5 minutes by user. Holding pipeline...")
+                deferred_logged = True
         elif status == "testing":
             pass
 
