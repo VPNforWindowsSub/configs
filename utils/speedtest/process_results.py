@@ -670,6 +670,53 @@ def process_and_save_results():
 
     def clean_link_params(raw_link):
         raw_link = html.unescape(raw_link)
+        if raw_link.startswith("ss://"):
+            try:
+                tag_part = ""
+                main_part = raw_link[5:]
+                if '#' in main_part:
+                    main_part, tag_part = main_part.split('#', 1)
+                    tag_part = '#' + tag_part
+                query_part = ""
+                if '?' in main_part:
+                    main_part, query_part = main_part.split('?', 1)
+
+                if '@' in main_part:
+                    userinfo, server_port = main_part.rsplit('@', 1)
+                    userinfo = urllib.parse.unquote(userinfo)
+                    if ':' not in userinfo:
+                        pad = userinfo + '=' * (-len(userinfo) % 4)
+                        userinfo = base64.b64decode(pad.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore')
+                else:
+                    pad = main_part + '=' * (-len(main_part) % 4)
+                    decoded = base64.b64decode(pad.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore')
+                    if '@' in decoded:
+                        userinfo, server_port = decoded.rsplit('@', 1)
+                    else:
+                        return raw_link
+
+                if ':' not in userinfo:
+                    return raw_link
+
+                method, password = userinfo.split(':', 1)
+                method = method.strip().lower()
+                if method == 'chacha20-poly1305':
+                    method = 'chacha20-ietf-poly1305'
+                elif method == 'xchacha20-poly1305':
+                    method = 'xchacha20-ietf-poly1305'
+
+                new_query = ""
+                if query_part:
+                    params = urllib.parse.parse_qsl(query_part, keep_blank_values=True)
+                    valid_params = [(k, v) for k, v in params if k.lower() not in ['type', 'security', 'headertype']]
+                    if valid_params:
+                        new_query = '?' + urllib.parse.urlencode(valid_params)
+
+                new_cred = base64.b64encode(f"{method}:{password}".encode('utf-8')).decode('ascii')
+                return f"ss://{new_cred}@{server_port}{new_query}{tag_part}"
+            except Exception:
+                return raw_link
+
         raw_link = re.sub(r'([?&])allowInsecure=(?:1|true)', r'\1allowInsecure=0', raw_link, flags=re.IGNORECASE)
         raw_link = re.sub(r'([?&])insecure=(?:1|true)', r'\1insecure=0', raw_link, flags=re.IGNORECASE)
 
