@@ -79,6 +79,106 @@ COUNTRY_NAME_MAPPING = {
     'United Arab Emirates': 'Emirates'
 }
 
+def get_sync_branch_headers(token):
+    return {
+        "Authorization": f"Bearer {token}",
+        "Accept": "application/vnd.github.v3+json",
+        "User-Agent": "IranProbeCoordinator"
+    }
+
+def get_file_from_branch(repo, branch, file_path, token):
+    try:
+        import requests
+        url = f"https://api.github.com/repos/{repo}/contents/{file_path}?ref={branch}"
+        resp = requests.get(url, headers=get_sync_branch_headers(token), timeout=10)
+        if resp.status_code == 200:
+            data = resp.json()
+            content = base64.b64decode(data['content']).decode('utf-8')
+            return json.loads(content), data['sha']
+    except Exception:
+        pass
+    return None, None
+
+def put_file_to_branch(repo, branch, file_path, content_dict, token, sha=None):
+    try:
+        import requests
+        url = f"https://api.github.com/repos/{repo}/contents/{file_path}"
+        raw_bytes = json.dumps(content_dict, indent=2).encode('utf-8')
+        payload = {
+            "message": f"Sync probe: {content_dict.get('status', 'update')}",
+            "content": base64.b64encode(raw_bytes).decode('ascii'),
+            "branch": branch
+        }
+        if sha:
+            payload["sha"] = sha
+        resp = requests.put(url, headers=get_sync_branch_headers(token), json=payload, timeout=15)
+        return resp.status_code in [200, 201]
+    except Exception:
+        return False
+
+def ensure_sync_branch(repo, branch, token):
+    try:
+        import requests
+        headers = get_sync_branch_headers(token)
+        ref_url = f"https://api.github.com/repos/{repo}/git/ref/heads/{branch}"
+        r = requests.get(ref_url, headers=headers, timeout=10)
+        if r.status_code == 200:
+            return True
+        for candidate_branch in [os.environ.get("GITHUB_REF_NAME", "master"), "master", "main"]:
+            branch_url = f"https://api.github.com/repos/{repo}/git/ref/heads/{candidate_branch}"
+            mr = requests.get(branch_url, headers=headers, timeout=10)
+            if mr.status_code == 200:
+                sha = mr.json()['object']['sha']
+                create_url = f"https://api.github.com/repos/{repo}/git/refs"
+                cr = requests.post(create_url, headers=headers, json={"ref": f"refs/heads/{branch}", "sha": sha}, timeout=10)
+                return cr.status_code == 201
+    except Exception:
+        pass
+    return False
+
+def coordinate_iran_probe(candidate_links):
+    token = os.environ.get("GITHUB_TOKEN")
+    repo = os.environ.get("GITHUB_REPOSITORY")
+    if not token or not repo or not candidate_links:
+        return []
+
+    branch = "probe-sync"
+    if not ensure_sync_branch(repo, branch, token):
+        return []
+
+    run_id = f"job-{int(time.time())}"
+    job_payload = {
+        "run_id": run_id,
+        "created_at": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+        "status": "pending",
+        "candidates": candidate_links[:2000]
+    }
+
+    current_data, current_sha = get_file_from_branch(repo, branch, "probe_job.json", token)
+    if not put_file_to_branch(repo, branch, "probe_job.json", job_payload, token, current_sha):
+        return []
+
+    print(f"Dispatched {len(job_payload['candidates'])} candidates to local Iran probe. Waiting for client response...")
+    deadline = time.time() + 420
+    while time.time() < deadline:
+        time.sleep(10)
+        data, _ = get_file_from_branch(repo, branch, "probe_job.json", token)
+        if not data or data.get("run_id") != run_id:
+            continue
+        status = data.get("status")
+        if status == "skipped":
+            print("Local probe explicitly skipped this run.")
+            return []
+        elif status == "completed":
+            verified = data.get("verified", [])
+            print(f"Local probe completed successfully. Received {len(verified)} verified nodes from Iran.")
+            return verified
+        elif status == "testing":
+            pass
+
+    print("Local probe timed out after 7 minutes. Proceeding with cloud fallbacks.")
+    return []
+
 RESILIENCE_THEMES=["🌐 Grid","🏹 Barton","👻 Roach","🌙 Twilight","⚡ Zenitsu","🕸️ Shadow","🦅 Raptor","🏔️ Ridge","🔥 Inferno","🦁 CapeTown","⚔️ Zoro","🌙 Lunar","✈️ Spitfire","🗡️ Dagger","👻 Rayman","📡 Bandwidth","📡 Antenna","🌿 Amazon","🦊 MetaMask","⚖️ Gravity","🦇 Gotham","🗡️ Cloud","🧙 Dumbledore","👽 Stitch","🌲 Taiga","🏹 Hanzo","🕸️ Node","🌟 Zenith","🎤 Billie","☯️ Yin","🔫 Jules","🚀 Normandy","🕶️ JayZ","🐰 Bunny","🚢 Nelson","🌫️ Vapor","🦍 Gorilla","🖼️ NFT","⛏️ Steve","🏖️ Miami","📞 Tardis","🦾 Cyborg","🎩 Lincoln","☄️ Comet","🚘 CJ","🔪 Ripper","🦂 Scorpion","🏌️ Woods","👺 Ronin","🔥 Scorpion","🏇 Attila","🏝️ Bali","🔭 Optics","🥊 Ryu","🦖 Godzilla","🐰 Bugs","🕵️‍♀️ Kim","🧬 Helix","😈 Daemon","⚡ Kinetic","👾 Virus","🎤 Abel","🙏 Cleric","🌋 Tremor","📡 Beacon","☀️ Summer","🧩 Enigma","🌿 Jade","🌑 Blackhole","🚪 Gateway","📡 Proxy","🍔 Burger","☄️ Flare","🤠 Morgan","🛡️ Chief","🔶 Amber","⚖️ Anubis","🔭 Galileo","🧊 Sid","🌘 Eclipse","🏀 Bird","🏁 McLaren","🌌 Jupiter","🦅 Phoenix","🦾 Stark","🌌 Gurren","❄️ Frost","🚬 Noir","⚙️ Inertia","🔫 Flintlock","⚪ Silver","📡 Sonar","🚀 Soyuz","🧥 Armani","🛡️ Bastion","🤖 Daft","💥 Fission","🌑 MoonKnight","🔮 Oracle","🍸 Bond","🕷️ Parker","🌠 Asteroid","🍸 Martini","⚡ Fiber","🦅 Scout","🌑 Raven","🤖 C3PO","🧪 Chemistry","🐂 Minotaur","🌬️ Chicago","🚀 Saturn","🎹 Moog","♌ Leo","🌌 Fractal","🦾 MegaMan","🧘 Zen","🏹 Quiver","🏰 Gondor","🐈 Catwoman","🛡️ Rogers","💍 Crystal","🚬 Spike","🦄 Unicorn","🕌 Dubai","📓 Light","🤖 Gundam","🦅 Hawk","🍷 Speakeasy","🧵 Dior","🏛️ Aurelius","🐶 Inuyasha","🧬 Augment","🦍 Tarzan","🧚‍♀️ Tinkerbell","🦍 Beast","🌌 Mercury","🦅 Horus","🥞 Pancake","♔ King","❄️ Isotope","🏎️ Ferrari","🦍 Caesar","🦏 Rhinoceros","🤖 Shinji","🦅 Griffin","🍄 Mario","👑 Peach","💣 Claymore","🌳 Druid","✈️ Boeing","🎹 Chopin","🐉 Spyro","🐺 Geralt","✨ Aura","🍣 Sushi","🌐 Polygon","♍ Virgo","🎯 Darts","🦁 Simba","🕶️ Cypher","🌉 SF","🥊 Ken","🎸 Punk","🕵️ Stealth","🏎️ M3","🦅 Skyline","🌿 Solstice","🔴 Asuka","👦 Ben10","🎸 Zeppelin","💦 Aqua","⚔️ Jedi","🌅 Dawn","📉 Bear","⛵ Columbus","🦾 Genji","⚔️ Halberd","🚀 Moon","⚾ Ruth","🦒 Giraffe","♖ Rook","🍎 Newton","🦦 Otter","🌊 Hydro","🌌 Tatooine","🏎️ Veyron","💎 Onyx","🎀 Swift","✨ Topaz","🔨 Warhammer","🦖 Jurassic","🐷 Porky","💻 Matrix","🏎️ Leclerc","🕵️ Poirot","⚙️ Macro","🤖 AI","🌠 Orion","⚪ Pearl","🏀 Shaq","🔴 Garnet","👁️ Cyclops","✨ Quasar","🏀 Magic","🦁 Lion","🦁 Lannister","⛄ Snow","🌕 Moon","🎧 Skrillex","🥊 Drago","🔗 Ledger","💣 C4","🐉 Shenron","🎤 Mercury","📡 Radar","💻 Windows","🦇 Alucard","🏈 Manning","🌑 Pulsar","⚔️ Sora","🚗 Tesla","⚡ Speedster","🏐 Shoyo","🏛️ Sparta","🔥 Hades","🎸 Jagger","🕯️ Ritual","🛡️ Vanguard","🐼 Po","📏 Zenith","🛡️ Wakanda","⚡ Bolt","🍹 Mojito","💼 Vuitton","🍂 Autumn","🦇 Batgirl","🤖 Bender","⚡ ACDC","🌀 Karma","🦅 Hawkeye","⚔️ Maximus","🛡️ Leonidas","🐍 Kobe","⚔️ Sephiroth","🥊 Ali","🚙 Wrangler","💣 Grenade","🎸 Slash","✍️ Plato","📜 Aristotle","♏ Scorpio","🔥 Wildfire","🧽 Sponge","♑ Capricorn","🔗 Mesh","🐉 Targaryen","☁️ Cloud","🌀 Flux","🍀 Luck","🦇 Belmont","🎩 Gatsby","⚡ Static","🐍 Shelby","⚡ Sith","🐎 Knight","🕶️ Gojo","🐪 Camel","🗡️ Sasuke","🎯 Ballistic","❄️ Tundra","🧿 Ward","🔢 Algebra","🌟 Bowie","⚔️ Kenshin","🌌 Cosmos","🦅 Napoleon","✍️ Socrates","⚽ Henry","🖥️ Mainframe","🎱 Billiards","🍕 Milan","♈ Aries","🗽 NY","🌭 Dog","🦇 Nightwing","📜 Washington","🏹 Crossbow","🦅 Alexander","🌳 Jungle","🏀 Curry","🌟 Madonna","🐿️ Squirrel","🔱 Curry","🐺 Direwolf","👑 Drake","🛡️ Troy","🔥 Loki","👁️ Vision","🏝️ Island","🔌 Jack","🌌 Void","🏈 Brady","🔬 Mutation","💣 Torpedo","🌀 Cyclone","🚀 Shepard","♗ Bishop","🎧 Tiesto","⚽ Mbappe","🥚 Egg","💎 Tiffany","🏙️ Berlin","🥊 McGregor","⚔️ Berserker","🛹 Skateboard","💨 Sonic","🌌 Galaxy","🌿 Leon","♟️ Checkmate","🟥 Carnage","🦅 Hermes","🚀 Rover","🀄 Mahjong","🚁 Drone","🍩 Homer","🌐 Nexus","🌊 Tsunami","☔ Seattle","🔨 Hephaestus","🦈 Shark","🔫 Master","🦹‍♂️ Lex","🗡️ Guts","🛹 Mullen","🏰 Madrid","🌌 Pluto","🎾 Federer","🤖 WallE","🔥 Pyromancer","🎩 Mobster","🌑 NewMoon","🦸‍♂️ Incredible","🔊 Echo","🔨 Thor","🛳️ Cruise","🔵 Cobalt","🌋 Mustafar","⛏️ Miner","📐 Geometry","🌹 Nobara","🛰️ Sputnik","🗡️ Kirito","❄️ SubZero","🌿 Mantis","☀️ Apollo","✈️ Airbus","⚔️ Deadpool","🐉 Dovahkiin","♋ Cancer","🏎️ Senna","🐻 Grizzly","🌫️ Fog","🎤 Dua","💀 Diablo","💨 Gale","🧇 Waffle","😈 Dante","⚙️ Steel","🏹 Cupid","🛰️ Hubble","♠️ Syndicate","🦅 Robin","🎤 Ariana","🔵 Aquamarine","👁️ Strange","💣 Missile","☯️ Yang","🦂 Cobra","🧲 Magneto","💾 Cache","🐉 Smaug","🏍️ Ducati","⌚ Omega","🍵 Matcha","🍁 Fall","🌌 Kamina","🕴️ BabaYaga","✨ Opal","🔱 Trident","💥 Blast","🏎️ Hamilton","🐎 Mustang","💀 Punisher","🦈 Jaws","🌑 Midnight","👑 Caesar","☕ Mocha","🌬️ Breeze","👁️ Retina","🏎️ Schumacher","🌌 Venus","💎 Zircon","☄️ Meteor","🦊 Naruto","🌪️ Storm","🔭 Copernicus","💊 Neo","👨‍🚀 Astronaut","💾 Byte","🧪 Pinkman","⛵ Titanic","💎 Cartier","🌠 Halley","🏎️ AMG","🚁 Chinook","🌋 Crater","🔫 Tommy","🔥 Flint","☀️ Solar","🦇 Wayne","🦅 Eagle","🏔️ Alps","💻 Root","🔥 Firewall","📏 Kelvin","🧊 Frostbite","🔮 Magic","🏦 Vault","🌮 Taco","🎈 Zeppelin","🛡️ VPN","🐉 Mushu","🌀 Vortex","⚽ Zidane","🌟 Kirby","🔥 Roy","☕ Latte","🏎️ Supra","🍰 Cake","🤠 Indy","📐 Matrix","❤️ Heart","💥 Jinx","🎾 Nadal","☁️ AWS","🌙 Night","⚔️ Wilson","🗼 Tokyo","🦊 Fox","👽 Alien","💀 Necromancer","👑 Nefertiti","🧬 DNA","☀️ Sun","🚂 Loco","😈 Daredevil","🤺 Zorro","🏍️ Kaneda","🏹 Arrow","📡 Server","🍺 Stout","🌇 Dusk","🎮 Chief","🛸 Romulan","🧪 Catalyst","⚾ Jeter","⚙️ Kernel","⚔️ Glaive","🎹 Synth","💼 Goodman","💥 Bakugo","🦥 Sloth","🛡️ Aegis","⚛️ Quantum","⛏️ Dwarf","🌙 Selene","🏖️ Ibiza","📈 Vector","⛏️ Coal","🎲 Casino","🧚‍♂️ Elf","🦖 Rex","🖖 Spock","👻 Megumi","🧫 Cell","🐉 Beijing","👑 Cleopatra","💊 Overdose","👑 Victoria","🦋 Paramore","📜 Curse","🧊 Frost","🏹 Bow","🔫 Solo","🥁 Snare","📜 Churchill","🛡️ Naofumi","👊 JoJo","🌲 Forest","⚖️ Osiris","😈 Doom","🏎️ F1","👜 Prada","🔭 Parallax","🧩 Scrabble","🐺 Stark","🚗 Civic","👾 Samus","🌊 Leviathan","🐺 Hati","⚪ Ivory","💣 Mine","🏎️ Kart","👗 Gucci","📷 Kodak","⚛️ Electron","🛡️ Shield","🔋 Battery","🥊 Mayweather","🤖 T800","⚡ Killua","🐰 NewJeans","🍷 Cartel","🥖 Baguette","🗼 Paris","🔥 Fusion","🗡️ Machete","⚙️ Panzer","🥊 Tyson","♙ Pawn","🌬️ Wind","🏔️ Denver","⚽ Neymar","🌌 Asgard","🛡️ Buckler","🤖 Cylon","🌋 Magma","⚡ Tempest","💥 Tetsuo","🦛 Hippo","🐭 Jerry","☀️ Heatwave","🌊 Ocean","🧿 Zenith","🐉 Goku","🐧 Linux","🔺 Apex","⚔️ Raiden","🦅 Ezio","🗡️ Broadsword","🛸 Voyager","🏙️ Zion","🎾 Djokovic","🌌 Horizon","🦇 Dracula","💿 Platinum","🐱 Tom","🐘 Manny","🌌 Thanos","🦘 Kangaroo","🥊 Rocky","🏙️ Gotham","🔭 Scope","🦋 Shinobu","🧥 Nomad","🛡️ Spartacus","🏦 Defi","🕷️ Widow","🌍 Orbit","✨ Nebula","🕊️ Hawks","🎼 Beethoven","🐰 Rabbit","💨 Aero","💍 Gollum","♎ Libra","🏇 Genghis","🔮 Quartz","🐍 Viper","🎧 Guetta","🃏 Poker","🌸 Seoul","🦆 Donald","🦉 Minerva","❄️ Moscow","🧊 Todoroki","🐉 Dragon","🧠 Neural","🌱 Bloom","🍩 Donut","🚁 Apache","🐗 Pumbaa","♕ Queen","🌌 MilkyWay","🌌 Klingon","🐕 Doge","🌌 Supernova","🐎 Aragorn","🏎️ Falcon","☀️ Morning","🌸 Sakura","🐅 Tiger","🎤 Freddie","🦡 Badger","🛡️ Zelda","⚔️ Levi","🔑 Token","☕ Espresso","🏛️ Rome","🤠 Woody","🎤 Kendrick","🎭 Rio","🐉 Drogo","🐍 Slytherin","🚗 Furiosa","⚙️ Logic","🎸 Cobain","🐺 Skoll","⚡ Tracer","⚡ Flash","🐉 Bowser","🐴 Donkey","🎭 Mirage","❄️ Blizzard","🐺 Logan","🏂 White","🌘 Equinox","🧹 Nimbus","🔭 Astro","🔫 Vash","🚬 Detective","☔ Monsoon","😈 Krampus","🏍️ Harley","💻 Zero","🌃 Skyline","🎙️ Sinatra","🌌 Sky","🖥️ Monitor","🗡️ Katana","🍻 Brew","🔫 Vincent","⚔️ Tanjiro","🦅 Falco","🔥 Torch","🌡️ Celsius","🔫 Magnum","🐻 Bear","🔴 Ruby","⚛️ Neutron","🛸 UFO","🏹 Rambo","👾 Glitch","🏜️ Canyon","☄️ Meteorite","🌆 Metropolis","🛥️ Stealth","🔒 Crypto","🦅 Garuda","🍖 Sanji","🚜 Tractor","🔬 Proton","🚪 Portal","♠️ Spade","🦍 Kong","🦸‍♂️ KalEl","🌐 IP","🍪 Cookie","✨ Stardust","💘 IVE","🪄 Merlin","🏀 LeBron","🔥 Illidan","⚡ Storm","🌊 Surge","🖥️ Host","❄️ Arthas","🛸 Enterprise","🗡️ Rogue","❄️ Winter","🗡️ Marth","🚲 BMX","🛥️ Yacht","☀️ Helios","🎧 Kanye","🔷 Sapphire","🚪 Narnia","🔫 Musket","⚔️ Spear","🦝 Rocket","🔫 Croft","🎯 Wick","🏜️ Oasis","🦉 Athena","🐘 Elephant","👁️ Fremen","🏎️ GTR","🌌 Andromeda","⏳ Chronos","🗻 Fuji","🖖 Vulcan","⚔️ Wallace","👻 Phantom","🚀 Concorde","🎼 Mozart","🥪 Sub","♉ Taurus","🐈 Sylvester","♊ Gemini","⚔️ Link","🤖 Claptrap","♒ Aquarius","🎸 Gibson","🦊 Kurama","⬛ Borg","🐘 Hannibal","🦾 Jax","💥 Oppenheimer","🧠 Brain","🏢 McClane","🧟‍ Rick","🤡 Joker","⚙️ Chrome","🦝 Raccoon","🐉 Toothless","🐉 Triad","🥩 Wagyu","🐭 Mouse","🔨 Odinson","🌐 Ping","🐍 Snake","📓 Ryuk","👽 Predator","🗡️ Snow","🔌 Cable","🏂 McMorris","🌌 Dimension","🦅 Raven","⚔️ Mandalorian","🌊 Poseidon","⚡ Socket","🏔️ Avalanche","⛄ Olaf","🔗 Blockchain","🥊 ChunLi","♓ Pisces","🕶️ Snoop","💻 Cipher","🐎 Rohan","🍫 Gump","🦇 Gargoyle","👑 Richard","⚙️ RAM","🦾 Malware","🔭 Einstein","♐ Sagittarius","🐆 Jaguar","🐺 Coyote","🥊 Pacquiao","🧝‍♀️ Galadriel","🏀 Jordan","🐪 Cairo","⚽ Maradona","🧸 Pooh","🛡️ Kevlar","🏎️ Bugatti","🍁 Toronto","🚀 Ripley","🦨 Skunk","🍷 Lecter","😈 Lucifer","🚢 Davy","🌐 Protocol","⚔️ Saladin","♘ Knight","🏜️ Dune","🌑 Omen","🎸 Elvis","🔑 RSA","⚓ Dreadnought","👹 Shrek","🍷 Merlot","⚔️ Valkyrie","✈️ Maverick","🦅 Pegasus","🦇 Morrigan","🕉️ Om","🎸 Metallica","🌌 Mars","⛏️ Gordon","🕰️ Paradox","🌋 Volcano","🔱 Odin","📉 Entropy","🔩 Tungsten","🐦 Tweety","🧱 Clay","🍏 Apple","⚔️ Mulan","🌳 Groot","⚙️ Marcus","⚙️ Edward","🌌 Saturn","🔥 Ember","❄️ Yeti","🧬 Gene","🚗 Brian","🦉 Hedwig","🏎️ Verstappen","🎸 Sheeran","💥 Nova","👜 Birkin","🦅 Kent","🍷 Shiraz","🏰 Hogwarts","🗡️ Arya","🧪 Plasma","🍃 Totoro","🐙 Kraken","🍷 Dionysus","💾 Drive","🌋 Mordor","🌧️ Rain","⚓ Freeman","🐉 Yakuza","🌸 Spring","🕵️ L","💎 Hodl","🛡️ Kite","🛡️ Carbon","🕶️ Eazy","⛰️ Mountain","📊 Calculus","🦇 Aventador","🐗 Inosuke","🛸 Apollo","👑 Jackson","⚽ Ronaldo","💻 Pixel","⚡ Switch","🏎️ Furiosa","🦆 Daffy","🌾 Demeter","🦊 StarFox","☀️ Ra","🎸 Fender","🎣 Gon","⚡ Potter","🎰 Vegas","🎩 Corleone","🐺 KaerMorhen","🗡️ Joan","🎤 Adele","🌐 Web","🤖 2B","🏎️ Dom","👊 Baki","🌟 Rihanna","🐱 Puss","⚔️ Vader","🎩 Shelby","🏍️ Akira","✨ Halo","🐼 Panda","🕸️ Darknet","📜 SunTzu","🌉 London","🤖 R2D2","🎸 Nirvana","🦴 Spine","🌌 Surfer","🌙 Hunter","👊 Monk","🏰 Citadel","🥓 Bacon","🛰️ Webb","🕶️ Mirage","⛵ Magellan","🏙️ Neon","☀️ Daylight","🐶 Scooby","🌊 Abyss","🏞️ River","🐾 Cerberus","💎 Diamond","🌊 Giyu","🗡️ Ichigo","🌴 LA","🌪️ Typhoon","⚡ Shazam","🧲 Electromagnet","🧞 Genie","🎤 Eminem","🏌️ McIlroy","🚦 Router","🐈 BlackCat","🔬 Biology","⛓️ Titanium","🕵️ Bourne","🧀 Cheese","🦍 Donkey","🥯 Bagel","🐆 Panther","🐭 Mickey","⚡ Kakashi","🦾 Cable","👹 Slayer","💀 Hel","🧪 Heisenberg","✨ Nirvana","🦆 Scrooge","🍄 Luigi","🍟 Fries","💊 Pill","💻 Turing","⚽ Messi","📸 Leica","⛈️ Thunder","🏹 Ranger","🚪 Port","🎨 DaVinci","🖤 PinkFloyd","🦇 Bat","⚡ Spark","👑 Tupac","🧞‍♂️ Aladdin","🦾 Bionic","🎧 Avicii","🐨 Koala","🍕 Slice","🛡️ Porsche","🌵 Desert","🥃 Bourbon","🐍 Medusa","⛵ Galleon","🏹 Artemis","🖤 Obsidian","🎲 Roulette","🗡️ Brutus","💉 Serum","⚔️ Pike","⚽ Beckham","⚙️ Docker","🥂 Champagne","🎾 Serena","🎸 Hendrix","🏎️ McQueen","🌨️ Hail","🗡️ Scimitar","🛡️ Paladin","⚡ Zeus","🧸 Ted","🍫 Cacao","🔌 Node","🕳️ Wormhole","🐯 Diego","🔵 Lapis","🛹 Hawk","🦈 Orca","🦴 Skull","🧬 Chromosome","🌌 Aether","👁️ Karma","🧚‍♀️ Freya","✨ Spice","🏊 Phelps","🕵️ Holmes","🖤 Blackpink","🏴‍☠️ Sparrow","⚔️ Ragnar","🧱 Thing","💍 Ring","🔊 Sonic","💃 Tango","🎹 Mozart","⌚ Rolex","🔫 Doomguy","🦁 Mufasa","⚽ Pele","🥐 Croissant","🐍 Jormungandr","⛓️ Kratos","☮️ Peace","🐺 Wolf","🚗 McFly","🐢 Raphael","🏹 Katniss","🐺 Jon","🕵️ Assassin","🖥️ Terminal","🎲 Monopoly","🎶 Bard","🗡️ Yuji","🔌 Motoko","👑 Charlemagne","🌍 Atlas","🏍️ Chopper","🌟 Jotaro","🧟 Jill","🥨 Pretzel","🦞 Boston","🕊️ Gandhi","🧊 Elsa","👊 Saitama","📈 Bull","🗡️ Rapier","🦅 Sphinx","🔫 Sniper","🏜️ Sahara","🌌 Neptune","🌠 ShootingStar","🔮 Mystic","🦓 Zebra","🔥 Hestia","🌌 Quill","💡 Tesla","✈️ Blackbird","🚬 Draper","🛡️ Arthur","🌀 String","💀 Reaper","🦅 Gryffindor","🏔️ Everest","🦾 Alphonse","⚽ Ronaldinho","📡 Uplink","🗝️ Key","🕷️ Morales","🚀 Falcon9","⌨️ Hacker","💠 Vertex","🔫 Price","🦅 Falcon","🐺 Fenrir","🎭 Persona","🚀 Buzz","🛡️ Ares","🎩 Wonka","🕸️ Venom","🚬 Cigar","🍖 Luffy"]
 
 CF_PORTS = [443, 2053, 2083, 2087, 2096, 8443]
@@ -752,6 +852,9 @@ def process_and_save_results():
     log_list = [f"name: {n['tag']} | avg_speed: {n.get('speed',0)/1_048_576:.3f} MB/s | delay: {n['delay']} ms\n" for n in conventional_nodes]
     with open(LOG_INFO_FILE, 'w', encoding='utf-8') as f: f.writelines(log_list)
 
+    print("\n--- Initiating Local Iran Probe Coordination ---")
+    iran_verified_records = coordinate_iran_probe(full_links)
+
     print("\n--- Generating Eternity List ---")
 
     def is_vless_reality(link):
@@ -844,6 +947,27 @@ def process_and_save_results():
                     pass
         return links
 
+    if iran_verified_records:
+        verified_map = {item['link']: item.get('delay', 9999) for item in iran_verified_records if 'link' in item}
+        verified_nodes_pool = []
+        for n in conventional_nodes:
+            if n['link'] in verified_map:
+                node_copy = n.copy()
+                node_copy['iran_delay'] = verified_map[n['link']]
+                verified_nodes_pool.append(node_copy)
+
+        verified_nodes_pool.sort(key=lambda x: x.get('iran_delay', 9999))
+        uuid_counts_verified = {}
+        for vn in verified_nodes_pool:
+            if len(eternity_nodes) >= 140:
+                break
+            uid = get_uuid(vn['link'])
+            if uid:
+                if uuid_counts_verified.get(uid, 0) >= MAX_SAME_UUID:
+                    continue
+                uuid_counts_verified[uid] = uuid_counts_verified.get(uid, 0) + 1
+            add_to_eternity(vn, ignore_country_limit=True)
+                
     raw_patterniha_links = get_patterniha_raw_links()
     patterniha_sigs = {get_proxy_signature(l) for l in raw_patterniha_links if l}
 
@@ -907,8 +1031,16 @@ def process_and_save_results():
             if n['link'] not in selected:
                 add_to_eternity(n)
 
-    eternity_links = [p['link'] for p in eternity_nodes]
-    random.shuffle(eternity_links)
+    if iran_verified_records:
+        verified_links_set = {item['link'] for item in iran_verified_records if 'link' in item}
+        verified_tier = [p['link'] for p in eternity_nodes if p['link'] in verified_links_set]
+        fallback_tier = [p['link'] for p in eternity_nodes if p['link'] not in verified_links_set]
+        random.shuffle(fallback_tier)
+        eternity_links = verified_tier + fallback_tier
+    else:
+        eternity_links = [p['link'] for p in eternity_nodes]
+        random.shuffle(eternity_links)
+
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write('\n'.join(eternity_links))
     with open(ETERNITY_OUTPUT_BASE64_FILE, 'w', encoding='utf-8') as f: f.write(base64.b64encode('\n'.join(eternity_links).encode()).decode())
     
@@ -934,6 +1066,7 @@ def process_and_save_results():
 - **Successfully Tested by Xray:** {tested_count}
 - **Dead Nodes (Timeout/0ms):** {tested_count - len(working_nodes)} *(See `Logs/dead_nodes.txt`)*
 - **Working Nodes (Ping > 0):** {len(working_nodes)}
+- **Iran In-Country Double-Verified Nodes:** {len(iran_verified_records)}
 
 ## 🗑️ Filtering & Deduplication
 - **Duplicates Removed (Same IP/Port/ID):** {duplicates_removed}
