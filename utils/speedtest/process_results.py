@@ -208,14 +208,48 @@ def get_patterniha_commit_time():
         import requests
         url = "https://api.github.com/repos/patterniha/Free-Configs/commits?path=configs.txt&page=1&per_page=1"
         resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code in (401, 403):
+            resp = requests.get(url, headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}, timeout=10)
         if resp.status_code == 200:
             data = resp.json()
             if isinstance(data, list) and data:
-                date_str = data[0]["commit"]["committer"]["date"]
-                return datetime.datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+                commit_info = data[0].get("commit", {})
+                date_str = (commit_info.get("committer") or {}).get("date") or (commit_info.get("author") or {}).get("date")
+                if date_str:
+                    return datetime.datetime.fromisoformat(date_str.replace("Z", "+00:00"))
     except Exception:
         pass
     return None
+
+def is_patterniha_build_running():
+    headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}
+    token = os.environ.get("GITHUB_TOKEN")
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    try:
+        import requests
+        url = "https://api.github.com/repos/patterniha/Free-Configs/actions/workflows/build.yml/runs?per_page=5"
+        resp = requests.get(url, headers=headers, timeout=10)
+        if resp.status_code in (401, 403):
+            resp = requests.get(url, headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}, timeout=10)
+        if resp.status_code == 200:
+            now_utc = datetime.datetime.now(datetime.timezone.utc)
+            for run in resp.json().get("workflow_runs", []):
+                created_at_str = run.get("run_started_at") or run.get("created_at")
+                if created_at_str:
+                    try:
+                        run_dt = datetime.datetime.fromisoformat(created_at_str.replace("Z", "+00:00"))
+                        if (now_utc - run_dt).total_seconds() > 3 * 3600:
+                            continue
+                    except Exception:
+                        pass
+                status = str(run.get("status", "")).lower()
+                conclusion = run.get("conclusion")
+                if status in ["in_progress", "queued", "waiting", "pending", "requested"] or (status and status != "completed" and conclusion is None):
+                    return True
+    except Exception:
+        pass
+    return False
 
 def sync_patterniha_if_needed():
     commit_dt = get_patterniha_commit_time()
@@ -224,7 +258,10 @@ def sync_patterniha_if_needed():
     now_utc = datetime.datetime.now(datetime.timezone.utc)
     age_hours = (now_utc - commit_dt).total_seconds() / 3600.0
     if age_hours > 20.0:
-        print(f"Patterniha configs updated {age_hours:.1f}h ago (>20h). Waiting up to 45m for fresh release...", flush=True)
+        if not is_patterniha_build_running():
+            print(f"Patterniha configs updated {age_hours:.1f}h ago (>20h), but build.yml is not running. Skipping wait and proceeding.", flush=True)
+            return
+        print(f"Patterniha configs updated {age_hours:.1f}h ago (>20h) and build.yml is currently running. Waiting up to 45m for fresh release...", flush=True)
         deadline = time.time() + (45 * 60)
         while time.time() < deadline:
             time.sleep(60)
@@ -232,9 +269,17 @@ def sync_patterniha_if_needed():
             if new_dt and (new_dt > commit_dt or (datetime.datetime.now(datetime.timezone.utc) - new_dt).total_seconds() / 3600.0 < 2.0):
                 print("Fresh Patterniha release detected! Proceeding.", flush=True)
                 break
+            if not is_patterniha_build_running():
+                time.sleep(5)
+                new_dt = get_patterniha_commit_time()
+                if new_dt and (new_dt > commit_dt or (datetime.datetime.now(datetime.timezone.utc) - new_dt).total_seconds() / 3600.0 < 2.0):
+                    print("Fresh Patterniha release detected! Proceeding.", flush=True)
+                else:
+                    print("Patterniha build.yml has finished. Proceeding with available version.", flush=True)
+                break
         else:
             print("45m wait limit reached without new release. Proceeding with current version.", flush=True)
-
+            
 sync_patterniha_if_needed()
 
 DEFAULT_FINALMASK_SETTINGS = {
@@ -248,7 +293,7 @@ def get_dynamic_patterniha_settings():
     clean_ip, clean_fm = None, None
     try:
         import requests
-        resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
+        resp = requests.get(f'https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt?t={int(time.time())}', timeout=10)
         if resp.status_code == 200:
             for l in resp.text.splitlines():
                 if not clean_ip:
@@ -988,7 +1033,7 @@ def process_and_save_results():
         links = []
         try:
             import requests
-            resp = requests.get('https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt', timeout=10)
+            resp = requests.get(f'https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt?t={int(time.time())}', timeout=10)
             if resp.status_code == 200:
                 links = [l.strip() for l in resp.text.splitlines() if l.strip() and l.startswith(('vless://', 'trojan://'))]
         except Exception:
