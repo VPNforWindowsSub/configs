@@ -1017,7 +1017,7 @@ def process_and_save_results():
         verified_nodes_pool.sort(key=lambda x: -x.get('speed', 0))
         verified_added_count = 0
         for vn in verified_nodes_pool:
-            if verified_added_count >= 50 or len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+            if verified_added_count >= 70 or len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
             if add_to_eternity(vn, ignore_country_limit=True):
                 verified_added_count += 1
