@@ -950,6 +950,8 @@ jobs:
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
           git pull origin ${{ github.ref_name }}
+          git rm --cached -f Logs/dead_nodes.txt 2>/dev/null || true
+          rm -f Logs/dead_nodes.txt
           git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience full.txt full_base64.txt LogInfo.txt sub/ Logs/ Stats.md
           if ! git diff --staged --quiet; then
             git commit -m "✔️ Updated proxy lists and compiled statistics"
