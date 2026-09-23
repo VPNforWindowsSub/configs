@@ -1166,7 +1166,7 @@ def process_and_save_results():
 - **Total Incoming Configs:** {total_incoming_nodes}
 - **Failed Parsing (Invalid/Corrupted):** {parse_error_count} *(See `Logs/parse_errors.txt`)*
 - **Successfully Tested by Xray:** {tested_count}
-- **Dead Nodes (Timeout/0ms):** {tested_count - len(working_nodes)} *(See `Logs/dead_nodes.txt`)*
+- **Dead Nodes (Timeout/0ms):** {tested_count - len(working_nodes)}
 - **Working Nodes (Ping > 0):** {len(working_nodes)}
 - **Iran In-Country Double-Verified Nodes:** {len(iran_verified_records)}
 
