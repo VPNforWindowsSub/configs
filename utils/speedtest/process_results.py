@@ -483,11 +483,17 @@ def ensure_empty_files():
         FULL_OUTPUT_FILE, FULL_OUTPUT_BASE64_FILE, ETERNITY_OUTPUT_FILE,
         ETERNITY_OUTPUT_BASE64_FILE, LOG_INFO_FILE,
         DIVERSITY_OUTPUT_FILE, DIVERSITY_OUTPUT_BASE64_FILE,
-        RESILIENCE_OUTPUT_FILE, RESILIENCE_OUTPUT_BASE64_FILE,
-        os.path.join(LOGS_DIR, 'dead_nodes.txt')
+        RESILIENCE_OUTPUT_FILE, RESILIENCE_OUTPUT_BASE64_FILE
     ]
     for f in files_to_touch:
         open(f, 'w').close()
+
+    dead_log = os.path.join(LOGS_DIR, 'dead_nodes.txt')
+    if os.path.exists(dead_log):
+        try:
+            os.remove(dead_log)
+        except OSError:
+            pass
     
     os.makedirs(SPLITTED_OUTPUT_DIR, exist_ok=True)
     for p in ['vmess.txt', 'vless.txt', 'trojan.txt', 'ss.txt']:
@@ -615,8 +621,6 @@ def process_and_save_results():
     tested_count = len(nodes)
     total_incoming_nodes = tested_count + parse_error_count
 
-    dead_nodes_list = []
-
     for node in nodes:
         speed = node.get('avg_speed', 0)
         delay = node.get('delay', 9999)
@@ -627,17 +631,16 @@ def process_and_save_results():
         else:
             latency_score = 0
 
-        health = (speed_mb * 7) + (latency_score * 0.3)
-        node['health_score'] = health
-        
-        if health == 0:
-            dead_nodes_list.append(node.get('link', ''))
+        node['health_score'] = (speed_mb * 7) + (latency_score * 0.3)
 
     working_nodes = [node for node in nodes if node.get('health_score', 0) > 0]
     
-    # Dump Dead Nodes
-    with open(os.path.join(LOGS_DIR, 'dead_nodes.txt'), 'w', encoding='utf-8') as f:
-        f.write("\n".join(dead_nodes_list))
+    dead_log = os.path.join(LOGS_DIR, 'dead_nodes.txt')
+    if os.path.exists(dead_log):
+        try:
+            os.remove(dead_log)
+        except OSError:
+            pass
     
     if not working_nodes:
         print("No working nodes found. Output files will be empty.")
