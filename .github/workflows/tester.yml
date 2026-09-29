@@ -880,9 +880,13 @@ jobs:
     name: Merge Results and Publish
     needs: test-chunk
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Setup Python
         uses: actions/setup-python@v5
@@ -949,13 +953,30 @@ jobs:
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git pull origin ${{ github.ref_name }}
+          git config --local http.postBuffer 524288000
+          git config --local http.version HTTP/1.1
+          git pull --rebase origin "${{ github.ref_name }}" || true
           git rm --cached -f Logs/dead_nodes.txt 2>/dev/null || true
           rm -f Logs/dead_nodes.txt
           git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience full.txt full_base64.txt LogInfo.txt sub/ Logs/ Stats.md
           if ! git diff --staged --quiet; then
             git commit -m "✔️ Updated proxy lists and compiled statistics"
-            git push
+            pushed=0
+            for attempt in {1..5}; do
+              echo "Push attempt $attempt of 5..."
+              if git push origin "${{ github.ref_name }}"; then
+                pushed=1
+                echo "Successfully pushed changes!"
+                break
+              fi
+              echo "Push failed. Waiting $((attempt * 5))s before retry..."
+              sleep $((attempt * 5))
+              git pull --rebase origin "${{ github.ref_name }}" || true
+            done
+            if [ $pushed -ne 1 ]; then
+              echo "Failed to push after 5 attempts."
+              exit 1
+            fi
           else
             echo "No changes to commit."
           fi
