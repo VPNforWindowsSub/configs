@@ -206,20 +206,63 @@ def get_patterniha_commit_time():
         headers["Authorization"] = f"Bearer {token}"
     try:
         import requests
-        url = "https://api.github.com/repos/patterniha/Free-Configs/commits?path=configs.txt&page=1&per_page=1"
-        resp = requests.get(url, headers=headers, timeout=10)
-        if resp.status_code in (401, 403):
-            resp = requests.get(url, headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}, timeout=10)
-        if resp.status_code == 200:
-            data = resp.json()
-            if isinstance(data, list) and data:
-                commit_info = data[0].get("commit", {})
-                date_str = (commit_info.get("committer") or {}).get("date") or (commit_info.get("author") or {}).get("date")
-                if date_str:
-                    return datetime.datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+        for path_target in ["configs_base64.txt", "configs.txt"]:
+            url = f"https://api.github.com/repos/patterniha/Free-Configs/commits?path={path_target}&page=1&per_page=1"
+            resp = requests.get(url, headers=headers, timeout=10)
+            if resp.status_code in (401, 403):
+                resp = requests.get(url, headers={"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}, timeout=10)
+            if resp.status_code == 200:
+                data = resp.json()
+                if isinstance(data, list) and data:
+                    commit_info = data[0].get("commit", {})
+                    date_str = (commit_info.get("committer") or {}).get("date") or (commit_info.get("author") or {}).get("date")
+                    if date_str:
+                        return datetime.datetime.fromisoformat(date_str.replace("Z", "+00:00"))
     except Exception:
         pass
     return None
+
+def get_patterniha_raw_links():
+    links = []
+    try:
+        import requests
+        url = f'https://raw.githubusercontent.com/patterniha/Free-Configs/refs/heads/main/configs_base64.txt?t={int(time.time())}'
+        resp = requests.get(url, timeout=10)
+        if resp.status_code == 200:
+            raw_text = resp.text.strip()
+            try:
+                raw_text += '=' * (-len(raw_text) % 4)
+                decoded = base64.b64decode(raw_text.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore')
+                lines = decoded.splitlines()
+            except Exception:
+                lines = raw_text.splitlines()
+            links = [l.strip() for l in lines if l.strip() and l.startswith(('vless://', 'trojan://'))]
+    except Exception:
+        pass
+    if not links:
+        try:
+            import requests
+            resp = requests.get(f'https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt?t={int(time.time())}', timeout=10)
+            if resp.status_code == 200:
+                links = [l.strip() for l in resp.text.splitlines() if l.strip() and l.startswith(('vless://', 'trojan://'))]
+        except Exception:
+            pass
+    if not links:
+        url_target = 'patterniha/Free-Configs'
+        sub_list_file = './sub/sub_list.txt'
+        if os.path.exists(sub_list_file):
+            try:
+                with open(sub_list_file, 'r', encoding='utf-8') as f:
+                    lines = [l.strip() for l in f if l.strip()]
+                for idx, line in enumerate(lines, 1):
+                    if url_target in line:
+                        list_file = f'./sub/list/{idx:02d}.txt'
+                        if os.path.exists(list_file):
+                            with open(list_file, 'r', encoding='utf-8') as lf:
+                                links = [l.strip() for l in lf if l.strip() and l.startswith(('vless://', 'trojan://'))]
+            except Exception:
+                pass
+    return links
 
 def is_patterniha_build_running():
     headers = {"Accept": "application/vnd.github.v3+json", "User-Agent": "ProxyTester"}
@@ -293,9 +336,22 @@ def get_dynamic_patterniha_settings():
     clean_ip, clean_fm = None, None
     try:
         import requests
-        resp = requests.get(f'https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt?t={int(time.time())}', timeout=10)
+        text = ""
+        url_b64 = f'https://raw.githubusercontent.com/patterniha/Free-Configs/refs/heads/main/configs_base64.txt?t={int(time.time())}'
+        resp = requests.get(url_b64, timeout=10)
         if resp.status_code == 200:
-            for l in resp.text.splitlines():
+            raw_text = resp.text.strip()
+            try:
+                raw_text += '=' * (-len(raw_text) % 4)
+                text = base64.b64decode(raw_text.replace('-', '+').replace('_', '/')).decode('utf-8', errors='ignore')
+            except Exception:
+                text = raw_text
+        if not text:
+            resp = requests.get(f'https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt?t={int(time.time())}', timeout=10)
+            if resp.status_code == 200:
+                text = resp.text
+        if text:
+            for l in text.splitlines():
                 if not clean_ip:
                     m_ip = re.search(r'@([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+):', l)
                     if m_ip:
@@ -356,8 +412,8 @@ RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
 
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
-REALITY_TARGET_PERCENT = 0.50
-REALITY_TARGET_SIZE = math.ceil(ETERNITY_LIST_SIZE * REALITY_TARGET_PERCENT)
+REALITY_MAX_PERCENT = 0.30
+REALITY_MAX_SIZE = math.floor(ETERNITY_LIST_SIZE * REALITY_MAX_PERCENT)
 NODES_PER_COUNTRY = 1
 COUNTRY_NODE_LIMITS = {
     'TR': 4,
@@ -621,6 +677,8 @@ def process_and_save_results():
     tested_count = len(nodes)
     total_incoming_nodes = tested_count + parse_error_count
 
+    patterniha_initial_sigs = {get_proxy_signature(l) for l in get_patterniha_raw_links() if l}
+
     for node in nodes:
         speed = node.get('avg_speed', 0)
         delay = node.get('delay', 9999)
@@ -632,6 +690,8 @@ def process_and_save_results():
             latency_score = 0
 
         node['health_score'] = (speed_mb * 7) + (latency_score * 0.3)
+        if get_proxy_signature(node.get('link', '')) in patterniha_initial_sigs and 0 < delay < 5000:
+            node['health_score'] = max(0.1, node['health_score'])
 
     working_nodes = [node for node in nodes if node.get('health_score', 0) > 0]
     
@@ -694,8 +754,9 @@ def process_and_save_results():
                 speed_mb = sim_speed / 1_000_000
                 latency_score = max(0, 100 - (sim_delay / 10)) if 0 < sim_delay < 5000 else 0
                 new_health = (speed_mb * 7) + (latency_score * 0.3)
-
                 link = node.get('link')
+                if link and get_proxy_signature(link) in patterniha_initial_sigs and 0 < sim_delay < 5000:
+                    new_health = max(0.1, new_health)
                 if link:
                     raw_processed.append({
                         'link': link, 'ip': ip_address, 'tag': node.get('tag', 'N/A'),
@@ -996,18 +1057,10 @@ def process_and_save_results():
                 nodes_by_country[c] = []
             nodes_by_country[c].append(node)
 
-    def reality_rank(link):
-        if not is_vless_reality(link):
-            return 2
-        l = link.lower()
-        if 'type=grpc' in l or 'type=xhttp' in l:
-            return 0
-        return 1
-
-    eternity_candidates.sort(key=lambda x: (reality_rank(x['link']), -x['speed']))
+    eternity_candidates.sort(key=lambda x: -x.get('speed', 0))
 
     for c in nodes_by_country:
-        nodes_by_country[c].sort(key=lambda x: (reality_rank(x['link']), -x['speed']))
+        nodes_by_country[c].sort(key=lambda x: -x.get('speed', 0))
 
     eternity_nodes = []
     selected = set()
@@ -1017,6 +1070,12 @@ def process_and_save_results():
 
     def add_to_eternity(n, ignore_country_limit=False):
         nonlocal reality_c
+        is_reality = is_vless_reality(n['link'])
+        if is_reality and reality_c >= REALITY_MAX_SIZE:
+            return False
+        sig = get_proxy_signature(n['link'])
+        if sig and sig in selected_sigs:
+            return False
         c_code = n['country']
         max_allowed = COUNTRY_MAX_LIMITS.get(c_code, 999)
         if not ignore_country_limit and c_counts.get(c_code, 0) >= max_allowed:
@@ -1024,39 +1083,12 @@ def process_and_save_results():
 
         eternity_nodes.append(n)
         selected.add(n['link'])
-        sig = get_proxy_signature(n['link'])
         if sig:
             selected_sigs.add(sig)
         c_counts[c_code] = c_counts.get(c_code, 0) + 1
-        if is_vless_reality(n['link']):
+        if is_reality:
             reality_c += 1
         return True
-
-    def get_patterniha_raw_links():
-        links = []
-        try:
-            import requests
-            resp = requests.get(f'https://raw.githubusercontent.com/patterniha/Free-Configs/main/configs.txt?t={int(time.time())}', timeout=10)
-            if resp.status_code == 200:
-                links = [l.strip() for l in resp.text.splitlines() if l.strip() and l.startswith(('vless://', 'trojan://'))]
-        except Exception:
-            pass
-        if not links:
-            url_target = 'patterniha/Free-Configs'
-            sub_list_file = './sub/sub_list.txt'
-            if os.path.exists(sub_list_file):
-                try:
-                    with open(sub_list_file, 'r', encoding='utf-8') as f:
-                        lines = [l.strip() for l in f if l.strip()]
-                    for idx, line in enumerate(lines, 1):
-                        if url_target in line:
-                            list_file = f'./sub/list/{idx:02d}.txt'
-                            if os.path.exists(list_file):
-                                with open(list_file, 'r', encoding='utf-8') as lf:
-                                    links = [l.strip() for l in lf if l.strip() and l.startswith(('vless://', 'trojan://'))]
-                except Exception:
-                    pass
-        return links
 
     if iran_verified_records:
         verified_map = {item['link']: item.get('delay', 9999) for item in iran_verified_records if 'link' in item}
@@ -1074,13 +1106,35 @@ def process_and_save_results():
                 break
             if add_to_eternity(vn, ignore_country_limit=True):
                 verified_added_count += 1
-                
-    raw_patterniha_links = get_patterniha_raw_links()
-    patterniha_sigs = {get_proxy_signature(l) for l in raw_patterniha_links if l}
-    patterniha_untested_links = []
 
+    raw_patterniha_links = get_patterniha_raw_links()
+    patterniha_sigs = set()
+    for l in raw_patterniha_links:
+        if not l: continue
+        sig = get_proxy_signature(l)
+        if sig: patterniha_sigs.add(sig)
+        cl_sig = get_proxy_signature(clean_link_params(l))
+        if cl_sig: patterniha_sigs.add(cl_sig)
+
+    patterniha_working = [
+        n for n in conventional_nodes
+        if not n['link'].startswith(('ss://', 'vmess://'))
+        and get_proxy_signature(n['link']) in patterniha_sigs
+        and get_proxy_signature(n['link']) not in selected_sigs
+        and n['link'] not in selected
+        and 0 < n.get('delay', 9999) < 5000
+    ]
+    patterniha_working.sort(key=lambda x: (-x.get('speed', 0), x.get('delay', 9999)))
+
+    for n in patterniha_working[:20]:
+        if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+            break
+        add_to_eternity(n, ignore_country_limit=True)
+
+    patterniha_untested_links = []
     if raw_patterniha_links:
-        untested_sample = random.sample(raw_patterniha_links, min(5, len(raw_patterniha_links)))
+        untested_candidates = [l for l in raw_patterniha_links if l and get_proxy_signature(l) not in selected_sigs]
+        untested_sample = random.sample(untested_candidates, min(5, len(untested_candidates))) if untested_candidates else []
         for raw_link in untested_sample:
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
                 break
@@ -1101,21 +1155,6 @@ def process_and_save_results():
                 selected.add(cleaned)
                 patterniha_untested_links.append(formatted_link)
 
-    patterniha_working = [
-        n for n in eternity_candidates
-        if get_proxy_signature(n['link']) in patterniha_sigs
-        and get_proxy_signature(n['link']) not in selected_sigs
-        and n.get('health_score', 0) > 0
-        and n['link'] not in selected
-    ]
-    patterniha_working.sort(key=lambda x: -x.get('speed', 0))
-
-    for n in patterniha_working[:10]:
-        if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
-            break
-        if n['link'] not in selected and get_proxy_signature(n['link']) not in selected_sigs:
-            add_to_eternity(n, ignore_country_limit=True)
-
     for c in sorted(nodes_by_country.keys()):
         limit = COUNTRY_NODE_LIMITS.get(c, NODES_PER_COUNTRY)
         to_take = min(limit, len(nodes_by_country[c]))
@@ -1125,13 +1164,6 @@ def process_and_save_results():
                 break
             if n['link'] not in selected and add_to_eternity(n):
                 added += 1
-
-    if reality_c < REALITY_TARGET_SIZE:
-        for n in eternity_candidates:
-            if len(eternity_nodes) >= ETERNITY_LIST_SIZE or reality_c >= REALITY_TARGET_SIZE:
-                break
-            if is_vless_reality(n['link']) and n['link'] not in selected:
-                add_to_eternity(n)
 
     if len(eternity_nodes) < ETERNITY_LIST_SIZE:
         for n in eternity_candidates:
