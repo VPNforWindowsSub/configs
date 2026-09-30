@@ -1005,7 +1005,7 @@ def process_and_save_results():
     random.shuffle(theme_pool)
 
     for node in resilience_candidates:
-        if len(resilience_nodes) >= 300: break
+        if len(resilience_nodes) >= 200: break
         if not theme_pool:
             theme_pool = list(RESILIENCE_THEMES)
             random.shuffle(theme_pool)
