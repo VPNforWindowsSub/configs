@@ -831,6 +831,14 @@ def process_and_save_results():
             except Exception:
                 return raw_link
 
+        if raw_link.startswith(("vless://", "trojan://")) and "?" in raw_link:
+            base_part, query_part = raw_link.split("?", 1)
+            frag_part = ""
+            if "#" in query_part:
+                query_part, frag_part = query_part.split("#", 1)
+                frag_part = "#" + frag_part
+            query_part = re.sub(r'(?<=[^?&])(security|encryption|type|sni|host|path)=', r'&\1=', query_part)
+            raw_link = f"{base_part}?{query_part}{frag_part}"
         raw_link = re.sub(r'([?&])allowInsecure=(?:1|true)', r'\1allowInsecure=0', raw_link, flags=re.IGNORECASE)
         raw_link = re.sub(r'([?&])insecure=(?:1|true)', r'\1insecure=0', raw_link, flags=re.IGNORECASE)
 
@@ -883,7 +891,27 @@ def process_and_save_results():
                 
         return raw_link
 
-    unique_nodes = list(seen_signatures.values())
+    def is_safe_node(link):
+        try:
+            link = clean_link_params(link)
+            if link.startswith(('vless://', 'trojan://')):
+                parsed = urllib.parse.urlparse(link)
+                params = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
+                sec_default = 'tls' if link.startswith('trojan://') else 'none'
+                sec = params.get('security', sec_default).lower()
+                enc = params.get('encryption', 'none').lower()
+                if sec in ['tls', 'reality'] or enc not in ['none', '']:
+                    return True
+                server = (parsed.hostname or '').strip('[]')
+                if is_ip_address(server):
+                    ip = ipaddress.ip_address(server)
+                    return ip.is_private or ip.is_loopback
+                return True
+            return True
+        except Exception:
+            return True
+
+    unique_nodes = [node for node in seen_signatures.values() if is_safe_node(node['link'])]
     unique_nodes.sort(key=lambda x: x.get('health_score', 0), reverse=True)
     duplicates_removed = len(raw_processed) - len(unique_nodes)
 
@@ -1035,11 +1063,20 @@ def process_and_save_results():
         l = link.lower()
         return 'security=reality' in l or 'security%3dreality' in l
 
+    def is_link_secure(l):
+        try:
+            l = clean_link_params(l)
+            q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(l).query, keep_blank_values=True))
+            def_sec = 'tls' if l.startswith('trojan://') else 'none'
+            return q.get('security', def_sec).lower() in ['tls', 'reality']
+        except Exception:
+            return False
+
     uuid_counts_eternity = {}
     eternity_candidates = []
     for node in conventional_nodes:
         link = node['link']
-        if link.startswith(('ss://', 'vmess://')):
+        if link.startswith(('ss://', 'vmess://')) or not is_link_secure(link):
             continue
         uuid = get_uuid(link)
         if not uuid:
@@ -1070,10 +1107,13 @@ def process_and_save_results():
 
     def add_to_eternity(n, ignore_country_limit=False):
         nonlocal reality_c
-        is_reality = is_vless_reality(n['link'])
+        link = n.get('link', '')
+        if link.startswith(('ss://', 'vmess://')) or not is_link_secure(link):
+            return False
+        is_reality = is_vless_reality(link)
         if is_reality and reality_c >= REALITY_MAX_SIZE:
             return False
-        sig = get_proxy_signature(n['link'])
+        sig = get_proxy_signature(link)
         if sig and sig in selected_sigs:
             return False
         c_code = n['country']
@@ -1082,7 +1122,7 @@ def process_and_save_results():
             return False
 
         eternity_nodes.append(n)
-        selected.add(n['link'])
+        selected.add(link)
         if sig:
             selected_sigs.add(sig)
         c_counts[c_code] = c_counts.get(c_code, 0) + 1
@@ -1094,7 +1134,7 @@ def process_and_save_results():
         verified_map = {item['link']: item.get('delay', 9999) for item in iran_verified_records if 'link' in item}
         verified_nodes_pool = []
         for n in conventional_nodes:
-            if n['link'] in verified_map:
+            if n['link'] in verified_map and not n['link'].startswith(('ss://', 'vmess://')) and is_link_secure(n['link']):
                 node_copy = n.copy()
                 node_copy['iran_delay'] = verified_map[n['link']]
                 verified_nodes_pool.append(node_copy)
@@ -1119,6 +1159,7 @@ def process_and_save_results():
     patterniha_working = [
         n for n in conventional_nodes
         if not n['link'].startswith(('ss://', 'vmess://'))
+        and is_link_secure(n['link'])
         and get_proxy_signature(n['link']) in patterniha_sigs
         and get_proxy_signature(n['link']) not in selected_sigs
         and n['link'] not in selected
@@ -1133,7 +1174,10 @@ def process_and_save_results():
 
     patterniha_untested_links = []
     if raw_patterniha_links:
-        untested_candidates = [l for l in raw_patterniha_links if l and get_proxy_signature(l) not in selected_sigs]
+        untested_candidates = [
+            l for l in raw_patterniha_links
+            if l and get_proxy_signature(l) not in selected_sigs and is_link_secure(l)
+        ]
         untested_sample = random.sample(untested_candidates, min(5, len(untested_candidates))) if untested_candidates else []
         for raw_link in untested_sample:
             if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
