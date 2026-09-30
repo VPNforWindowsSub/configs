@@ -661,9 +661,31 @@ def process_and_save_results():
             shutil.move(log_f, os.path.join(LOGS_DIR, log_f))
 
     parse_error_count = 0
-    if os.path.exists(os.path.join(LOGS_DIR, 'parse_errors.txt')):
-        with open(os.path.join(LOGS_DIR, 'parse_errors.txt'), 'r', encoding='utf-8') as f:
-            parse_error_count = sum(1 for line in f if line.strip())
+    parse_err_file = os.path.join(LOGS_DIR, 'parse_errors.txt')
+    if os.path.exists(parse_err_file):
+        sample_lines = []
+        with open(parse_err_file, 'r', encoding='utf-8') as f:
+            for line in f:
+                if line.strip():
+                    parse_error_count += 1
+                    if len(sample_lines) < 500:
+                        sample_lines.append(line)
+        with open(parse_err_file, 'w', encoding='utf-8') as f:
+            f.write(f"# Truncated log: showing {len(sample_lines)} sample errors out of {parse_error_count} total\n")
+            f.writelines(sample_lines)
+
+    for log_f in ['runner_logs.txt', 'xray_crashes.txt']:
+        fp = os.path.join(LOGS_DIR, log_f)
+        if os.path.exists(fp):
+            sample = []
+            with open(fp, 'r', encoding='utf-8') as f:
+                for line in f:
+                    if len(sample) < 1000:
+                        sample.append(line)
+                    else:
+                        break
+            with open(fp, 'w', encoding='utf-8') as f:
+                f.writelines(sample)
 
     try:
         with open(META_FILE, 'r', encoding='utf-8') as f:
