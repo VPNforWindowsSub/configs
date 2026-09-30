@@ -949,15 +949,13 @@ jobs:
               json.dump(all_data, out, indent=2)
               
           def merge_logs(pattern, outfile):
-              lines = []
-              for f in sorted(glob.glob(pattern)):
-                  try:
-                      with open(f, 'r', encoding='utf-8') as file:
-                          lines.extend(file.readlines())
-                  except: pass
-              if lines:
-                  with open(outfile, 'w', encoding='utf-8') as out:
-                      out.writelines(lines)
+              with open(outfile, 'w', encoding='utf-8') as out:
+                  for f in sorted(glob.glob(pattern)):
+                      try:
+                          with open(f, 'r', encoding='utf-8') as file:
+                              for line in file:
+                                  out.write(line)
+                      except: pass
 
           merge_logs('processed_chunks/*_debug.log', 'runner_logs.txt')
           merge_logs('processed_chunks/*_errors.log', 'parse_errors.txt')
@@ -981,7 +979,6 @@ jobs:
           git config --local user.name "GitHub Action"
           git config --local http.postBuffer 524288000
           git config --local http.version HTTP/1.1
-          git pull --rebase origin "${{ github.ref_name }}" || true
           git rm --cached -f Logs/dead_nodes.txt 2>/dev/null || true
           rm -f Logs/dead_nodes.txt
           git add Eternity Eternity.txt Diversity Diversity.txt Resilience.txt Resilience full.txt full_base64.txt LogInfo.txt sub/ Logs/ Stats.md
