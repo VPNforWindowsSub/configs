@@ -85,7 +85,9 @@ jobs:
 
       - name: Download Xray Core
         run: |
-          wget -O xray.zip https://github.com/XTLS/Xray-core/releases/download/v26.3.27/Xray-linux-64.zip
+          TAG=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" https://api.github.com/repos/XTLS/Xray-core/releases | python3 -c "import sys, json; print(json.load(sys.stdin)[0]['tag_name'])" 2>/dev/null || echo "v26.9.30")
+          [ -z "$TAG" ] && TAG="v26.9.30"
+          wget -O xray.zip "https://github.com/XTLS/Xray-core/releases/download/${TAG}/Xray-linux-64.zip" || wget -O xray.zip "https://github.com/XTLS/Xray-core/releases/download/v26.9.30/Xray-linux-64.zip"
           unzip xray.zip xray
           chmod +x xray
 
@@ -96,7 +98,7 @@ jobs:
       - name: Write Xray Tester (Part 1)
         run: |
           cat <<'EOF' > xray_tester.py
-          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket, re, html
+          import json, urllib.parse, base64, time, subprocess, concurrent.futures, requests, sys, socket, re, html, ipaddress
 
           try:
               start_idx = int(sys.argv[1])
@@ -252,16 +254,25 @@ jobs:
               if net_type not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp"]:
                   raise Exception(f"Invalid VLESS network type: {net_type}")
 
+              enc = clean_str(params.get('encryption', ['none'])[0]).lower()
               config = {
                   "tag": f"out-{index}", "protocol": "vless",
                   "settings": {
-                      "vnext": [{"address": server, "port": port, "users": [{"id": uuid, "encryption": "none"}]}]
+                      "vnext": [{"address": server, "port": port, "users": [{"id": uuid, "encryption": enc if enc and enc != 'none' else "none"}]}]
                   },
                   "streamSettings": {"network": net_type}
               }
 
-              sec = clean_str(params.get('security', ['none'])[0]).lower()
+              sec_list = [clean_str(x).lower() for x in params.get('security', ['none']) if clean_str(x)]
+              sec = 'reality' if 'reality' in sec_list else ('tls' if 'tls' in sec_list else (sec_list[-1] if sec_list else 'none'))
               if sec not in ["none", "tls", "reality"]: raise Exception(f"Invalid VLESS security: {sec}")
+              enc = clean_str(params.get('encryption', ['none'])[0]).lower()
+              if sec == 'none' and enc in ['none', '']:
+                  try:
+                      ip_obj = ipaddress.ip_address(server.strip('[]'))
+                      if not (ip_obj.is_private or ip_obj.is_loopback):
+                          raise Exception("VLESS without TLS or encryption over public IP is prohibited")
+                  except ValueError: pass
 
               if sec == 'reality' and net_type not in ['tcp', 'grpc', 'xhttp']:
                   raise Exception(f"REALITY unsupported network: {net_type}")
@@ -541,9 +552,16 @@ jobs:
               if net not in ["tcp", "ws", "grpc", "httpupgrade", "xhttp"]:
                   raise Exception(f"Invalid Trojan network type: {net}")
 
-              sec = clean_str(params.get('security', ['tls'])[0]).lower()
+              sec_list = [clean_str(x).lower() for x in params.get('security', ['tls']) if clean_str(x)]
+              sec = 'reality' if 'reality' in sec_list else ('tls' if 'tls' in sec_list else (sec_list[-1] if sec_list else 'tls'))
               if sec not in ["none", "tls", "reality"]:
                   raise Exception(f"Invalid Trojan security: {sec}")
+              if sec == 'none':
+                  try:
+                      ip_obj = ipaddress.ip_address(server.strip('[]'))
+                      if not (ip_obj.is_private or ip_obj.is_loopback):
+                          raise Exception("Trojan without TLS over public IP is prohibited")
+                  except ValueError: pass
               if sec == 'reality' and net not in ['tcp', 'grpc', 'xhttp']:
                   raise Exception(f"REALITY unsupported network: {net}")
 
@@ -694,6 +712,14 @@ jobs:
                   except Exception:
                       return raw_link
 
+              if raw_link.startswith(("vless://", "trojan://")) and "?" in raw_link:
+                  base_part, query_part = raw_link.split("?", 1)
+                  frag_part = ""
+                  if "#" in query_part:
+                      query_part, frag_part = query_part.split("#", 1)
+                      frag_part = "#" + frag_part
+                  query_part = re.sub(r'(?<=[^?&])(security|encryption|type|sni|host|path)=', r'&\1=', query_part)
+                  raw_link = f"{base_part}?{query_part}{frag_part}"
               raw_link = re.sub(r'([?&])allowInsecure=(?:1|true)', r'\1allowInsecure=0', raw_link, flags=re.IGNORECASE)
               raw_link = re.sub(r'([?&])insecure=(?:1|true)', r'\1insecure=0', raw_link, flags=re.IGNORECASE)
 
