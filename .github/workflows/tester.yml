@@ -749,6 +749,10 @@ jobs:
                           break
                       raw_link = new_link
 
+              if "ech=" in raw_link and "fm=" in raw_link:
+                  raw_link = re.sub(r'([?&])fm=[^&#]*(&?)', lambda m: m.group(1) if m.group(1) == '?' and m.group(2) else ('&' if m.group(1) == '&' and m.group(2) else ''), raw_link)
+                  raw_link = raw_link.replace('?&', '?').rstrip('?&')
+
               def process_extra(m):
                   raw_extra = urllib.parse.unquote(m.group(2))
                   for candidate in [raw_extra, raw_extra.replace('+', ' ')]:
