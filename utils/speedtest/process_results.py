@@ -409,6 +409,41 @@ PREFERRED_TARGETS = [
 ]
 DYNAMIC_CLEAN_IP, FINALMASK_SETTINGS = get_dynamic_patterniha_settings()
 RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
+ECH_RESOLVERS = [
+    "cloudflare-ech.com+udp://208.67.222.222:5353",
+    "cloudflare-ech.com+udp://208.67.220.220:5353",
+    "cloudflare-ech.com+udp://1.1.1.1",
+    "cloudflare-ech.com+udp://8.8.8.8"
+]
+ECH_WEIGHTS = [35, 35, 15, 15]
+
+def apply_ech_to_link(link):
+    try:
+        if not (link.startswith('vless://') or link.startswith('trojan://')):
+            return link
+        parsed = urllib.parse.urlparse(link)
+        params = dict(urllib.parse.parse_qsl(parsed.query, keep_blank_values=True))
+        sec_default = 'tls' if link.startswith('trojan://') else 'none'
+        sec = params.get('security', sec_default).lower()
+        if sec != 'tls':
+            return link
+        params['security'] = 'tls'
+        server = parsed.hostname or ''
+        origin_sni = params.get('sni') or (server if not is_ip_address(server) else '')
+        if not origin_sni or is_ip_address(origin_sni):
+            return link
+        params['sni'] = origin_sni
+        net = params.get('type', 'tcp').lower()
+        if net in ['ws', 'httpupgrade', 'xhttp']:
+            if 'host' not in params or not params['host']:
+                params['host'] = origin_sni
+        params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
+        params.pop('fm', None)
+        new_query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
+        frag = f"#{parsed.fragment}" if parsed.fragment else ""
+        return f"{parsed.scheme}://{parsed.netloc}?{new_query}{frag}"
+    except Exception:
+        return link
 
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
@@ -555,7 +590,7 @@ def ensure_empty_files():
     for p in ['vmess.txt', 'vless.txt', 'trojan.txt', 'ss.txt']:
         open(os.path.join(SPLITTED_OUTPUT_DIR, p), 'w').close()
 
-def create_resilience_clone(node, theme_name, apply_fragment=False):
+def create_resilience_clone(node, theme_name, apply_fragment=False, apply_ech=False):
     link = node.get('link', '')
     ip = node.get('ip', '')
     if not is_cloudflare_ip(ip): return None
@@ -583,7 +618,7 @@ def create_resilience_clone(node, theme_name, apply_fragment=False):
 
             params = dict(urllib.parse.parse_qsl(query, keep_blank_values=True))
             net = params.get('type', 'tcp')
-            sec = params.get('security', 'none')
+            sec = params.get('security', 'tls' if scheme == 'trojan' else 'none')
 
             if sec != 'tls': return None
             if net not in ['ws', 'grpc', 'httpupgrade', 'xhttp']: return None
@@ -601,10 +636,15 @@ def create_resilience_clone(node, theme_name, apply_fragment=False):
             if scheme == 'vless' and not params.get('encryption'):
                 params['encryption'] = 'none'
 
-            if apply_fragment:
+            if apply_ech:
+                params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
+                params.pop('fm', None)
+            elif apply_fragment:
                 params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
+                params.pop('ech', None)
             else:
                 params.pop('fm', None)
+                params.pop('ech', None)
 
             server = target_addr
             new_query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
@@ -890,6 +930,10 @@ def process_and_save_results():
                     break
                 raw_link = new_link
 
+        if "ech=" in raw_link and "fm=" in raw_link:
+            raw_link = re.sub(r'([?&])fm=[^&#]*(&?)', lambda m: m.group(1) if m.group(1) == '?' and m.group(2) else ('&' if m.group(1) == '&' and m.group(2) else ''), raw_link)
+            raw_link = raw_link.replace('?&', '?').rstrip('?&')
+
         def process_extra(m):
             raw_extra = urllib.parse.unquote(m.group(2))
             for candidate in [raw_extra, raw_extra.replace('+', ' ')]:
@@ -912,6 +956,21 @@ def process_and_save_results():
                 raw_link = new_link
                 
         return raw_link
+
+    def is_vless_reality(link):
+        if not link.startswith('vless://'):
+            return False
+        l = link.lower()
+        return 'security=reality' in l or 'security%3dreality' in l
+
+    def is_link_secure(l):
+        try:
+            l = clean_link_params(l)
+            q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(l).query, keep_blank_values=True))
+            def_sec = 'tls' if l.startswith('trojan://') else 'none'
+            return q.get('security', def_sec).lower() in ['tls', 'reality']
+        except Exception:
+            return False
 
     def is_safe_node(link):
         try:
@@ -1013,8 +1072,8 @@ def process_and_save_results():
         current_theme = theme_pool.pop(0)
         theme_name = f"{current_theme}-{random.randint(1000, 9999)}"
 
-        apply_fragment = (len(resilience_nodes) % 2 == 0)
-        cloned = create_resilience_clone(node, theme_name, apply_fragment)
+        is_ech = (random.random() < 0.70)
+        cloned = create_resilience_clone(node, theme_name, apply_fragment=not is_ech, apply_ech=is_ech)
         if cloned: resilience_nodes.append(cloned)
         else: theme_pool.insert(0, current_theme)
 
@@ -1074,25 +1133,22 @@ def process_and_save_results():
     log_list = [f"name: {n['tag']} | avg_speed: {n.get('speed',0)/1_048_576:.3f} MB/s | delay: {n['delay']} ms\n" for n in conventional_nodes]
     with open(LOG_INFO_FILE, 'w', encoding='utf-8') as f: f.writelines(log_list)
 
+    commit_dt = get_patterniha_commit_time()
+    now_utc = datetime.datetime.now(datetime.timezone.utc)
+    patterniha_age_hours = (now_utc - commit_dt).total_seconds() / 3600.0 if commit_dt else 999.0
+    is_patterniha_old = patterniha_age_hours > 12.0
+    raw_patterniha_links = get_patterniha_raw_links()
+
+    probe_candidates = list(full_links)
+    if is_patterniha_old and raw_patterniha_links:
+        p_probe_links = [clean_link_params(l) for l in raw_patterniha_links if l and l.startswith(('vless://', 'trojan://')) and is_link_secure(l)]
+        seen_cand = set(p_probe_links)
+        probe_candidates = p_probe_links + [l for l in full_links if l not in seen_cand]
+
     print("\n--- Initiating Local Iran Probe Coordination ---")
-    iran_verified_records = coordinate_iran_probe(full_links)
+    iran_verified_records = coordinate_iran_probe(probe_candidates)
 
     print("\n--- Generating Eternity List ---")
-
-    def is_vless_reality(link):
-        if not link.startswith('vless://'):
-            return False
-        l = link.lower()
-        return 'security=reality' in l or 'security%3dreality' in l
-
-    def is_link_secure(l):
-        try:
-            l = clean_link_params(l)
-            q = dict(urllib.parse.parse_qsl(urllib.parse.urlparse(l).query, keep_blank_values=True))
-            def_sec = 'tls' if l.startswith('trojan://') else 'none'
-            return q.get('security', def_sec).lower() in ['tls', 'reality']
-        except Exception:
-            return False
 
     uuid_counts_eternity = {}
     eternity_candidates = []
@@ -1152,8 +1208,10 @@ def process_and_save_results():
             reality_c += 1
         return True
 
+    verified_map = {item['link']: item.get('delay', 9999) for item in iran_verified_records if 'link' in item} if iran_verified_records else {}
+    verified_sigs = {get_proxy_signature(item['link']): item.get('delay', 9999) for item in iran_verified_records if 'link' in item and get_proxy_signature(item['link'])} if iran_verified_records else {}
+
     if iran_verified_records:
-        verified_map = {item['link']: item.get('delay', 9999) for item in iran_verified_records if 'link' in item}
         verified_nodes_pool = []
         for n in conventional_nodes:
             if n['link'] in verified_map and not n['link'].startswith(('ss://', 'vmess://')) and is_link_secure(n['link']):
@@ -1169,7 +1227,9 @@ def process_and_save_results():
             if add_to_eternity(vn, ignore_country_limit=True):
                 verified_added_count += 1
 
-    raw_patterniha_links = get_patterniha_raw_links()
+    if not raw_patterniha_links:
+        raw_patterniha_links = get_patterniha_raw_links()
+
     patterniha_sigs = set()
     for l in raw_patterniha_links:
         if not l: continue
@@ -1187,6 +1247,14 @@ def process_and_save_results():
         and n['link'] not in selected
         and 0 < n.get('delay', 9999) < 5000
     ]
+
+    require_local_verified = bool(iran_verified_records and is_patterniha_old)
+    if require_local_verified:
+        patterniha_working = [
+            n for n in patterniha_working
+            if n['link'] in verified_map or get_proxy_signature(n['link']) in verified_sigs
+        ]
+
     patterniha_working.sort(key=lambda x: (-x.get('speed', 0), x.get('delay', 9999)))
 
     for n in patterniha_working[:20]:
@@ -1195,7 +1263,35 @@ def process_and_save_results():
         add_to_eternity(n, ignore_country_limit=True)
 
     patterniha_untested_links = []
-    if raw_patterniha_links:
+    if require_local_verified:
+        for raw_link in raw_patterniha_links:
+            if len(eternity_nodes) >= ETERNITY_LIST_SIZE:
+                break
+            if not raw_link or not raw_link.startswith(('vless://', 'trojan://')) or not is_link_secure(raw_link):
+                continue
+            cleaned = clean_link_params(raw_link)
+            sig = get_proxy_signature(cleaned)
+            if sig in selected_sigs or raw_link in selected or cleaned in selected:
+                continue
+            if raw_link in verified_map or cleaned in verified_map or sig in verified_sigs:
+                v_delay = verified_map.get(raw_link) or verified_map.get(cleaned) or verified_sigs.get(sig, 999)
+                tag = f"🏁 Relay-{random.randint(1000, 9999)}"
+                formatted_link = f"{cleaned.split('#')[0]}#{urllib.parse.quote(tag)}"
+                v_node = {
+                    'link': formatted_link,
+                    'tag': tag,
+                    'country': 'RELAY',
+                    'country_name': 'Relay',
+                    'speed': 1000000,
+                    'delay': v_delay,
+                    'iran_delay': v_delay,
+                    'health_score': max(0.1, 100 - (v_delay / 10))
+                }
+                if add_to_eternity(v_node, ignore_country_limit=True):
+                    selected.add(raw_link)
+                    selected.add(cleaned)
+                    patterniha_untested_links.append(formatted_link)
+    elif raw_patterniha_links:
         untested_candidates = [
             l for l in raw_patterniha_links
             if l and get_proxy_signature(l) not in selected_sigs and is_link_secure(l)
@@ -1238,7 +1334,12 @@ def process_and_save_results():
             if n['link'] not in selected:
                 add_to_eternity(n)
 
-    eternity_links = [p['link'] for p in eternity_nodes]
+    eternity_links = []
+    for p in eternity_nodes:
+        link = p['link']
+        if (p.get('country') == 'RELAY' or is_cloudflare_ip(p.get('ip', ''))) and not is_vless_reality(link) and random.random() < 0.70:
+            link = apply_ech_to_link(link)
+        eternity_links.append(link)
     random.shuffle(eternity_links)
 
     with open(ETERNITY_OUTPUT_FILE, 'w', encoding='utf-8') as f: f.write('\n'.join(eternity_links))
