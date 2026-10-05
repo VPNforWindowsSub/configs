@@ -410,12 +410,20 @@ PREFERRED_TARGETS = [
 DYNAMIC_CLEAN_IP, FINALMASK_SETTINGS = get_dynamic_patterniha_settings()
 RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
 ECH_RESOLVERS = [
-    "cloudflare-ech.com+udp://208.67.222.222:5353",
-    "cloudflare-ech.com+udp://208.67.220.220:5353",
-    "cloudflare-ech.com+udp://1.1.1.1",
-    "cloudflare-ech.com+udp://8.8.8.8"
+    "remove.bg+udp://8.8.8.8",
+    "remove.bg+udp://208.67.222.222:5353",
+    "doxygen.org+udp://8.8.8.8",
+    "doxygen.org+udp://208.67.222.222:5353",
+    "sagepub.com+udp://8.8.8.8",
+    "sagepub.com+udp://208.67.220.220:5353",
+    "sphinx-doc.org+udp://8.8.8.8",
+    "sphinx-doc.org+udp://208.67.222.222:5353",
+    "crypto.cloudflare.com+udp://8.8.8.8",
+    "crypto.cloudflare.com+udp://208.67.222.222:5353",
+    "html5up.net+udp://8.8.8.8",
+    "html5up.net+udp://208.67.220.220:5353"
 ]
-ECH_WEIGHTS = [35, 35, 15, 15]
+ECH_WEIGHTS = [1] * len(ECH_RESOLVERS)
 
 def apply_ech_to_link(link):
     try:
