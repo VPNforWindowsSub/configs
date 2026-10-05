@@ -410,8 +410,6 @@ PREFERRED_TARGETS = [
 DYNAMIC_CLEAN_IP, FINALMASK_SETTINGS = get_dynamic_patterniha_settings()
 RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
 ECH_RESOLVERS = [
-    "remove.bg+udp://8.8.8.8",
-    "remove.bg+udp://208.67.222.222:5353",
     "doxygen.org+udp://8.8.8.8",
     "doxygen.org+udp://208.67.222.222:5353",
     "sagepub.com+udp://8.8.8.8",
