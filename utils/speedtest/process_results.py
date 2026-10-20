@@ -410,16 +410,22 @@ PREFERRED_TARGETS = [
 DYNAMIC_CLEAN_IP, FINALMASK_SETTINGS = get_dynamic_patterniha_settings()
 RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
 ECH_RESOLVERS = [
-    "doxygen.org+udp://8.8.8.8",
-    "doxygen.org+udp://208.67.222.222:5353",
-    "sagepub.com+udp://8.8.8.8",
-    "sagepub.com+udp://208.67.220.220:5353",
-    "sphinx-doc.org+udp://8.8.8.8",
-    "sphinx-doc.org+udp://208.67.222.222:5353",
-    "crypto.cloudflare.com+udp://8.8.8.8",
-    "crypto.cloudflare.com+udp://208.67.222.222:5353",
-    "html5up.net+udp://8.8.8.8",
-    "html5up.net+udp://208.67.220.220:5353"
+    "cloudflare-ech.com+https://8.8.8.8/dns-query",
+    "crypto.cloudflare.com+https://9.9.9.9/dns-query",
+    "remove.bg+https://94.140.14.14/dns-query",
+    "doxygen.org+https://8.8.4.4/dns-query",
+    "crypto.cloudflare.com+https://8.8.8.8/dns-query",
+    "remove.bg+https://9.9.9.9/dns-query",
+    "cloudflare-ech.com+https://94.140.14.14/dns-query",
+    "cloudflare-ech.com+https://8.8.4.4/dns-query",
+    "remove.bg+https://8.8.8.8/dns-query",
+    "cloudflare-ech.com+https://9.9.9.9/dns-query",
+    "crypto.cloudflare.com+https://94.140.14.14/dns-query",
+    "remove.bg+https://8.8.4.4/dns-query",
+    "doxygen.org+https://8.8.8.8/dns-query",
+    "doxygen.org+https://9.9.9.9/dns-query",
+    "doxygen.org+https://94.140.14.14/dns-query",
+    "crypto.cloudflare.com+https://8.8.4.4/dns-query"
 ]
 ECH_WEIGHTS = [1] * len(ECH_RESOLVERS)
 
@@ -443,6 +449,8 @@ def apply_ech_to_link(link):
         if net in ['ws', 'httpupgrade', 'xhttp']:
             if 'host' not in params or not params['host']:
                 params['host'] = origin_sni
+        if not params.get('fp') or params.get('fp', '').lower() == 'unsafe':
+            params['fp'] = 'chrome'
         params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
         params.pop('fm', None)
         new_query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
@@ -636,19 +644,21 @@ def create_resilience_clone(node, theme_name, apply_fragment=False, apply_ech=Fa
                 if 'host' not in params or not params['host']: params['host'] = origin_sni
 
             params['security'] = 'tls'
-            params['fp'] = 'chrome'
             params.pop('cipherSuites', None)
             params.pop('cs', None)
             if scheme == 'vless' and not params.get('encryption'):
                 params['encryption'] = 'none'
 
             if apply_ech:
+                params['fp'] = 'chrome'
                 params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
                 params.pop('fm', None)
             elif apply_fragment:
+                params['fp'] = 'unsafe'
                 params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
                 params.pop('ech', None)
             else:
+                params['fp'] = 'chrome'
                 params.pop('fm', None)
                 params.pop('ech', None)
 
@@ -936,6 +946,22 @@ def process_and_save_results():
                     break
                 raw_link = new_link
 
+        if "ech=" in raw_link:
+            det_ech = ECH_RESOLVERS[sum(raw_link.split('?', 1)[0].encode('utf-8')) % len(ECH_RESOLVERS)]
+            def process_ech(m):
+                raw_ech = urllib.parse.unquote(m.group(2)).strip()
+                if not raw_ech:
+                    if m.group(1) == '?' and m.group(3) == '&': return '?'
+                    elif m.group(1) == '&' and m.group(3) == '&': return '&'
+                    else: return ''
+                if 'udp://' in raw_ech.lower() or ('+https://' not in raw_ech.lower() and not raw_ech.startswith('AE')):
+                    raw_ech = det_ech
+                return m.group(1) + "ech=" + urllib.parse.quote(raw_ech) + m.group(3)
+
+            raw_link = re.sub(r'([?&])ech=([^&#]*)(&?)', process_ech, raw_link)
+            if "ech=" in raw_link:
+                raw_link = re.sub(r'([?&])fp=unsafe(?=[&#]|$)', r'\1fp=chrome', raw_link, flags=re.IGNORECASE)
+
         if "ech=" in raw_link and "fm=" in raw_link:
             raw_link = re.sub(r'([?&])fm=[^&#]*(&?)', lambda m: m.group(1) if m.group(1) == '?' and m.group(2) else ('&' if m.group(1) == '&' and m.group(2) else ''), raw_link)
             raw_link = raw_link.replace('?&', '?').rstrip('?&')
@@ -1078,7 +1104,7 @@ def process_and_save_results():
         current_theme = theme_pool.pop(0)
         theme_name = f"{current_theme}-{random.randint(1000, 9999)}"
 
-        is_ech = (random.random() < 0.70)
+        is_ech = (random.random() < 0.85)
         cloned = create_resilience_clone(node, theme_name, apply_fragment=not is_ech, apply_ech=is_ech)
         if cloned: resilience_nodes.append(cloned)
         else: theme_pool.insert(0, current_theme)
@@ -1343,7 +1369,7 @@ def process_and_save_results():
     eternity_links = []
     for p in eternity_nodes:
         link = p['link']
-        if (p.get('country') == 'RELAY' or is_cloudflare_ip(p.get('ip', ''))) and not is_vless_reality(link) and random.random() < 0.70:
+        if (p.get('country') == 'RELAY' or is_cloudflare_ip(p.get('ip', ''))) and not is_vless_reality(link) and random.random() < 0.85:
             link = apply_ech_to_link(link)
         eternity_links.append(link)
     random.shuffle(eternity_links)
