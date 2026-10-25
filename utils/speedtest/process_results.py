@@ -409,6 +409,24 @@ PREFERRED_TARGETS = [
 ]
 DYNAMIC_CLEAN_IP, FINALMASK_SETTINGS = get_dynamic_patterniha_settings()
 RESILIENCE_TARGETS = PREFERRED_TARGETS + ([DYNAMIC_CLEAN_IP] * 3)
+
+CHANNEL_EUROPEAN_TARGETS = [
+    "138.124.115.218",
+    "2.26.199.72",
+    "2.26.18.230",
+    "87.120.222.125",
+    "45.150.33.1",
+    "140.99.101.63",
+    "151.158.1.213",
+    "77.110.106.106",
+    "195.58.38.1",
+    "81.19.137.10",
+    "176.124.198.1",
+    "185.103.164.216",
+    "159.195.115.30",
+    "31.77.218.78",
+    "185.184.121.153"
+]
 ECH_RESOLVERS = [
     "cloudflare-ech.com+https://8.8.8.8/dns-query",
     "crypto.cloudflare.com+https://9.9.9.9/dns-query",
@@ -429,7 +447,7 @@ ECH_RESOLVERS = [
 ]
 ECH_WEIGHTS = [1] * len(ECH_RESOLVERS)
 
-def apply_balanced_style_to_link(link):
+def apply_ech_to_link(link):
     try:
         if not (link.startswith('vless://') or link.startswith('trojan://')):
             return link
@@ -449,47 +467,15 @@ def apply_balanced_style_to_link(link):
         if net in ['ws', 'httpupgrade', 'xhttp']:
             if 'host' not in params or not params['host']:
                 params['host'] = origin_sni
-
-        style = random.choices(
-            ['fm', 'fm_ech', 'fragment', 'clean', 'ech'],
-            weights=[0.35, 0.20, 0.15, 0.20, 0.10],
-            k=1
-        )[0]
-
-        if style == 'fm':
-            params['fp'] = 'unsafe'
-            params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
-            params.pop('ech', None)
-            params.pop('fragment', None)
-        elif style == 'fm_ech':
+        if not params.get('fp') or params.get('fp', '').lower() == 'unsafe':
             params['fp'] = 'chrome'
-            params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
-            params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
-            params.pop('fragment', None)
-        elif style == 'fragment':
-            params['fp'] = 'chrome'
-            frag_options = ['0,104,tlshello,0', '1-3,5-10,tlshello,1', '104,114,1']
-            params['fragment'] = random.choice(frag_options)
-            params.pop('fm', None)
-            params.pop('ech', None)
-        elif style == 'clean':
-            params['fp'] = random.choice(['chrome', 'firefox', 'safari', 'ios', 'edge'])
-            params.pop('fm', None)
-            params.pop('ech', None)
-            params.pop('fragment', None)
-        elif style == 'ech':
-            params['fp'] = 'chrome'
-            params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
-            params.pop('fm', None)
-            params.pop('fragment', None)
-
+        params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
+        params.pop('fm', None)
         new_query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
         frag = f"#{parsed.fragment}" if parsed.fragment else ""
         return f"{parsed.scheme}://{parsed.netloc}?{new_query}{frag}"
     except Exception:
         return link
-
-apply_ech_to_link = apply_balanced_style_to_link
 
 # --- Parameters ---
 ETERNITY_LIST_SIZE = 165
@@ -636,12 +622,13 @@ def ensure_empty_files():
     for p in ['vmess.txt', 'vless.txt', 'trojan.txt', 'ss.txt']:
         open(os.path.join(SPLITTED_OUTPUT_DIR, p), 'w').close()
 
-def create_resilience_clone(node, theme_name, style='fm'):
+def create_resilience_clone(node, theme_name, apply_fragment=False, apply_ech=False, target_addr=None, force_port=None):
     link = node.get('link', '')
     ip = node.get('ip', '')
     if not is_cloudflare_ip(ip): return None
 
-    target_addr = random.choice(RESILIENCE_TARGETS)
+    if not target_addr:
+        target_addr = random.choice(RESILIENCE_TARGETS)
 
     if link.startswith('vless://') or link.startswith('trojan://'):
         try:
@@ -658,6 +645,8 @@ def create_resilience_clone(node, theme_name, style='fm'):
                 port = 443
 
             if port not in CF_PORTS: return None
+            if force_port:
+                port = force_port
 
             if '#' in query_name: query, name = query_name.split('#', 1)
             else: query, name = query_name, "Proxy"
@@ -681,32 +670,18 @@ def create_resilience_clone(node, theme_name, style='fm'):
             if scheme == 'vless' and not params.get('encryption'):
                 params['encryption'] = 'none'
 
-            if style == 'fm':
+            if apply_ech:
+                params['fp'] = 'chrome'
+                params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
+                params.pop('fm', None)
+            elif apply_fragment:
                 params['fp'] = 'unsafe'
                 params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
                 params.pop('ech', None)
-                params.pop('fragment', None)
-            elif style == 'fm_ech':
+            else:
                 params['fp'] = 'chrome'
-                params['fm'] = json.dumps(FINALMASK_SETTINGS, separators=(',', ':'))
-                params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
-                params.pop('fragment', None)
-            elif style == 'fragment':
-                params['fp'] = 'chrome'
-                frag_options = ['0,104,tlshello,0', '1-3,5-10,tlshello,1', '104,114,1']
-                params['fragment'] = random.choice(frag_options)
                 params.pop('fm', None)
                 params.pop('ech', None)
-            elif style == 'clean':
-                params['fp'] = random.choice(['chrome', 'firefox', 'safari', 'ios', 'edge'])
-                params.pop('fm', None)
-                params.pop('ech', None)
-                params.pop('fragment', None)
-            elif style == 'ech':
-                params['fp'] = 'chrome'
-                params['ech'] = random.choices(ECH_RESOLVERS, weights=ECH_WEIGHTS, k=1)[0]
-                params.pop('fm', None)
-                params.pop('fragment', None)
 
             server = target_addr
             new_query = urllib.parse.urlencode(params, quote_via=urllib.parse.quote)
@@ -727,6 +702,9 @@ def create_resilience_clone(node, theme_name, style='fm'):
 
             port = int(j.get('port', 443))
             if port not in CF_PORTS: return None
+            if force_port:
+                port = force_port
+                j['port'] = force_port
 
             net = str(j.get('net', 'tcp'))
             tls = str(j.get('tls', 'none'))
@@ -1008,6 +986,10 @@ def process_and_save_results():
             if "ech=" in raw_link:
                 raw_link = re.sub(r'([?&])fp=unsafe(?=[&#]|$)', r'\1fp=chrome', raw_link, flags=re.IGNORECASE)
 
+        if "ech=" in raw_link and "fm=" in raw_link:
+            raw_link = re.sub(r'([?&])fm=[^&#]*(&?)', lambda m: m.group(1) if m.group(1) == '?' and m.group(2) else ('&' if m.group(1) == '&' and m.group(2) else ''), raw_link)
+            raw_link = raw_link.replace('?&', '?').rstrip('?&')
+
         def process_extra(m):
             raw_extra = urllib.parse.unquote(m.group(2))
             for candidate in [raw_extra, raw_extra.replace('+', ' ')]:
@@ -1146,14 +1128,25 @@ def process_and_save_results():
         current_theme = theme_pool.pop(0)
         theme_name = f"{current_theme}-{random.randint(1000, 9999)}"
 
-        # Balanced Anti-Censorship Distribution across 5 distinct styles:
-        # 35% FinalMask (FM), 20% FM+ECH Hybrid, 15% Legacy Fragment, 20% Clean TLS, 10% Pure ECH
-        chosen_style = random.choices(
-            ['fm', 'fm_ech', 'fragment', 'clean', 'ech'],
-            weights=[0.35, 0.20, 0.15, 0.20, 0.10],
-            k=1
-        )[0]
-        cloned = create_resilience_clone(node, theme_name, style=chosen_style)
+        use_iran_relay = (len(resilience_nodes) % 2 == 0)
+        if use_iran_relay:
+            chosen_relay = random.choice(CHANNEL_EUROPEAN_TARGETS)
+            cloned = create_resilience_clone(
+                node, theme_name,
+                apply_fragment=True,
+                apply_ech=False,
+                target_addr=chosen_relay,
+                force_port=443
+            )
+        else:
+            is_ech = (random.random() < 0.85)
+            cloned = create_resilience_clone(
+                node, theme_name,
+                apply_fragment=not is_ech,
+                apply_ech=is_ech,
+                target_addr=random.choice(RESILIENCE_TARGETS)
+            )
+
         if cloned: resilience_nodes.append(cloned)
         else: theme_pool.insert(0, current_theme)
 
@@ -1417,8 +1410,8 @@ def process_and_save_results():
     eternity_links = []
     for p in eternity_nodes:
         link = p['link']
-        if (p.get('country') == 'RELAY' or is_cloudflare_ip(p.get('ip', ''))) and not is_vless_reality(link):
-            link = apply_balanced_style_to_link(link)
+        if (p.get('country') == 'RELAY' or is_cloudflare_ip(p.get('ip', ''))) and not is_vless_reality(link) and random.random() < 0.85:
+            link = apply_ech_to_link(link)
         eternity_links.append(link)
     random.shuffle(eternity_links)
 
