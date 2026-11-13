@@ -1,7 +1,7 @@
 {
   "run_id": "job-1794581003",
   "created_at": "2026-11-13T14:43:23.726101+00:00",
-  "status": "testing",
+  "status": "completed",
   "candidates": [
     "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTELEGRAM--B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub--TELEGRAM%3Fed%3D2560&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20%40B2Hub%20%7C%202395a0",
     "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@127.0.0.1:40443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTELEGRAM--B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub--TELEGRAM%3Fed%3D2560&sni=fs.qicai99.com&alpn=http%2F1.1&fp=chrome#Sni-Spoofing%20%40B2Hub%20%7C%202f7e61",
@@ -1274,5 +1274,799 @@
     "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@178.128.199.136:443?path=%2F&security=tls&encryption=none&insecure=0&host=fs.qicai99.com&type=ws&allowInsecure=0&sni=fs.qicai99.com#%F0%9F%87%A9%F0%9F%87%AA%20Germany-7077",
     "vmess://eyJ2IjoiMiIsInBzIjoi8J+HuvCfh7ggVVNBLTY3MTYiLCJhZGQiOiIxNjIuMjUxLjYxLjQ2IiwicG9ydCI6IjEyNzAiLCJpZCI6IjVjMDQwZjFkLTQ1ZGItNDNiZC04ZDQ2LWU0OTUwZTQzMzczNSIsImFpZCI6IjAiLCJuZXQiOiJ0Y3AiLCJ0eXBlIjoibm9uZSIsImhvc3QiOiIiLCJwYXRoIjoiIiwidGxzIjoidGxzIiwic25pIjoieG1maGxweS5jb20iLCJhbHBuIjoiIiwic2N5IjoiYXV0byJ9",
     "vless://dd5bed0b-ee77-481b-9f2c-250a632ddd9f@get.jarbook.net:443?security=reality&encryption=none&pbk=BIy6H-jndn24Ukyw83ML8LDB1HL8WLJmfCADEy8lzVs&headerType=none&fp=safari&spx=%2F&type=tcp&flow=xtls-rprx-vision&sni=get.jarbook.net&sid=c6f97313#%F0%9F%87%B8%F0%9F%87%AA%20Sweden-2365"
+  ],
+  "verified": [
+    {
+      "link": "ss://MjAyMi1ibGFrZTMtY2hhY2hhMjAtcG9seTEzMDU6Q2cyRHc0T2hkQlpocWJlTzlaVEEzZy9Hay9BdnNyWVpHaEFKZUduUUl4ND0=@18.175.123.65:443#%F0%9F%87%AC%F0%9F%87%A7%20UK-2645",
+      "delay": 582
+    },
+    {
+      "link": "vmess://eyJhZGQiOiIxMDkuNzAuNzQuMjE3IiwiYWlkIjoiMCIsImFscG4iOiIiLCJmcCI6IiIsImhvc3QiOiIiLCJpZCI6ImE4M2YzNzAwLWU3NWItNDdjMS1hZmY4LTgwOGVhNzkzZjIzZCIsImluc2VjdXJlIjoiMCIsIm5ldCI6InRjcCIsInBhdGgiOiIiLCJwY3MiOiIiLCJwb3J0IjoiMTk4MjkiLCJwcyI6IvCfh6nwn4eqIEdlcm1hbnktOTYyOCIsInNjeSI6ImF1dG8iLCJzbmkiOiIiLCJ0bHMiOiJub25lIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIsInZjbiI6IiJ9",
+      "delay": 634
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.156:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-8211",
+      "delay": 630
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.195:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-8104",
+      "delay": 580
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.215:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-7752",
+      "delay": 618
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.66:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-6533",
+      "delay": 599
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.190:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5456",
+      "delay": 643
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.218:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-2752",
+      "delay": 611
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.214:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-1187",
+      "delay": 656
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.103:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-7539",
+      "delay": 702
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.12:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-5771",
+      "delay": 732
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.193:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-6077",
+      "delay": 751
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.179:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-3207",
+      "delay": 633
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.35:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-3837",
+      "delay": 668
+    },
+    {
+      "link": "vless://90157e25-cee1-4217-921e-91f300bc1a24@50.7.227.82:443?encryption=none&flow=xtls-rprx-vision&fp=chrome&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&security=reality&sid=428ef87fd47a3a32&sni=bizorg.su&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20USA-3871",
+      "delay": 794
+    },
+    {
+      "link": "vless://6fe050ea-c381-4680-8308-f1fb415e7787@109.70.74.181:8443?security=reality&encryption=none&pbk=lPitiRac183VJuFBM13SljV9TkhcSjbZ5Vy06Noh11M&headerType=none&fp=chrome&spx=/02960dbf329105f&type=tcp&sni=corporate.amazon.com&sid=636d4c02#%F0%9F%87%A9%F0%9F%87%AA%20Germany-8140",
+      "delay": 824
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206WlJwZ2FCZUd4dEVOSVhndmhwa1pCS3o5R25XUlMyZFljeDlPK2EyaXdOND0=@193.151.160.9:19999#%F0%9F%87%BA%F0%9F%87%B8%20USA-4463",
+      "delay": 861
+    },
+    {
+      "link": "ss://YWVzLTEyOC1nY206c2hhZG93c29ja3M=@156.146.38.169:443#%F0%9F%87%BA%F0%9F%87%B8%20USA-6063",
+      "delay": 848
+    },
+    {
+      "link": "vless://218b7565-b3ca-432e-924d-9654ee980dbe@2.59.21.188:443?flow=xtls-rprx-vision&security=reality&sni=tg-lovers-free.com&fp=edge&pbk=_0N3gACBkKvGKTh0q5-dmt-XqSHB3xfEHSANRXu-U0I&sid=f00f58383241c807&encryption=none&type=tcp#%F0%9F%87%AE%F0%9F%87%B9%20Italy-8629",
+      "delay": 824
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.204:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-1190",
+      "delay": 691
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%2Ffp%3Dchrome&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&headerType=none#F%26F%20%40VPsave%20%7C%209db157",
+      "delay": 862
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.186:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-4589",
+      "delay": 700
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.207:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5294",
+      "delay": 1636
+    },
+    {
+      "link": "vless://1d1eda2e-0bd7-4478-877b-1c5425c6c4dd@48.102.169.194:8443?encryption=none&flow=xtls-rprx-vision&fp=firefox&pbk=yr_opKG6DGTppNDXkk-DhGSYJZXbb9o-caexk2FZO38&security=reality&sid=8f3c6e2a1b5d4f09&sni=tradingview.com&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20USA-6578",
+      "delay": 758
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTELEGRAM--MARAMBASHI--MARAMBASHI--MARAMBASHI--MARAMBASHI%3Fed%3D2560&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20Tel%40MARAMBASHI%20%F0%9F%87%A9%F0%9F%87%AA%20%7C%20b4a7a2",
+      "delay": 849
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%2F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&packetEncoding=xudp#F%26F%20%F0%9F%87%A9%F0%9F%87%AA226Mb%20%7C%20Cloudflare%20%7C%20189ca8",
+      "delay": 874
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20CA%20%F0%9F%87%A8%F0%9F%87%A6%20%7C%20%40Raydikalx%20%7C%202c17b2",
+      "delay": 853
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.62:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-1255",
+      "delay": 689
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@62.210.91.10:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%AB%F0%9F%87%B7%20France-1572",
+      "delay": 797
+    },
+    {
+      "link": "vless://fa081e9f-7574-0002-8928-31aa5ac923c7@203.23.179.123:443?security=reality&type=tcp&sni=de1-b.sbcweb.net&fp=firefox&flow=xtls-rprx-vision&sid=868419504747f6de&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ#%F0%9F%87%A9%F0%9F%87%AA%20Germany-4491",
+      "delay": 793
+    },
+    {
+      "link": "vmess://eyJhZGQiOiI4NC4xNy40MS4yIiwiYWlkIjowLCJob3N0IjoiIiwiaWQiOiJmOGM4ZGMzZC0wZDM3LTQ2YjAtOGIzNC1hNzIzMjg4MmZjZmUiLCJuZXQiOiJ0Y3AiLCJwYXRoIjoiIiwicG9ydCI6IjE4MDAwIiwicHMiOiLwn4e68J+HuCBVU0EtMzE5MyIsInNuaSI6Ijg0LjE3LjQxLjIiLCJ0bHMiOiIiLCJ0eXBlIjoibm9uZSIsInYiOiIyIn0=",
+      "delay": 932
+    },
+    {
+      "link": "vless://fa081e9f-7574-4e18-8928-31aa5ac923c7@48.103.120.1:443?encryption=none&flow=xtls-rprx-vision&fp=chrome&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&security=reality&sid=868419504747f6de&sni=de1-b.sbcweb.net&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20USA-5412",
+      "delay": 798
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@104.18.37.228:443?path=%2F&security=tls&encryption=none&host=fs.qicai99.com&type=ws&sni=fs.qicai99.com&allowInsecure=0&insecure=0#%F0%9F%8F%81%20Relay-5237",
+      "delay": 936
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%2F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&headerType=none#F%26F%20%5Bopenproxylist.com%5D%20US%204711792%20%7C%20698fb7",
+      "delay": 985
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%252F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&packetEncoding=none#F%26F%20%F0%9F%87%B8%F0%9F%87%AA155Mb%20%7C%20Cloudflare%20%7C%20100aba",
+      "delay": 1876
+    },
+    {
+      "link": "vless://cda0862a-0f87-4be9-8ed8-1d0c9e382839@196.245.153.104:443?type=xhttp&security=reality&path=/d20896a4ce30&sni=e60833x.nl7.h1clayd.click&pbk=jIRVNEf9SpuWP2nJrAbHGGIUnfzOmwZZlrNGw-Y-O2Q&sid=2d2598d60447a967#%F0%9F%87%B8%F0%9F%87%B0%20Slovakia-4275",
+      "delay": 1038
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@104.233.9.100:443?security=reality&sni=nob.kosmosapp.net&fp=firefox&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&type=grpc&serviceName=neurex&mode=gun&encryption=none#%F0%9F%87%B3%F0%9F%87%B4%20Norway-7339",
+      "delay": 926
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@172.67.167.207:443?security=tls&sni=fs.qicai99.com&type=ws&host=fs.qicai99.com&path=%2Ffp#%F0%9F%8F%81%20Relay-2815",
+      "delay": 1543
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%2Ffp%3Dchrome&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20CA%20%F0%9F%87%A8%F0%9F%87%A6%20%7C%20%40Raydikalx%20%7C%200DF342%20%7C%208e8441",
+      "delay": 954
+    },
+    {
+      "link": "vless://664f65f4-33b3-43a3-b9e5-68192d1d428e@200.102.180.37:8443?security=reality&encryption=none&pbk=bGwVs-Re6vNB1tuKqZZ209x7l361FxZdtPHg0yZLa2Q&host=%2F%3FTELEGRAM---MARAMBASHI---MARAMBASHI---MARAMBASHI---MARAMBASHI&headerType=none&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=juniper-canyon.cdn.cachefleet.com&sid=63c4425dacae86cb#%F0%9F%87%BA%F0%9F%87%B8%20USA-6357",
+      "delay": 1055
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@217.156.123.33:443?type=grpc&security=reality&fp=firefox&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&sni=mda.kosmosapp.net&mode=gun&serviceName=neurex&encryption=none#%F0%9F%87%B2%F0%9F%87%A9%20Moldova-3778",
+      "delay": 1101
+    },
+    {
+      "link": "vmess://eyJ2IjoiMiIsInBzIjoi8J+HuvCfh7ggVVNBLTYwMTAiLCJhZGQiOiIxMjkuMTQ2Ljc3LjI0OCIsInBvcnQiOiIzOTQ5NSIsImlkIjoiZjgzNmM3MzYtODdmYy00ZmRlLWFhYmMtMDA4NTdlY2RmZjNlIiwiYWlkIjoiMCIsInNjeSI6ImF1dG8iLCJuZXQiOiJ3cyIsInR5cGUiOiIiLCJ0bHMiOiIiLCJwYXRoIjoiL2NjdHYxMy5tM3U4IiwiaG9zdCI6IjEyOS4xNDYuNzcuMjQ4In0=",
+      "delay": 1685
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@162.159.198.1:443?allowInsecure=0&host=fs.qicai99.com&encryption=none&type=ws&sni=fs.qicai99.com&fp=chrome&insecure=0&security=tls&path=%2F%3FTELEGRAM--B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub--TELEGRAM%3Fed%3D2560#%F0%9F%8F%81%20Relay-8807",
+      "delay": 975
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%2F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&Telegram=%40GozargahAzad%2C%40GozargahAzad%2C%40GozargahAzad%2C%40GozargahAzad%2C%40GozargahAzad%2C%40GozargahAzad%2C%40GozargahAzad#F%26F%20CA%20%F0%9F%87%A8%F0%9F%87%A6%20%7C%20%40Raydikalx%20%7C%2018B39C%20%7C%208b0aa7",
+      "delay": 1016
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@15.204.97.219:23576?security=reality&type=tcp&packetEncoding=xudp&sni=fuck.rkn&fp=chrome&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&encryption=none#%F0%9F%87%BA%F0%9F%87%B8%20USA-3566",
+      "delay": 1249
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p1real5.greewebservices.ir:1270?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-1044",
+      "delay": 1009
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.200:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-1799",
+      "delay": 873
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%252F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&packetEncoding=none#F%26F%20%40DeltaKroneckerGithub%20%7C%2000108c",
+      "delay": 1045
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@15.204.97.214:23576?security=reality&type=raw&sni=fuck.rkn&fp=firefox&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&encryption=none#%F0%9F%87%BA%F0%9F%87%B8%20USA-5232",
+      "delay": 2411
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTplRGZON1NPRFFjZUlPbUlBYnRKSnRL@198.98.53.130:443#%F0%9F%87%BA%F0%9F%87%B8%20USA-8190",
+      "delay": 1075
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206WTZSOXBBdHZ4eHptR0M=@213.202.208.199:5000#%F0%9F%87%A9%F0%9F%87%AA%20Germany-5870",
+      "delay": 1815
+    },
+    {
+      "link": "vless://30610baf-4645-4c7b-9a22-0d0a0a79eab5@188.114.98.0:443?encryption=none&security=tls&type=ws&host=mao.kipfelmao.de5.net&path=%2Fapi%2Fv1%2Fguests%2Fprofiles%2F5de14443985f%2F&sni=mao.kipfelmao.de5.net&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&packetEncoding=xudp#F%26F%20%E6%9C%AA%E7%9F%A5_1107191544%20%7C%204ce1aa",
+      "delay": 1469
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206UmV4bkJnVTdFVjVBRHhH@94.156.250.148:7001#%F0%9F%87%AC%F0%9F%87%A7%20UK-7380",
+      "delay": 1498
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?security=tls&type=ws&host=fs.qicai99.com&path=%2F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20%F0%9F%87%A9%F0%9F%87%AA322Mb%20%7C%20Cloudflare%20%7C%208a9255",
+      "delay": 1428
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTelegram---%40pirozi_ArGaP---%40pirozi_ArGaP---%40pirozi_ArGaP---%40pirozi_ArGaP&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20CA%20%F0%9F%87%A8%F0%9F%87%A6%20%7C%20%40Raydikalx%20%7C%202685CB%20%7C%20b9eaa1",
+      "delay": 1749
+    },
+    {
+      "link": "vless://c6624b96-e346-490b-9145-74c2543a9483@140.245.62.225:36442?security=tls&encryption=none&insecure=0&headerType=none&fp=firefox&type=tcp&allowInsecure=0&flow=xtls-rprx-vision&sni=xjpp.zjlo.top#%F0%9F%87%B8%F0%9F%87%AC%20Singapore-2237",
+      "delay": 1408
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTELEGRAM--B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub-B2Hub--TELEGRAM%3Fed%3D2560&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20%40B2Hub%20%7C%202395a0",
+      "delay": 1209
+    },
+    {
+      "link": "vless://fa081e9f-7574-4e18-8928-31aa5ac923c7@84.32.23.119:443?security=reality&flow=xtls-rprx-vision&fp=chrome&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&sid=868419504747f6de&sni=si1.lazeroe.com&encryption=none&type=tcp#%F0%9F%87%B8%F0%9F%87%AC%20Singapore-4861",
+      "delay": 2125
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@109.122.196.166:443?encryption=none&fp=firefox&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&security=reality&serviceName=neurex&sid=27350908de933e09&sni=dea.kosmosapp.net&type=grpc#%F0%9F%87%A9%F0%9F%87%AA%20Germany-2935",
+      "delay": 1245
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2Ffp%3Dchrome&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20%F0%9F%94%A5Join%2BTelegram%3A%40Farah_VPN%F0%9F%9F%A3%20%7C%206267a3",
+      "delay": 1336
+    },
+    {
+      "link": "vless://5269e0b4-0dff-4f97-e0c7-83130bacb009@xjpp.zjlo.top:36442?encryption=none&flow=xtls-rprx-vision&security=tls&sni=xjpp.zjlo.top&fp=chrome&type=tcp&headerType=none#%F0%9F%87%B8%F0%9F%87%AC%20Singapore-4299",
+      "delay": 1718
+    },
+    {
+      "link": "vless://84be02cf-c5c5-4b33-ba26-31b5f8320033@n1.topingr.ir:443?security=tls&type=ws&path=%2Fapi%2Fv3%2Fpulse&host=cdn2.zovip2.ir&packetEncoding=xudp&alpn=http%2F1.1&sni=cdn2.zovip2.ir&fp=chrome&encryption=none#%F0%9F%87%A9%F0%9F%87%AA%20Germany-4121",
+      "delay": 1271
+    },
+    {
+      "link": "vless://41a382b8-6d2f-482e-abf2-954a56456e8c@83.141.69.220:443?encryption=none&flow=xtls-rprx-vision&fp=firefox&pbk=p0M6RumtfcATPNPUIFnFcgWy2rzk2gGVWx21sql1hV0&security=reality&sid=8238d76df92c2560&sni=13.143.195.113.sslip.io&type=tcp#%F0%9F%87%AE%F0%9F%87%AA%20Ireland-1487",
+      "delay": 1905
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@139.162.62.195:443?&security=tls&fp=chrome&sni=fs.qicai99.com&type=ws&headerType=none&host=fs.qicai99.com&path=%2F#%F0%9F%87%B8%F0%9F%87%AC%20Singapore-6530",
+      "delay": 1912
+    },
+    {
+      "link": "trojan://d7563108-615c-4338-a7bd-77f359869a4a@157.254.38.210:20028?sni=hk.catxstar.com&allowInsecure=0#%F0%9F%87%BA%F0%9F%87%B8%20USA-7131",
+      "delay": 2092
+    },
+    {
+      "link": "trojan://d7563108-615c-4338-a7bd-77f359869a4a@157.254.38.210:20027?sni=hk.catxstar.com&allowInsecure=0#%F0%9F%87%BA%F0%9F%87%B8%20USA-9850",
+      "delay": 2402
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D&packetEncoding=xudp#F%26F%20United%20States%20%7C%2056ae6a",
+      "delay": 1468
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTelegram---MTMVPN---MTMVPN---MTMVPN---MTMVPN&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20Telegram%20%40mtmvpn%20%7C%20ab49d4",
+      "delay": 1454
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=%2F%3FTelegram---PLANB_NET---PLANB_NET---PLANB_NET---PLANB_NET&sni=fs.qicai99.com&alpn=http%2F1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384%3ATLS_CHACHA20_POLY1305_SHA256%3ATLS_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384%3ATLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256%3ATLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256%3ATLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_RSA_WITH_AES_256_CBC_SHA%3ATLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256%3ATLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256&fm=%7B%22tcp%22%3A%5B%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%22tlshello%22%2C%22lengths%22%3A%5B%220%22%2C%22104%22%2C%221%22%5D%2C%22delays%22%3A%5B%220%22%5D%2C%22maxSplit%22%3A%220%22%7D%7D%2C%7B%22type%22%3A%22fragment%22%2C%22settings%22%3A%7B%22packets%22%3A%221-1%22%2C%22lengths%22%3A%5B%22114%22%2C%221%22%5D%2C%22delays%22%3A%5B%221%22%5D%2C%22maxSplit%22%3A%2211%22%7D%7D%5D%7D#F%26F%20%40ConfigV2RayNG%20%7C%2025823a",
+      "delay": 2011
+    },
+    {
+      "link": "trojan://d7563108-615c-4338-a7bd-77f359869a4a@sclass-b1.catcat321.com:20028?security=tls&sni=hk.catxstar.com#%F0%9F%87%BA%F0%9F%87%B8%20USA-8148",
+      "delay": 1537
+    },
+    {
+      "link": "vless://d9274255-edf4-4944-bc62-6ef35cd2de40@194.87.109.106:443?encryption=none&type=tcp&security=tls&sni=currant.asynchronous.site&fp=firefox&alpn=h2%2Chttp%2F1.1#%F0%9F%87%A8%F0%9F%87%BF%20Czechia-1417",
+      "delay": 1824
+    },
+    {
+      "link": "trojan://0ab6c98dae3b48e8b9c4a776b6c9c19a@66.163.118.115:443?security=tls&insecure=0&headerType=none&fp=chrome&type=tcp&allowInsecure=0&sni=discovergreatjobsandadvanceyourcareer.com#%F0%9F%87%AA%F0%9F%87%B8%20Spain-8022",
+      "delay": 2249
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206WlJwZ2FCZUd4dEVOSVhndmhwa1pCS3o5R25XUlMyZFljeDlPK2EyaXdOND0=@185.176.204.18:19999#%F0%9F%87%A9%F0%9F%87%AA%20Germany-1312",
+      "delay": 425
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.162:443#%F0%9F%87%AC%F0%9F%87%A7%20UK-2151",
+      "delay": 467
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.182:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-4697",
+      "delay": 468
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.46:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-8819",
+      "delay": 450
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.61:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-6979",
+      "delay": 485
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.157:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5109",
+      "delay": 497
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206UEppcktRY3lxYkFpcWVicTRBSGV0R1VrWnVRdm1UNmZmd3V5UEZadTBuZz0=@51.38.131.73:8443#%F0%9F%87%B5%F0%9F%87%B1%20Poland-6024",
+      "delay": 496
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.185:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-6385",
+      "delay": 484
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.194:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-4768",
+      "delay": 505
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.220:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-4735",
+      "delay": 499
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.192:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5319",
+      "delay": 464
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.219:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5639",
+      "delay": 497
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206UEppcktRY3lxYkFpcWVicTRBSGV0R1VrWnVRdm1UNmZmd3V5UEZadTBuZz0=@212.86.105.233:8443#%F0%9F%87%AC%F0%9F%87%A7%20UK-9344",
+      "delay": 497
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.211:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5636",
+      "delay": 528
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.198:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-8370",
+      "delay": 647
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.189:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-9460",
+      "delay": 1206
+    },
+    {
+      "link": "vless://90157e25-cee1-4217-921e-91f300bc1a24@89.105.218.139:443?flow=xtls-rprx-vision&security=reality&sni=89.105.218.139&fp=firefox&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&sid=428ef87fd47a3a32&encryption=none&type=tcp#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-6280",
+      "delay": 564
+    },
+    {
+      "link": "vless://50a87e21-f0e2-4b53-a787-91adfe748f63@sundaylanzgem.site:443?type=tcp&security=reality&sni=sundaylanzgem.site&fp=qq&flow=xtls-rprx-vision&pbk=-BN9yCN0ECqxOPoJOan1-CIMEYc5e7wdJwaeDxsUM20#%F0%9F%87%BA%F0%9F%87%B8%20USA-8427",
+      "delay": 544
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTp+NEhULH1iQ0BoZWlSYWk=@67.159.56.79:8388#%F0%9F%87%AC%F0%9F%87%A7%20UK-3791",
+      "delay": 496
+    },
+    {
+      "link": "vless://549766c3-fa5f-471e-8031-ffc1f8d5064f@95.85.232.83:2087?type=xhttp&security=reality&path=/v2/sync/6e9367&sni=trips.blog-forme.ru&fp=edge&pbk=mbi4BZAuiq_L6pfhG2xxWmtosq0Z1Pzf18fvNSWKMxY&sid=3258252d44113e23#%F0%9F%87%A8%F0%9F%87%BF%20Czechia-6959",
+      "delay": 574
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpieVg0LURWMEM0MlBMRlRXUWhNVEFRNjNtWjhxckRSQg==@185.4.115.149:1348#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-7274",
+      "delay": 621
+    },
+    {
+      "link": "vless://fa081e9f-7574-4e18-8928-31aa5ac923c7@94.177.253.26:443?flow=xtls-rprx-vision&security=reality&sni=uk7.sbcweb.net&fp=chrome&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&sid=868419504747f6de#%F0%9F%87%AC%F0%9F%87%A7%20UK-4083",
+      "delay": 632
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.19:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&host=%2F%3FTelegram---Lent_Gc---Lent_Gc&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-6893",
+      "delay": 636
+    },
+    {
+      "link": "vless://3f3160a0-747d-4fed-bf3d-4d884bfa964d@178.214.125.1:443?security=reality&type=tcp&packetEncoding=xudp&sni=conf.emaar.ru&fp=chrome&flow=xtls-rprx-vision&sid=6172ba9cffe9c22f&pbk=ZxCwJxbsZWJYYCPzeWj7_fxJMVhwh4XGfpvjmEIQjHY&encryption=none#%F0%9F%87%AA%F0%9F%87%AA%20Estonia-5079",
+      "delay": 659
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.80:23576?security=reality&type=tcp&packetEncoding=xudp&sni=fuck.rkn&fp=chrome&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&encryption=none#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-4843",
+      "delay": 641
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.87:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-9521",
+      "delay": 643
+    },
+    {
+      "link": "vless://fa081e9f-7574-0001-8928-31aa5ac923c7@203.23.179.123:443?type=tcp&security=reality&sni=de1-b.sbcweb.net&flow=xtls-rprx-vision&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&sid=868419504747f6de#%F0%9F%87%A9%F0%9F%87%AA%20Germany-7872",
+      "delay": 635
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.34:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-4764",
+      "delay": 680
+    },
+    {
+      "link": "vless://90157e25-cee1-4217-921e-91f300bc1a24@novonl.subv.ru:443?security=reality&encryption=none&pbk=1vSZjvhZO01oAEH3b7eebR1qF5dLU1Dq2E7xu8pwGSs&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=golos.mail.ru&sid=428ef87fd47a3a32#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-3358",
+      "delay": 663
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@62.210.91.2:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%AB%F0%9F%87%B7%20France-1380",
+      "delay": 637
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.20:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-3547",
+      "delay": 669
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206RGdNeXdYS3FvakhYZXVYWThoT0phWUdQRmNqd2VDSUplRDVjZGcvY1VVWT0=@213.176.92.148:40647#%F0%9F%87%AD%F0%9F%87%B0%20Hong-Kong-5093",
+      "delay": 752
+    },
+    {
+      "link": "vless://50a87e21-f0e2-4b53-a787-91adfe748f63@netherafteraventura.site:444?flow=xtls-rprx-vision&pbk=c45KyRQO_-rZ282JqMRcxlwu2DOV30b999vwCi0sLy0&security=reality&sni=netherafteraventura.site&type=raw&fp=firefox&encryption=none#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-7387",
+      "delay": 1688
+    },
+    {
+      "link": "trojan://123456@104.18.35.86:2096?allowInsecure=0&sni=321dfbc6.uir-9i6.pages.dev&type=ws&host=321dfbc6.uir-9i6.pages.dev&path=/#%F0%9F%8F%81%20Relay-1516",
+      "delay": 742
+    },
+    {
+      "link": "vless://84be02cf-c5c5-4b33-ba26-31b5f8320033@143.14.59.36:443?encryption=none&fp=firefox&host=cdn2.zovip2.ir&path=%2Fapi%2Fv3%2Fpulse&security=tls&sni=cdn2.zovip2.ir&type=ws#%F0%9F%87%A9%F0%9F%87%AA%20Germany-5084",
+      "delay": 677
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@194.180.207.154:443?type=grpc&security=reality&fp=firefox&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&sni=ita.kosmosapp.net&mode=gun&serviceName=neurex&encryption=none#%F0%9F%87%AE%F0%9F%87%B9%20Italy-8903",
+      "delay": 790
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.97:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&host=%2F%3FTelegram%E2%80%94%40bored_vpn&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-3026",
+      "delay": 695
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTo1NzVoaW9wcTJoMjh5YW82@15.235.121.109:8080#%F0%9F%87%A8%F0%9F%87%A6%20Canada-8070",
+      "delay": 713
+    },
+    {
+      "link": "vmess://eyJ2IjpudWxsLCJwcyI6IvCfh7rwn4e4IFVTQS0xNzc0IiwiYWRkIjoiNjcuMjIwLjg1LjQ2IiwicG9ydCI6MTgwMDAsImlkIjoiZjhjOGRjM2QtMGQzNy00NmIwLThiMzQtYTcyMzI4ODJmY2ZlIiwiYWlkIjoiMCIsInNjeSI6ImFlcy0xMjgtZ2NtIiwibmV0IjoidGNwIiwidHlwZSI6bnVsbCwiaG9zdCI6bnVsbCwiYWxwbiI6bnVsbCwicGF0aCI6Ii8iLCJ0bHMiOiJub25lIiwic25pIjpudWxsLCJmcCI6bnVsbCwibmFtZSI6IlVTIPCfh7rwn4e4IHwgQFJheWRpa2FseCB8IDY2NTI2QiJ9",
+      "delay": 715
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.205:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-7692",
+      "delay": 616
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.203:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-6949",
+      "delay": 592
+    },
+    {
+      "link": "vless://3c152dce-5887-486c-9f0f-693ca271f2e6@zibanabz.jonsonvip.ir:3939?encryption=none&flow=xtls-rprx-vision&security=reality&sni=ai.android&fp=chrome&pbk=dnnN66V_xqEbGoG5P8E_Zqk3TaZt2lM4SI9N7Ana7FA&sid=d9a2600fdecd7be2&spx=%2F16504cba99195d6&type=tcp&headerType=none&path=%2F%40zibanabz#%F0%9F%87%A9%F0%9F%87%AA%20Germany-3278",
+      "delay": 756
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.178:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-3059",
+      "delay": 629
+    },
+    {
+      "link": "vless://e07a6d05-f665-4811-91f0-9b3dc1094e4d@48.102.170.205:8443?security=reality&encryption=none&pbk=yr_opKG6DGTppNDXkk-DhGSYJZXbb9o-caexk2FZO38&host=/?Telegram---@iranping24---@iranping24---@iranping24---@iranping24---@iranping24&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=tradingview.com&sid=8f3c6e2a1b5d4f09#%F0%9F%87%BA%F0%9F%87%B8%20USA-4764",
+      "delay": 863
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206WlJwZ2FCZUd4dEVOSVhndmhwa1pCS3o5R25XUlMyZFljeDlPK2EyaXdOND0=@185.215.132.18:19999#%F0%9F%87%BA%F0%9F%87%B8%20USA-3098",
+      "delay": 778
+    },
+    {
+      "link": "ss://YWVzLTEyOC1nY206c2hhZG93c29ja3M=@156.146.38.167:443#%F0%9F%87%BA%F0%9F%87%B8%20USA-7834",
+      "delay": 758
+    },
+    {
+      "link": "ss://MjAyMi1ibGFrZTMtYWVzLTI1Ni1nY206TmpjeU5tVmpNVFUxWldVNU5EQTVaRGswT0RnMU5XTTFNekpqWlRFM05Eaz06T0RnM1pqUXhPR00yTnpGaE5HTXpZV0ZoWlRRME5XRTJZVFk1TnpsallqWT0=@66.bmi.ir.asopardaz.ir:35176#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-9257",
+      "delay": 745
+    },
+    {
+      "link": "ss://YWVzLTEyOC1nY206c2hhZG93c29ja3M=@156.146.38.170:443#%F0%9F%87%BA%F0%9F%87%B8%20USA-2111",
+      "delay": 761
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.183:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-5953",
+      "delay": 885
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p11real2.greewebservices.ir:1030?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-2237",
+      "delay": 833
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@46.28.67.211:443?type=grpc&security=reality&fp=chrome&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&sni=roa.kosmosapp.net&mode=gun&serviceName=neurex#%F0%9F%87%B7%F0%9F%87%B4%20Romania-5265",
+      "delay": 832
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@188.114.98.0:443?encryption=none&security=tls&type=ws&host=fs.qicai99.com&path=/?TELEGRAM--MARAMBASHI--MARAMBASHI--MARAMBASHI--MARAMBASHI?ed=512&sni=fs.qicai99.com&alpn=http/1.1&fp=unsafe&cs=TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256:TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384:TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384:TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256:TLS_ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256:TLS_ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256:TLS_ECDHE_ECDSA_WITH_AES_256_CBC_SHA:TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA:TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA256:TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256#%F0%9F%8F%81%20Relay-4251",
+      "delay": 802
+    },
+    {
+      "link": "vmess://eyJhZGQiOiIzOC4xMTAuMS4yNDYiLCJhaWQiOiIwIiwiYWxwbiI6IiIsImZwIjoiIiwiaG9zdCI6IiIsImlkIjoiZjhjOGRjM2QtMGQzNy00NmIwLThiMzQtYTcyMzI4ODJmY2ZlIiwiaW5zZWN1cmUiOiIwIiwibmV0IjoidGNwIiwicGF0aCI6IiIsInBjcyI6IiIsInBvcnQiOjE4MDAwLCJwcyI6IvCfh7rwn4e4IFVTQS03NjUyIiwic2N5IjoiYXV0byIsInNuaSI6IjM4LjExMC4xLjI0NiIsInRscyI6Im5vbmUiLCJ0eXBlIjoibm9uZSIsInYiOiIyIiwidmNuIjoiIiwibmFtZSI6IlVTIPCfh7rwn4e4IHwgQFJheWRpa2FseCB8IDBCMDg0NyJ9",
+      "delay": 841
+    },
+    {
+      "link": "ss://YWVzLTEyOC1nY206c2hhZG93c29ja3M=@156.146.38.168:443#%F0%9F%87%BA%F0%9F%87%B8%20USA-1562",
+      "delay": 777
+    },
+    {
+      "link": "vless://e50e6851-a29a-45a1-811d-1e9230c1512a@2.27.23.223:8443?encryption=none&flow=xtls-rprx-vision&fp=firefox&pbk=lQn0k9GCrG7Hh34b8ezAyVjc9KBCxQm3oP0xdxKGy0U&security=reality&sid=35cb85e41b041622&sni=se1.slowframe.org&type=tcp#%F0%9F%87%B8%F0%9F%87%AA%20Sweden-5553",
+      "delay": 1608
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206UmV4bkJnVTdFVjVBRHhH@213.202.208.199:7001#%F0%9F%87%A9%F0%9F%87%AA%20Germany-8793",
+      "delay": 1610
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p1real3.greewebservices.ir:1250?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-9279",
+      "delay": 851
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@104.18.38.33:443?path=%2F&security=tls&encryption=none&host=fs.qicai99.com&type=ws&sni=fs.qicai99.com#%F0%9F%8F%81%20Relay-2094",
+      "delay": 802
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpoQ0NXT2NJc0s1d3JGejRPWDcwcldm@216.105.168.18:443#%F0%9F%87%BA%F0%9F%87%B8%20USA-2911",
+      "delay": 855
+    },
+    {
+      "link": "vmess://eyJhZGQiOiIxNjkuMTk3LjE0Mi4yMiIsImFpZCI6IjAiLCJhbHBuIjoiIiwiZnAiOiIiLCJob3N0IjoiIiwiaWQiOiJmOGM4ZGMzZC0wZDM3LTQ2YjAtOGIzNC1hNzIzMjg4MmZjZmUiLCJpbnNlY3VyZSI6IjAiLCJuZXQiOiJ0Y3AiLCJwYXRoIjoiIiwicGNzIjoiIiwicG9ydCI6IjE4MDAwIiwicHMiOiIxMjU3MEBwcm94eV9vbmxpbmVfbmV0Iiwic2N5IjoiYXV0byIsInNuaSI6IjE2OS4xOTcuMTQyLjIyIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiIsInZjbiI6IiJ9vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.98:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&host=%2F%3FTELEGRAM---MARAMBASHI---MARAMBASHI---MARAMBASHI---MARAMBASHI&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%BA%F0%9F%87%B8%20USA-1266",
+      "delay": 902
+    },
+    {
+      "link": "vmess://eyJ2IjpudWxsLCJwcyI6IvCfh7jwn4esIFNpbmdhcG9yZS01MTU0IiwiYWRkIjoiMTQ5Ljg4LjIzLjIwMiIsInBvcnQiOjE4MDAwLCJpZCI6ImY4YzhkYzNkLTBkMzctNDZiMC04YjM0LWE3MjMyODgyZmNmZSIsImFpZCI6IjAiLCJzY3kiOiJhdXRvIiwibmV0IjoidGNwIiwidHlwZSI6bnVsbCwiaG9zdCI6IiIsImFscG4iOm51bGwsInBhdGgiOiIvIiwidGxzIjoibm9uZSIsInNuaSI6bnVsbCwiZnAiOm51bGwsIm5hbWUiOiJTRyDwn4e48J+HrCB8IEBSYXlkaWthbHggfCA4RUVFMDkifQ==",
+      "delay": 915
+    },
+    {
+      "link": "vless://e50e6851-a29a-45a1-811d-1e9230c1512a@se1.slowframe.org:8443?encryption=none&flow=xtls-rprx-vision&type=tcp&security=reality&sni=se1.slowframe.org&pbk=lQn0k9GCrG7Hh34b8ezAyVjc9KBCxQm3oP0xdxKGy0U&sid=35cb85e41b041622&fp=firefox#%F0%9F%87%B8%F0%9F%87%AA%20Sweden-7334",
+      "delay": 983
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p1real2.greewebservices.ir:1240?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-3402",
+      "delay": 967
+    },
+    {
+      "link": "vless://d65cc14c-f53f-4fe2-b262-97856601319c@169.40.42.89:443?security=reality&type=tcp&packetEncoding=xudp&sni=yahoo.com&fp=ios&flow=xtls-rprx-vision&sid=c39cc7310a&pbk=e2RLf57Li_-MDZGE9ss1BWPgP54mqRb5PfXhW2jcVVg#%F0%9F%87%A9%F0%9F%87%AA%20Germany-6009",
+      "delay": 990
+    },
+    {
+      "link": "vless://bee92066-7bd9-498e-8645-ac26ee31eebf@87.120.106.95:443?mode=auto&path=/&security=reality&encryption=none&pbk=iQCvXMQZR-eT2MVmXP7c99cvcle22mVWuKem_345BWM&host=gofuture.games&fp=chrome&type=xhttp&sni=gofuture.games#%F0%9F%87%B9%F0%9F%87%B7%20Turkey-3840",
+      "delay": 1001
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p11real1.greewebservices.ir:1020?encryption=none&fp=chrome&pbk=xwbp4EcOtus1W5Au4XCJJbCl9jCb4DwGgYQYEwUDqTY&security=reality&sid=354e34396eaa89ab&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-2548",
+      "delay": 1007
+    },
+    {
+      "link": "vless://e19046d8-3d28-4428-bd85-af88f7fceb3e@87.120.252.16:443?security=reality&encryption=none&pbk=6dc3iKXilOQpA_JFrKlk5-CsFjSmOm_5p0kSQcO9qi4&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=blog.worldoftanks.eu#%F0%9F%87%BA%F0%9F%87%B8%20USA-7674",
+      "delay": 1055
+    },
+    {
+      "link": "trojan://0ab6c98dae3b48e8b9c4a776b6c9c19a@66.163.127.44:443?sni=learn.indyourperfectremotetechjobfromthecomfortofhome.com&peer=learn.indyourperfectremotetechjobfromthecomfortofhome.com&security=tls#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-6113",
+      "delay": 964
+    },
+    {
+      "link": "vless://a94d8907-6bbb-4570-80d3-dfdc314c1e7a@lt.t1n2.com:443?security=reality&encryption=none&pbk=awc2TGvraH8xMqfsAnNQ7JMQ_uUF8gW5auvU2gQfjR0&fp=firefox&type=tcp&flow=xtls-rprx-vision&sni=lt.t1n2.com&sid=b31de5bead2ebf3c#%F0%9F%87%B1%F0%9F%87%B9%20Lithuania-7282",
+      "delay": 1357
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.206:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-6765",
+      "delay": 834
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@82.38.31.165:443#%F0%9F%87%AC%F0%9F%87%A7%20UK-4179",
+      "delay": 844
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpvWklvQTY5UTh5aGNRVjhrYTNQYTNB@193.29.139.235:443#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-5315",
+      "delay": 871
+    },
+    {
+      "link": "vless://b743c868-b35c-4d91-b88b-d9efd7060b5c@xjpp.zjlo.top:36442?security=tls&encryption=none&insecure=0&headerType=none&fp=chrome&type=tcp&allowInsecure=0&flow=xtls-rprx-vision&sni=xjpp.zjlo.top#%F0%9F%87%B8%F0%9F%87%AC%20Singapore-6921",
+      "delay": 1496
+    },
+    {
+      "link": "vless://2633cbab-e901-4f5a-9a0f-18ff319d0d70@xjpp.zjlo.top:36442?security=tls&encryption=none&insecure=0&headerType=none&fp=chrome&type=tcp&allowInsecure=0&flow=xtls-rprx-vision&sni=xjpp.zjlo.top#%F0%9F%87%B8%F0%9F%87%AC%20Singapore-8650",
+      "delay": 1325
+    },
+    {
+      "link": "vless://9da605d3-f5f7-4135-f806-450f036f9351@djj.zjlo.top:23169?security=tls&type=tcp&packetEncoding=none&allowInsecure=0&sni=djj.zjlo.top&fp=chrome&flow=xtls-rprx-vision#%F0%9F%87%AF%F0%9F%87%B5%20Japan-8121",
+      "delay": 1560
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@23.156.153.40:443?sni=fs.qicai99.com&type=ws&host=fs.qicai99.com&path=/fp=chrome&security=tls#%F0%9F%87%AD%F0%9F%87%B0%20Hong-Kong-7847",
+      "delay": 1609
+    },
+    {
+      "link": "vmess://eyJhZGQiOiJkZS56aG91LXl1ZmFuLmNvbSIsImFpZCI6IjAiLCJob3N0IjoiZGUuemhvdS15dWZhbi5jb20iLCJpZCI6ImYzOGU1OTFkLWQxM2EtNGMzMC05NzYzLTZiZTNhZDY1ZjNlYyIsIm5ldCI6InJhdyIsInBhdGgiOiIvIiwicG9ydCI6IjQ0MyIsInBzIjoi8J+HqfCfh6ogR2VybWFueSwgRMO8c3NlbGRvcmYgfCDwn4yQIHwgW0JMXSIsInRscyI6InRscyIsInR5cGUiOiJub25lIiwidiI6IjIiLCJzY3kiOiJhdXRvIiwic25pIjoiIiwiYWxwbiI6IiIsImZwIjoiIn0?fp=ios#%F0%9F%87%A9%F0%9F%87%AA%20Germany-7135",
+      "delay": 1484
+    },
+    {
+      "link": "vless://fa081e9f-7574-4e18-8928-31aa5ac923c7@195.3.223.124:443?security=reality&encryption=none&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&host=/?Telegram---@iranping24---@iranping24---@iranping24---@iranping24---@iranping24&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=tcppl6.lazeroe.com&sid=868419504747f6de#%F0%9F%87%B5%F0%9F%87%B1%20Poland-7779",
+      "delay": 1800
+    },
+    {
+      "link": "ss://MjAyMi1ibGFrZTMtY2hhY2hhMjAtcG9seTEzMDU6OHlPM0FOV2VmdXVHczFsUktYRUNRQTFGRWh4bFdGVjJwcFFNY0JhWm81WT0=@18.199.171.99:443#%F0%9F%87%A9%F0%9F%87%AA%20Germany-9291",
+      "delay": 1258
+    },
+    {
+      "link": "vless://cda0862a-0f87-4be9-8ed8-1d0c9e382839@196.245.153.113:443?security=reality&sni=80cb66x.nl13.h1clayd.click&type=xhttp&path=%2Fd610f026b146&pbk=jhVdP7NFUaEXGfrmOqJlMCHTvqn3fymbzPfPT6NO4i0&sid=f72d4a2c7cbbacb1#%F0%9F%87%B8%F0%9F%87%B0%20Slovakia-6119",
+      "delay": 1972
+    },
+    {
+      "link": "vmess://eyJhZGQiOiIxMzQuMTk1LjE5Ni4yMTEiLCJhaWQiOjAsImhvc3QiOiIiLCJpZCI6ImY4YzhkYzNkLTBkMzctNDZiMC04YjM0LWE3MjMyODgyZmNmZSIsIm5ldCI6InRjcCIsInBhdGgiOiIiLCJwb3J0IjoiMTgwMDAiLCJwcyI6IvCfh6jwn4emIENhbmFkYS0yOTc5Iiwic25pIjoiMTM0LjE5NS4xOTYuMjExIiwidGxzIjoiIiwidHlwZSI6Im5vbmUiLCJ2IjoiMiJ9",
+      "delay": 1446
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@79.141.166.66:443?type=grpc&security=reality&fp=chrome&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&sni=caa.kosmosapp.net&mode=gun&serviceName=neurex#%F0%9F%87%A8%F0%9F%87%A6%20Canada-7650",
+      "delay": 1735
+    },
+    {
+      "link": "vless://cda0862a-0f87-4be9-8ed8-1d0c9e382839@f0d7aft.nl17.h1clayd.click:443?encryption=none&security=reality&type=tcp&sni=f0d7aft.nl17.h1clayd.click&fp=firefox&pbk=kkCGiCQCKnkozJR1KKCRNtmdBECmThCgI9VSv7iDcWI&sid=8956c57cb4c4f8d2#%F0%9F%87%A9%F0%9F%87%AA%20Germany-2360",
+      "delay": 2395
+    },
+    {
+      "link": "vless://c83f15bf-1817-4ec8-a19f-6393d226434c@fast.145779.xyz:2053?encryption=none&security=tls&sni=fast.145779.xyz&fp=chrome&type=ws&path=%2Fws-tesla#%F0%9F%8F%81%20Relay-9607",
+      "delay": 2683
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.210:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-8873",
+      "delay": 434
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.180:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-4279",
+      "delay": 456
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.202:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-2093",
+      "delay": 467
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpRQ1hEeHVEbFRUTUQ3anRnSFVqSW9q@193.29.139.168:8080#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-1877",
+      "delay": 476
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.217:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-7487",
+      "delay": 513
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.208:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-3177",
+      "delay": 492
+    },
+    {
+      "link": "vless://baded307-189c-4ffc-a271-9acdab51a324@online.shop.ir.eeso.cc:39653?security=tls&alpn=h2%2Chttp%2F1.1&encryption=none&headerType=none&fp=chrome&type=tcp&allowInsecure=0&sni=online.shop.ir.eeso.cc#%F0%9F%87%A9%F0%9F%87%AA%20Germany-8994",
+      "delay": 558
+    },
+    {
+      "link": "trojan://0ab6c98dae3b48e8b9c4a776b6c9c19a@193.108.119.34:443?security=tls&fp=chrome&sni=cdn.iloverussia2026.com#%F0%9F%87%A9%F0%9F%87%AA%20Germany-9205",
+      "delay": 770
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p1real1.greewebservices.ir:1230?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20Germany-3618",
+      "delay": 623
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.26:23576?security=reality&type=tcp&packetEncoding=xudp&sni=fuck.rkn&fp=chrome&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&encryption=none#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-5493",
+      "delay": 618
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.8:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-7195",
+      "delay": 604
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.98:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-7092",
+      "delay": 616
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.86:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-8151",
+      "delay": 575
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.29:23576?security=reality&encryption=none&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&headerType=none&fp=chrome&type=tcp&flow=xtls-rprx-vision&sni=fuck.rkn&sid=01#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-3828",
+      "delay": 626
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.96:23576?security=reality&type=tcp&packetEncoding=xudp&sni=fuck.rkn&fp=chrome&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&encryption=none#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-5957",
+      "delay": 609
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpBUmd2R1p5d0ErZ2FjZ0dWMjZCdm11MDUrd1ptUlcvaitBZFUrWjhCdDQ0PQ==@185.213.23.63:990#%F0%9F%87%B3%F0%9F%87%B4%20Norway-5070",
+      "delay": 610
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTpieVg0LURWMEM0MlBMRlRXUWhNVEFRNjNtWjhxckRSQg==@dns22.m3hrzd.ir:1348#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-5410",
+      "delay": 1149
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@51.158.206.25:23576?encryption=none&flow=xtls-rprx-vision&security=reality&sni=fuck.rkn&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&sid=01&type=tcp&headerType=none#%F0%9F%87%B3%F0%9F%87%B1%20Netherlands-5279",
+      "delay": 626
+    },
+    {
+      "link": "vless://26843758-24de-4f76-b5d0-624038e353c4@179.254.115.118:443?encryption=none&fp=firefox&pbk=xv6OUZcyzEHXFMTfumuJH-1Rd4NQ0cdmWikek4mm0m4&security=reality&sid=c71118d9399fb8c2&sni=15d7fft.nl11.h1clayd.click&type=tcp#%F0%9F%87%A9%F0%9F%87%AA%20Germany-5869",
+      "delay": 768
+    },
+    {
+      "link": "vless://68e6e2b1-5e31-4153-9d9b-c376ae579794@whitepanel-ui-production-493f7a3e.up.railway.app:443?path=/ws/68e6e2b1-5e31-4153-9d9b-c376ae579794&security=tls&alpn=http/1.1&encryption=none&host=whitepanel-ui-production-493f7a3e.up.railway.app&fp=chrome&type=ws&sni=whitepanel-ui-production-493f7a3e.up.railway.app#%F0%9F%87%BA%F0%9F%87%B8%20USA-6666",
+      "delay": 1163
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@vless1.greewebservices.ir:443?alpn=http/1.1&encryption=none&fp=chrome&host=vless1.greewebservices.ir&path=/timer/&security=tls&sni=vless1.greewebservices.ir&type=ws#%F0%9F%87%A9%F0%9F%87%AA%20Germany-1865",
+      "delay": 755
+    },
+    {
+      "link": "vless://e50e6851-a29a-45a1-811d-1e9230c1512a@87.121.89.160:8443?encryption=none&flow=xtls-rprx-vision&fp=firefox&pbk=lQn0k9GCrG7Hh34b8ezAyVjc9KBCxQm3oP0xdxKGy0U&security=reality&sid=35cb85e41b041622&sni=fi1.slowframe.org&type=tcp#%F0%9F%87%AB%F0%9F%87%AE%20Finland-3845",
+      "delay": 1094
+    },
+    {
+      "link": "vless://99c5b713-dedf-4a10-8070-916ff3f49b0e@172.64.150.28:443?path=/fp=chrome&security=tls&encryption=none&insecure=0&host=fs.qicai99.com&type=ws&allowInsecure=0&sni=fs.qicai99.com#%F0%9F%8F%81%20Relay-2934",
+      "delay": 779
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@89.150.45.246:443?type=grpc&security=reality&fp=firefox&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&sni=frb.kosmosapp.net&mode=gun&serviceName=neurex&encryption=none#%F0%9F%87%AB%F0%9F%87%B7%20France-8050",
+      "delay": 843
+    },
+    {
+      "link": "ss://Y2hhY2hhMjAtaWV0Zi1wb2x5MTMwNTprMWRCT21PQjRvcWk3VW1wMzdhMWJR@82.38.31.199:8080#%F0%9F%87%AC%F0%9F%87%A7%20UK-1945",
+      "delay": 679
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p1real4.greewebservices.ir:1260?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-8327",
+      "delay": 923
+    },
+    {
+      "link": "vless://887f418c-671a-4c3a-aae4-45a6a6979cb6@66.bmi.ir.asopardaz.ir:8443?encryption=none&flow=xtls-rprx-vision&fp=chrome&pbk=JtA0d5K6Jnmg35oWP9SDOsc1ceuqaxOsNg33fiPHJQs&security=reality&sid=e915&sni=timeline.www.cloudflare.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-6924",
+      "delay": 975
+    },
+    {
+      "link": "vless://fa081e9f-7574-4e18-8928-31aa5ac923c7@84.32.61.133:443?security=reality&flow=xtls-rprx-vision&fp=chrome&pbk=drl7nndYdfzZY1aQ0eUAWmNV0nsHig2uDnu9siy9biQ&sid=868419504747f6de&sni=us5.sbcweb.net&encryption=none&type=tcp#%F0%9F%87%BA%F0%9F%87%B8%20USA-8604",
+      "delay": 937
+    },
+    {
+      "link": "trojan://123456@104.17.234.157:2096?sni=321dfbc6.uir-9i6.pages.dev&type=ws&path=%2F&host=321dfbc6.uir-9i6.pages.dev#%F0%9F%8F%81%20Relay-9540",
+      "delay": 1004
+    },
+    {
+      "link": "vless://9edfa6ce-3252-46cf-8065-aef57f44e99c@animator-likeliest.sports-streams.org:443?type=tcp&security=reality&sni=worldoftanks.com&fp=chrome&flow=xtls-rprx-vision&pbk=6dc3iKXilOQpA_JFrKlk5-CsFjSmOm_5p0kSQcO9qi4#%F0%9F%87%BA%F0%9F%87%B8%20USA-7285",
+      "delay": 1053
+    },
+    {
+      "link": "trojan://5t6i121em5lkmsmk@149.104.87.125:15083?security=tls&sni=mx001.zestapp778.com&fp=firefox#%F0%9F%87%B2%F0%9F%87%BD%20Mexico-5226",
+      "delay": 1133
+    },
+    {
+      "link": "trojan://5t6i121em5lkmsmk@mx001.zestapp778.com:15083?security=tls&insecure=0&headerType=none&type=tcp&allowInsecure=0#%F0%9F%87%B2%F0%9F%87%BD%20Mexico-5652",
+      "delay": 1160
+    },
+    {
+      "link": "vless://f8cb3c89-32af-4255-bebc-d90aad175069@206.53.48.69:443?security=reality&sni=gea.kosmosapp.net&fp=chrome&pbk=pR39Vv5qhk8r6akOicoy6mMs4-ppSWUez8MyAXG7wwQ&sid=27350908de933e09&type=grpc&serviceName=neurex#%F0%9F%87%AC%F0%9F%87%AA%20Georgia-1538",
+      "delay": 1120
+    },
+    {
+      "link": "vless://b0511969-f769-460b-963b-70c6b84b6967@p11real3.greewebservices.ir:1040?encryption=none&fp=chrome&pbk=xQnXh5EfPDhcEBB7rRiLca33GYrMEeUa35domLL_yA8&security=reality&sid=9b60d3&sni=play.googleapis.com&type=tcp#%F0%9F%87%A7%F0%9F%87%AC%20Bulgaria-4568",
+      "delay": 1182
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@15.204.97.206:23576?security=reality&type=tcp&packetEncoding=xudp&sni=fuck.rkn&fp=chrome&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&encryption=none#%F0%9F%87%BA%F0%9F%87%B8%20USA-8948",
+      "delay": 1617
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@15.204.97.216:23576?type=tcp&encryption=none&flow=xtls-rprx-vision&sni=fuck.rkn&fp=chrome&security=reality&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s&sid=01#%F0%9F%87%BA%F0%9F%87%B8%20USA-4307",
+      "delay": 1222
+    },
+    {
+      "link": "vless://48ff2b70-e180-582f-8866-d9a2edeed5f5@15.204.97.197:23576?security=reality&type=tcp&allowInsecure=0&sni=fuck.rkn&fp=chrome&flow=xtls-rprx-vision&sid=01&pbk=1y5h2FGWKXTJ9xLPCqPo6Mw7RxoZzh6fGkEQKNxpZ3s#%F0%9F%87%BA%F0%9F%87%B8%20USA-2774",
+      "delay": 1245
+    },
+    {
+      "link": "vless://3c152dce-5887-486c-9f0f-693ca271f2e6@2.28.102.229:8080?security=reality&flow=xtls-rprx-vision&sni=digikala.com&type=tcp&path=%2F%40zibanabz%40zibanabz%40zibanabz&fp=chrome&pbk=aiFPeLurQNAOYZhwdXsYwxCxBgw6qg8rt0UvdrdNPTY&sid=ed516450fce897dd#%F0%9F%87%A9%F0%9F%87%AA%20Germany-1263",
+      "delay": 1245
+    },
+    {
+      "link": "vless://5d967efa-702c-4cde-9e79-29386c8012e5@hk1t.wawojk.dpdns.org:443?fp=chrome&host=hk1t.wawojk.dpdns.org&path=%2Fhk1-ws-1f8915c8964a&security=tls&sni=hk1t.wawojk.dpdns.org&type=ws#%F0%9F%8F%81%20Relay-5942",
+      "delay": 2217
+    },
+    {
+      "link": "vless://8c2d8960-ee85-427d-9653-191d905d21e5@64.186.244.143:443?encryption=none&security=reality&pbk=r3Y1YAWhGYjD72DevyQuUiJdvaTb7qzxdTNrUWVmOzQ&sid=0bd6&sni=www.vanqled.com&fp=chrome&type=tcp&flow=xtls-rprx-vision#%F0%9F%87%BA%F0%9F%87%B8%20USA-9143",
+      "delay": 1908
+    },
+    {
+      "link": "ss://YWVzLTI1Ni1nY206WTZSOXBBdHZ4eHptR0M=@51.222.200.165:5000#%F0%9F%87%A8%F0%9F%87%A6%20Canada-9681",
+      "delay": 2713
+    },
+    {
+      "link": "vless://2424febb-43cb-488d-bdd1-401e923c8e48@38.107.234.57:8443?security=tls&sni=3h-kazakhstan1.09vpn.com&type=ws&path=%2Fvless%2F&allowInsecure=0#%F0%9F%87%B0%F0%9F%87%BF%20Kazakhstan-7932",
+      "delay": 2153
+    }
   ]
 }
