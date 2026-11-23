@@ -1,58 +1,58 @@
 # 📊 Proxy Processing Statistics
 
 ## 📈 Pipeline Overview
-- **Total Incoming Configs:** 2130316
-- **Failed Parsing (Invalid/Corrupted):** 1921572 *(See `Logs/parse_errors.txt`)*
-- **Successfully Tested by Xray:** 208744
-- **Dead Nodes (Timeout/0ms):** 206963
-- **Working Nodes (Ping > 0):** 1781
-- **Iran In-Country Double-Verified Nodes:** 165
+- **Total Incoming Configs:** 2149473
+- **Failed Parsing (Invalid/Corrupted):** 1940364 *(See `Logs/parse_errors.txt`)*
+- **Successfully Tested by Xray:** 209109
+- **Dead Nodes (Timeout/0ms):** 206982
+- **Working Nodes (Ping > 0):** 2127
+- **Iran In-Country Double-Verified Nodes:** 0
 
 ## 🗑️ Filtering & Deduplication
-- **Duplicates Removed (Same IP/Port/ID):** 462
-- **UUID Spam Removed (Over 5 instances):** 546
-- **Final Unique & Safe Working Nodes:** 1208
+- **Duplicates Removed (Same IP/Port/ID):** 475
+- **UUID Spam Removed (Over 5 instances):** 650
+- **Final Unique & Safe Working Nodes:** 1531
 
 ## 📁 Output Lists Sizes
-- 💎 **Eternity:** 145 configs
-- 🌍 **Diversity:** 107 configs
-- 🛡️ **Resilience (Domain-Fronted):** 59 configs
-- 📦 **Full:** 1208 configs
+- 💎 **Eternity:** 165 configs
+- 🌍 **Diversity:** 114 configs
+- 🛡️ **Resilience (Domain-Fronted):** 174 configs
+- 📦 **Full:** 1531 configs
 
 ---
 
 ## 📡 Protocol Distribution (Full List)
 | Protocol | Count |
 |----------|-------|
-| **VLESS** | 622 |
-| **VMess** | 193 |
-| **Trojan** | 112 |
-| **Shadowsocks** | 281 |
+| **VLESS** | 868 |
+| **VMess** | 228 |
+| **Trojan** | 152 |
+| **Shadowsocks** | 283 |
 
 ## 🚀 Speed Performance (Full List)
 | Speed Bracket | Count |
 |---------------|-------|
-| ⚡ Ultra Fast (>5 MB/s) | 171 |
-| 🚀 Fast (1-5 MB/s) | 568 |
-| 🐢 Slow (<1 MB/s) | 469 |
+| ⚡ Ultra Fast (>5 MB/s) | 180 |
+| 🚀 Fast (1-5 MB/s) | 704 |
+| 🐢 Slow (<1 MB/s) | 647 |
 
 ---
 
 ## 🌍 Geographic Distribution (Top 15)
 | Country | Count |
 |---------|-------|
-| 🇺🇸 USA | 270 |
-| 🇩🇪 Germany | 154 |
-| 🇳🇱 Netherlands | 142 |
-| 🇬🇧 UK | 89 |
-| 🏁 Relay | 62 |
-| 🇸🇬 Singapore | 60 |
-| 🇨🇳 China | 40 |
-| 🇫🇷 France | 34 |
-| 🇨🇦 Canada | 32 |
-| 🇭🇰 Hong Kong | 31 |
-| 🇯🇵 Japan | 26 |
-| 🇨🇭 Switzerland | 24 |
-| 🇵🇱 Poland | 20 |
-| 🇦🇪 Emirates | 17 |
-| 🇹🇷 Turkey | 17 |
+| 🇺🇸 USA | 284 |
+| 🇩🇪 Germany | 197 |
+| 🏁 Relay | 187 |
+| 🇳🇱 Netherlands | 136 |
+| 🇬🇧 UK | 101 |
+| 🇭🇰 Hong Kong | 66 |
+| 🇨🇳 China | 62 |
+| 🇸🇬 Singapore | 61 |
+| 🇯🇵 Japan | 47 |
+| 🇫🇷 France | 46 |
+| 🇨🇦 Canada | 38 |
+| 🇨🇭 Switzerland | 30 |
+| 🇸🇨 Seychelles | 21 |
+| 🇱🇻 Latvia | 20 |
+| 🇹🇷 Turkey | 20 |
